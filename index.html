@@ -482,6 +482,10 @@
                         <div class="switch-tile"><span>继续播放胶囊</span><input type="checkbox" id="sw-center-pill" checked></div>
                         <div class="switch-tile"><span>特权横幅</span><input type="checkbox" id="sw-banner" checked></div>
                         <div class="switch-tile"><span>免费通道徽标</span><input type="checkbox" id="sw-free-pill" checked></div>
+                        <div class="switch-tile"><span>Laya 品牌标</span><input type="checkbox" id="sw-laya-badge" checked></div>
+                        <div class="switch-tile"><span>VIP 标</span><input type="checkbox" id="sw-vip-tag" checked></div>
+                        <div class="switch-tile"><span>返回箭头</span><input type="checkbox" id="sw-back-btn" checked></div>
+                        <div class="switch-tile"><span>右上系统项</span><input type="checkbox" id="sw-top-right" checked></div>
                         <div class="switch-tile"><span>底部控制栏</span><input type="checkbox" id="sw-bottom-bar" checked></div>
                         <div class="switch-tile"><span>画质药丸标</span><input type="checkbox" id="sw-bot-res" checked></div>
                     </div>
@@ -815,7 +819,16 @@
     renderDyTabs('in-dy-bot-tabs', 'dy-bot-tabs', true);
 
     // 7. 开关矩阵
-    const bindSwitch = (swId, targetId) => { document.getElementById(swId).addEventListener('change', (e) => { const el = document.getElementById(targetId); if(el) el.style.display = e.target.checked ? '' : 'none'; }); };
+    const bindSwitch = (swId, targetId) => { 
+        const sw = document.getElementById(swId);
+        if (sw) {
+            sw.addEventListener('change', (e) => { 
+                const el = document.getElementById(targetId); 
+                if(el) el.style.display = e.target.checked ? '' : 'none'; 
+            }); 
+        }
+    };
+    
     bindSwitch('sw-danmaku', 'danmaku-container');
     bindSwitch('sw-center-btn', 'wrap-center-btn');
     bindSwitch('sw-center-pill', 'wrap-center-pill');
@@ -826,6 +839,7 @@
     bindSwitch('sw-back-btn', 'wrap-back-btn');
     bindSwitch('sw-top-right', 'wrap-top-right');
     bindSwitch('sw-bottom-bar', 'wrap-bottom-bar');
+    bindSwitch('sw-bot-res', 'wrap-bot-res');
 
     bindSwitch('sw-dy-nav', 'dy-top-nav');
     bindSwitch('sw-dy-bot-tabs', 'dy-bot-tabs');
