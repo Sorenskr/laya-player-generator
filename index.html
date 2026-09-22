@@ -2013,18 +2013,46 @@
             offscreenCanvas.height = height;
             const ctx = offscreenCanvas.getContext('2d');
 
+            // 【关键修复 1】Safari 必须在 captureStream 之前先画一帧内容，否则会崩溃报错
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+
+            if (typeof offscreenCanvas.captureStream === 'undefined') {
+                throw new Error("当前浏览器不支持 Canvas 视频流抓取");
+            }
+            if (typeof MediaRecorder === 'undefined') {
+                throw new Error("当前浏览器不支持视频录制功能");
+            }
+
+            // 【关键修复 2】优先原生捕获音轨，规避严格的 Web Audio API 跨域与交互拦截
             let audioTracks = [];
             try {
-                if (!window._audioCtx) {
-                    window._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    window._audioSrc = window._audioCtx.createMediaElementSource(previewVideo);
-                    window._audioDst = window._audioCtx.createMediaStreamDestination();
-                    window._audioSrc.connect(window._audioDst);
-                    window._audioSrc.connect(window._audioCtx.destination);
+                const videoStream = previewVideo.captureStream ? previewVideo.captureStream() : 
+                                   (previewVideo.mozCaptureStream ? previewVideo.mozCaptureStream() : null);
+                if (videoStream) {
+                    audioTracks = videoStream.getAudioTracks();
                 }
-                audioTracks = window._audioDst.stream.getAudioTracks();
             } catch (err) {
-                console.warn('音频管线:', err);
+                console.warn('原生音轨捕获失败:', err);
+            }
+
+            // 如果原生捕获失败，降级使用 Web Audio API
+            if (audioTracks.length === 0) {
+                try {
+                    if (!window._audioCtx) {
+                        window._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                        window._audioSrc = window._audioCtx.createMediaElementSource(previewVideo);
+                        window._audioDst = window._audioCtx.createMediaStreamDestination();
+                        window._audioSrc.connect(window._audioDst);
+                        window._audioSrc.connect(window._audioCtx.destination);
+                    }
+                    if (window._audioCtx.state === 'suspended') {
+                        await window._audioCtx.resume();
+                    }
+                    audioTracks = window._audioDst.stream.getAudioTracks();
+                } catch (err) {
+                    console.warn('音频管线备用方案失败:', err);
+                }
             }
 
             const canvasDanmaku = danmakuList.map((dm, idx) => ({
@@ -2041,15 +2069,33 @@
                 ...audioTracks
             ]);
 
-            const mime = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1') ? 'video/mp4' : 'video/webm';
-            const recorder = new MediaRecorder(combinedStream, { mimeType: mime });
+            // 【关键修复 3】多格式探测匹配（适配 Safari 的 mp4 与 Chrome 的 webm）
+            const mimeTypes = [
+                'video/mp4;codecs=avc1',
+                'video/mp4',
+                'video/webm;codecs=vp9',
+                'video/webm;codecs=vp8',
+                'video/webm'
+            ];
+            let selectedMime = '';
+            for (let mt of mimeTypes) {
+                if (MediaRecorder.isTypeSupported(mt)) {
+                    selectedMime = mt;
+                    break;
+                }
+            }
+
+            const recorderOptions = selectedMime ? { mimeType: selectedMime } : {};
+            const recorder = new MediaRecorder(combinedStream, recorderOptions);
             const chunks = [];
-            recorder.ondataavailable = (e) => chunks.push(e.data);
+            recorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) chunks.push(e.data);
+            };
             recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: mime });
+                const blob = new Blob(chunks, { type: selectedMime || 'video/webm' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.download = `Laya_Player_Video_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
+                a.download = `Laya_Player_Video_${Date.now()}.${(selectedMime || '').includes('mp4') ? 'mp4' : 'webm'}`;
                 a.href = url;
                 a.click();
                 btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 合成下载带框视频 (带原声)`;
@@ -2400,7 +2446,8 @@
             console.error(err);
             btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 合成下载带框视频 (带原声)`;
             btn.disabled = false;
-            showToast('导出异常，请确认浏览器支持 Canvas 与 MediaRecorder');
+            // 【关键修复 4】抛出真实的系统错误内容，告别盲目报错
+            showToast(`导出失败: ${err.message || '浏览器不兼容录制功能'}`);
         }
     });
 </script>
