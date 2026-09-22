@@ -1102,7 +1102,7 @@
 
                                 <div class="danmaku-input-capsule" id="wrap-danmaku-input-capsule">
                                     <span class="danmaku-icon-text">A</span>
-                                    <input type="text" class="danmaku-inner-input" id="disp-danmaku-input-val" placeholder="發個友善的彈幕見證當下" value="發個友善的彈幕見證當下">
+                                    <input type="text" class="danmaku-inner-input" id="disp-danmaku-input-val" placeholder="太頂了，已備好衛生紙..." value="太頂了，已備好衛生紙...">
                                     <button class="danmaku-send-btn" id="btn-danmaku-send-preview">發送</button>
                                 </div>
                             </div>
@@ -1257,7 +1257,7 @@
 
             <div class="form-row">
                 <label>弹幕输入框预设占位文字</label>
-                <input type="text" id="in-danmaku-input-text" value="發個友善的彈幕見證當下">
+                <input type="text" id="in-danmaku-input-text" value="太頂了，已備好衛生紙...">
             </div>
 
             <div class="form-row">
@@ -1946,8 +1946,8 @@
 
     document.getElementById('btn-random-danmaku').addEventListener('click', () => {
         const presets = [
-            '哇塞完整版太刺激了吧！', '無碼畫質吹爆', '這播放器介面質感拉滿',
-            '第一名打卡！！', '真的能看，感謝樓主分享', '4K 藍光太清晰了'
+            '哇塞完整版太刺激了吧！', '無碼畫質吹爆', '這腿我能玩一年...',
+            '第一名打卡！！', '前方高能，請自備營養線...', '這劇情太頂了，受不了...'
         ];
         danmakuList = presets.map((text, i) => ({
             text,
@@ -2138,7 +2138,7 @@
                 ctx.fillRect(0, 0, width, height);
                 ctx.drawImage(previewVideo, offX, offY, renderW, renderH);
 
-                if (document.getElementById('sw-danmaku').checked) {
+                if (document.getElementById('sw-danmaku')?.checked) {
                     const fontSize = parseInt(document.getElementById('in-danmaku-size').value) * (width / 900);
                     ctx.font = `bold ${fontSize}px sans-serif`;
                     ctx.lineWidth = 3;
@@ -2165,7 +2165,7 @@
                 let curX = 24;
                 const topY = 32;
 
-                if (document.getElementById('sw-back-btn').checked) {
+                if (document.getElementById('sw-back-btn')?.checked) {
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 2.5;
                     ctx.beginPath();
@@ -2175,7 +2175,7 @@
                     curX += 34;
                 }
 
-                if (document.getElementById('sw-laya-badge').checked) {
+                if (document.getElementById('sw-laya-badge')?.checked) {
                     const layaText = document.getElementById('disp-laya-label').textContent;
                     ctx.font = 'bold 13px sans-serif';
                     const textW = ctx.measureText(layaText).width;
@@ -2200,7 +2200,7 @@
                     curX += textW + 46;
                 }
 
-                if (document.getElementById('sw-free-pill').checked) {
+                if (document.getElementById('sw-free-pill')?.checked) {
                     const freeText = document.getElementById('disp-free-pill-text').textContent;
                     ctx.font = 'bold 12px sans-serif';
                     const textW = ctx.measureText(freeText).width;
@@ -2216,7 +2216,7 @@
                     curX += textW + 36;
                 }
 
-                if (document.getElementById('sw-viewer').checked) {
+                if (document.getElementById('sw-viewer')?.checked) {
                     const viewText = document.getElementById('disp-viewer-text').textContent;
                     ctx.font = 'bold 12px sans-serif';
                     const textW = ctx.measureText(viewText).width;
@@ -2243,7 +2243,7 @@
                 ctx.fillText(titleText, curX, topY + 4);
                 curX += ctx.measureText(titleText).width + 8;
 
-                if (document.getElementById('sw-vip-tag').checked) {
+                if (document.getElementById('sw-vip-tag')?.checked) {
                     ctx.fillStyle = '#d48806';
                     ctx.beginPath();
                     ctx.roundRect(curX, topY - 11, 52, 19, 3);
@@ -2253,7 +2253,7 @@
                     ctx.fillText('VIP 原畫', curX + 5, topY + 3);
                 }
 
-                if (document.getElementById('sw-top-right').checked) {
+                if (document.getElementById('sw-top-right')?.checked) {
                     ctx.font = '12px sans-serif';
                     ctx.fillStyle = '#2ecc71';
                     ctx.beginPath();
@@ -2265,7 +2265,7 @@
                     ctx.fillText('設置', width - 36, topY + 4);
                 }
 
-                if (document.getElementById('sw-banner').checked) {
+                if (document.getElementById('sw-banner')?.checked) {
                     const bannerText = '【免費通道】限時特權：' + document.getElementById('disp-banner-body').textContent;
                     ctx.font = '11.5px sans-serif';
                     const bW = ctx.measureText(bannerText).width + 90;
@@ -2284,7 +2284,7 @@
                     ctx.fillText(document.getElementById('disp-banner-body').textContent, 34 + prefixW, topY + 40);
                 }
 
-                if (document.getElementById('sw-bottom-bar').checked) {
+                if (document.getElementById('sw-bottom-bar')?.checked) {
                     const botGrad = ctx.createLinearGradient(0, height - 90, 0, height);
                     botGrad.addColorStop(0, 'transparent');
                     botGrad.addColorStop(1, 'rgba(0,0,0,0.92)');
@@ -2295,7 +2295,7 @@
                     const barY = height - 42;
                     const trackW = width - 48;
 
-                    if (document.getElementById('sw-waveform').checked) {
+                    if (document.getElementById('sw-waveform')?.checked) {
                         const waveH = parseInt(document.getElementById('in-wave-height').value) * 1.35;
                         const waveY = barY;
                         
@@ -2365,14 +2365,14 @@
                     ctx.fillStyle = '#d0d4dc';
                     ctx.fillText(dynamicTimeStr, iconX + 44, height - 16);
 
-                    if (document.getElementById('sw-danmaku-input-bar').checked) {
+                    if (document.getElementById('sw-danmaku-input-bar')?.checked) {
                         const inputX = iconX + 215;
                         const inputW = 220;
                         const inputH = 24;
                         const inputY = height - 28;
 
-                        if (document.getElementById('sw-danmaku-btn-toggle').checked) {
-                            ctx.fillStyle = document.getElementById('sw-danmaku').checked ? '#00aeec' : 'rgba(255,255,255,0.15)';
+                        if (document.getElementById('sw-danmaku-btn-toggle')?.checked) {
+                            ctx.fillStyle = document.getElementById('sw-danmaku')?.checked ? '#00aeec' : 'rgba(255,255,255,0.15)';
                             ctx.beginPath();
                             ctx.roundRect(inputX - 32, inputY, 24, inputH, 4);
                             ctx.fill();
@@ -2389,7 +2389,7 @@
 
                         ctx.fillStyle = 'rgba(255,255,255,0.6)';
                         ctx.font = '10.5px sans-serif';
-                        ctx.fillText(dispDanmakuInputVal.value || '發個友善的彈幕見證當下', inputX + 12, inputY + 16);
+                        ctx.fillText(dispDanmakuInputVal.value || '太頂了，已備好衛生紙...', inputX + 12, inputY + 16);
 
                         ctx.fillStyle = '#00aeec';
                         ctx.beginPath();
@@ -2400,7 +2400,7 @@
                         ctx.fillText('發送', inputX + inputW - 35, inputY + 15);
                     }
 
-                    if (document.getElementById('sw-bot-danmaku-count').checked) {
+                    if (document.getElementById('sw-bot-danmaku-count')?.checked) {
                         const botDanmakuVal = document.getElementById('disp-bot-danmaku-count').textContent;
                         ctx.font = '12px sans-serif';
                         ctx.fillStyle = '#d0d4dc';
@@ -2411,7 +2411,7 @@
                     ctx.fillStyle = '#d0d4dc';
                     ctx.fillText('倍速 1.0X', width - 195, height - 16);
 
-                    if (document.getElementById('sw-bot-res').checked) {
+                    if (document.getElementById('sw-bot-res')?.checked) {
                         const resVal = document.getElementById('disp-bot-res').textContent;
                         ctx.font = 'bold 10px sans-serif';
                         const textW = ctx.measureText(resVal).width;
