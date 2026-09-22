@@ -1171,6 +1171,11 @@
                 <span class="badge-tip">秒数累加递增</span>
             </div>
 
+            <!-- 新增：右侧控制台专属播放/暂停按键，方便编辑时随时定格画面 -->
+            <button class="btn" style="width: 100%; justify-content: center; background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); margin-bottom: 4px;" id="btn-sidebar-play-pause">
+                ⏯️ 播放 / 暂停预览视频
+            </button>
+
             <div class="form-row">
                 <label>左下角播放按钮状态</label>
                 <select id="sel-play-state-mode">
@@ -1636,6 +1641,27 @@
 
     previewVideo.addEventListener('play', () => updatePlayIconDisplay(true));
     previewVideo.addEventListener('pause', () => updatePlayIconDisplay(false));
+
+    // 新增：右侧边栏专属按钮 与 画面中央大按钮的 播放/暂停控制逻辑
+    const togglePreviewVideoPlayback = () => {
+        if (!isVideoMode) {
+            showToast('提示：当前为图片模式，请先上传视频文件！');
+            return;
+        }
+        if (previewVideo.paused) {
+            previewVideo.play();
+            showToast('▶ 视频已继续播放');
+        } else {
+            previewVideo.pause();
+            showToast('|| 视频已暂停定格');
+        }
+    };
+
+    // 绑定右侧边栏播放控制按钮
+    document.getElementById('btn-sidebar-play-pause').addEventListener('click', togglePreviewVideoPlayback);
+    
+    // 绑定画面中央的巨大播放按钮区（让操作更直觉）
+    document.getElementById('wrap-center-all').addEventListener('click', togglePreviewVideoPlayback);
 
     const inStartTime = document.getElementById('in-start-time');
     const inTotalTime = document.getElementById('in-total-time');
