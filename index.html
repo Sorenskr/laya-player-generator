@@ -200,9 +200,12 @@
         .ctrl-left { display: flex; align-items: center; gap: 14px; }
         .time-label { font-family: monospace; font-size: 11px; letter-spacing: 0.5px; }
         .ctrl-right { display: flex; align-items: center; gap: 14px; }
+
+        /* 画质药丸标签 */
         .res-tag {
-            background: #1877F2; color: #fff; font-size: 10px; font-weight: 700;
-            padding: 2px 7px; border-radius: 4px;
+            background: #1877F2; color: #fff; font-size: 10.5px; font-weight: 700;
+            padding: 2.5px 8px; border-radius: 4px; cursor: pointer; user-select: none;
+            display: inline-flex; align-items: center; letter-spacing: 0.3px;
         }
 
         /* 右侧管理后台 (全中文简体) */
@@ -222,7 +225,7 @@
 
         .form-item { display: flex; flex-direction: column; gap: 5px; }
         .form-item label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-        .form-item input[type="text"], .form-item textarea {
+        .form-item input[type="text"], .form-item select, .form-item textarea {
             background: #0d0f14; border: 1px solid var(--border-color); color: #fff;
             padding: 8px 10px; border-radius: 5px; font-size: 12.5px; outline: none;
         }
@@ -374,7 +377,8 @@
                             <!-- 底部弹幕统计标签与开关 -->
                             <span id="wrap-bot-danmaku-count"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
                             <span>倍速 1.0X</span>
-                            <span class="res-tag">Laya 藍光 4K ▾</span>
+                            <!-- 底部画质/蓝光标签与开关 -->
+                            <span id="wrap-bot-res"><span class="res-tag" id="disp-bot-res">Laya 藍光 4K ▾</span></span>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                         </div>
                     </div>
@@ -394,6 +398,10 @@
             <div class="switch-card">
                 <span>底部弹幕数量</span>
                 <input type="checkbox" id="sw-bot-danmaku-count" checked>
+            </div>
+            <div class="switch-card">
+                <span>画质分辨率标</span>
+                <input type="checkbox" id="sw-bot-res" checked>
             </div>
             <div class="switch-card">
                 <span>在看人数标签</span>
@@ -453,6 +461,18 @@
         <div class="form-item">
             <label>底部弹幕统计文案</label>
             <input type="text" id="in-bot-danmaku-count" value="● 彈幕 1.8W">
+        </div>
+        <div class="form-item">
+            <label>画质清晰度选项 (下拉预设与自定义)</label>
+            <select id="sel-bot-res">
+                <option value="Laya 藍光 4K ▾">Laya 藍光 4K ▾</option>
+                <option value="4K 120P 極致 ▾">4K 120P 極致 ▾</option>
+                <option value="原畫 1080P 60幀 ▾">原畫 1080P 60幀 ▾</option>
+                <option value="超清 720P ▾">超清 720P ▾</option>
+                <option value="VIP 尊享原畫 ▾">VIP 尊享原畫 ▾</option>
+                <option value="custom">✏️ 自定义文案...</option>
+            </select>
+            <input type="text" id="in-bot-res" value="Laya 藍光 4K ▾" placeholder="输入自定义画质文案" style="margin-top: 4px;">
         </div>
         <div class="form-item">
             <label>继续播放胶囊文案</label>
@@ -550,8 +570,22 @@
     bindText('in-laya-label', 'disp-laya-label');
     bindText('in-viewer', 'disp-viewer-text');
     bindText('in-bot-danmaku-count', 'disp-bot-danmaku-count');
+    bindText('in-bot-res', 'disp-bot-res');
     bindText('in-center-pill', 'wrap-center-pill');
     bindText('in-time', 'disp-time');
+
+    // 画质下拉联动
+    const selBotRes = document.getElementById('sel-bot-res');
+    const inBotRes = document.getElementById('in-bot-res');
+    selBotRes.addEventListener('change', (e) => {
+        if (e.target.value !== 'custom') {
+            inBotRes.value = e.target.value;
+            document.getElementById('disp-bot-res').textContent = e.target.value;
+        } else {
+            inBotRes.focus();
+            inBotRes.select();
+        }
+    });
 
     // 5. 开关控制矩阵
     const bindSwitch = (swId, targetId) => {
@@ -561,6 +595,7 @@
     };
     bindSwitch('sw-danmaku', 'danmaku-container');
     bindSwitch('sw-bot-danmaku-count', 'wrap-bot-danmaku-count');
+    bindSwitch('sw-bot-res', 'wrap-bot-res');
     bindSwitch('sw-center-btn', 'wrap-center-btn');
     bindSwitch('sw-center-pill', 'wrap-center-pill');
     bindSwitch('sw-viewer', 'wrap-viewer-pill');
@@ -594,7 +629,6 @@
         danmakuListUI.innerHTML = '';
 
         danmakuList.forEach((dm, index) => {
-            // 画面弹幕元素
             const el = document.createElement('div');
             el.className = 'danmaku-item';
             el.textContent = dm.text;
@@ -603,7 +637,6 @@
             el.style.animationDuration = `${dm.speed}s`;
             danmakuContainer.appendChild(el);
 
-            // 右侧编辑卡片
             const card = document.createElement('div');
             card.className = 'danmaku-item-card';
             card.innerHTML = `
@@ -721,7 +754,7 @@
         });
     });
 
-    // 8. 实时合成带框短视频 (保留声音 + 完整边框与在看人数 + 底部弹幕统计)
+    // 8. 实时合成带框短视频 (保留声音 + 完整边框与在看人数 + 底部弹幕统计 + 蓝光药丸)
     document.getElementById('btn-save-vid').addEventListener('click', async () => {
         if (!isVideoMode) {
             alert('提示：请先点击【上传截图/视频】按钮上传一段带声音的 MP4/WebM 视频！');
@@ -970,23 +1003,39 @@
                     ctx.fillStyle = '#d0d4dc';
                     ctx.fillText(document.getElementById('disp-time').textContent, 24, height - 16);
 
-                    // 绘制底部弹幕数量统计 (如果开关开启)
+                    // 绘制底部弹幕数量统计
                     if (document.getElementById('sw-bot-danmaku-count').checked) {
                         const botDanmakuVal = document.getElementById('disp-bot-danmaku-count').textContent;
                         ctx.font = '12px sans-serif';
-                        ctx.fillText(botDanmakuVal, width - 260, height - 16);
+                        ctx.fillText(botDanmakuVal, width - 300, height - 16);
                     }
 
                     ctx.font = '12px sans-serif';
-                    ctx.fillText('倍速 1.0X', width - 175, height - 16);
+                    ctx.fillText('倍速 1.0X', width - 195, height - 16);
 
-                    ctx.fillStyle = '#1877F2';
-                    ctx.beginPath();
-                    ctx.roundRect(width - 110, height - 28, 76, 20, 4);
-                    ctx.fill();
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 10px sans-serif';
-                    ctx.fillText('Laya 藍光 4K', width - 104, height - 14);
+                    // 绘制画质分辨率药丸标 (如果开关开启)
+                    if (document.getElementById('sw-bot-res').checked) {
+                        const resVal = document.getElementById('disp-bot-res').textContent;
+                        ctx.font = 'bold 10px sans-serif';
+                        const textW = ctx.measureText(resVal).width;
+                        const boxW = textW + 16;
+                        const boxX = width - 42 - boxW;
+
+                        ctx.fillStyle = '#1877F2';
+                        ctx.beginPath();
+                        ctx.roundRect(boxX, height - 28, boxW, 20, 4);
+                        ctx.fill();
+
+                        ctx.fillStyle = '#fff';
+                        ctx.fillText(resVal, boxX + 8, height - 14);
+                    }
+
+                    // 全屏图标
+                    ctx.strokeStyle = '#d0d4dc';
+                    ctx.lineWidth = 1.8;
+                    const fsX = width - 32;
+                    const fsY = height - 26;
+                    ctx.strokeRect(fsX, fsY, 12, 12);
                 }
 
                 requestAnimationFrame(drawFrame);
