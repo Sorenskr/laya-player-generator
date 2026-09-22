@@ -371,7 +371,8 @@
                             <span class="time-label" id="disp-time">00:03:33 / 01:28:45</span>
                         </div>
                         <div class="ctrl-right">
-                            <span>● 彈幕 1.8W</span>
+                            <!-- 底部弹幕统计标签与开关 -->
+                            <span id="wrap-bot-danmaku-count"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
                             <span>倍速 1.0X</span>
                             <span class="res-tag">Laya 藍光 4K ▾</span>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
@@ -389,6 +390,10 @@
             <div class="switch-card">
                 <span>动态弹幕</span>
                 <input type="checkbox" id="sw-danmaku" checked>
+            </div>
+            <div class="switch-card">
+                <span>底部弹幕数量</span>
+                <input type="checkbox" id="sw-bot-danmaku-count" checked>
             </div>
             <div class="switch-card">
                 <span>在看人数标签</span>
@@ -444,6 +449,10 @@
         <div class="form-item">
             <label>在看人数文本</label>
             <input type="text" id="in-viewer" value="3.2 萬人正在觀看">
+        </div>
+        <div class="form-item">
+            <label>底部弹幕统计文案</label>
+            <input type="text" id="in-bot-danmaku-count" value="● 彈幕 1.8W">
         </div>
         <div class="form-item">
             <label>继续播放胶囊文案</label>
@@ -540,6 +549,7 @@
     bindText('in-title', 'disp-title');
     bindText('in-laya-label', 'disp-laya-label');
     bindText('in-viewer', 'disp-viewer-text');
+    bindText('in-bot-danmaku-count', 'disp-bot-danmaku-count');
     bindText('in-center-pill', 'wrap-center-pill');
     bindText('in-time', 'disp-time');
 
@@ -550,6 +560,7 @@
         });
     };
     bindSwitch('sw-danmaku', 'danmaku-container');
+    bindSwitch('sw-bot-danmaku-count', 'wrap-bot-danmaku-count');
     bindSwitch('sw-center-btn', 'wrap-center-btn');
     bindSwitch('sw-center-pill', 'wrap-center-pill');
     bindSwitch('sw-viewer', 'wrap-viewer-pill');
@@ -639,7 +650,6 @@
             return;
         }
 
-        // 智能正则切分：按 换行、中文逗号、英文逗号、中文分号、英文分号、句号 切割
         const segments = raw.split(/[\n,，;；。]+/).map(s => s.trim()).filter(s => s.length > 0);
         if (segments.length === 0) return;
 
@@ -679,7 +689,7 @@
         renderDanmaku();
     });
 
-    // 7. 保存高清图片 (PNG 导出：彻底解决弹幕截不进去的 Bug)
+    // 7. 保存高清图片 (PNG 导出：包含当前冻结弹幕与底栏设置)
     document.getElementById('btn-save-img').addEventListener('click', () => {
         html2canvas(renderTarget, {
             scale: 2.5,
@@ -687,7 +697,6 @@
             allowTaint: true,
             backgroundColor: '#000',
             onclone: (clonedDoc) => {
-                // 核心修复：抓取真实屏幕物理坐标，冻结 CSS 动画，确保弹幕 100% 截入画面！
                 const origBox = renderTarget.getBoundingClientRect();
                 const origItems = danmakuContainer.querySelectorAll('.danmaku-item');
                 const clonedContainer = clonedDoc.getElementById('danmaku-container');
@@ -712,7 +721,7 @@
         });
     });
 
-    // 8. 实时合成带框短视频 (保留声音 + 完整边框与在看人数 + 自动隐藏暂停键)
+    // 8. 实时合成带框短视频 (保留声音 + 完整边框与在看人数 + 底部弹幕统计)
     document.getElementById('btn-save-vid').addEventListener('click', async () => {
         if (!isVideoMode) {
             alert('提示：请先点击【上传截图/视频】按钮上传一段带声音的 MP4/WebM 视频！');
@@ -731,7 +740,7 @@
             offscreenCanvas.height = height;
             const ctx = offscreenCanvas.getContext('2d');
 
-            // 1. 获取原视频的声音流 (Web Audio API)
+            // 获取音频流
             let audioTracks = [];
             try {
                 if (!window._audioCtx) {
@@ -746,7 +755,7 @@
                 console.warn('音频管线:', err);
             }
 
-            // 2. 初始化弹幕物理飞行粒子
+            // 初始化弹幕粒子
             const canvasDanmaku = danmakuList.map((dm, idx) => ({
                 text: dm.text,
                 color: dm.color,
@@ -755,7 +764,6 @@
                 speed: (dm.speed ? 18 - dm.speed : 8) * 0.9
             }));
 
-            // 3. 构建录制流
             const canvasStream = offscreenCanvas.captureStream(30);
             const combinedStream = new MediaStream([
                 ...canvasStream.getVideoTracks(),
@@ -781,15 +789,14 @@
             previewVideo.play();
             recorder.start();
 
-            // 4. 实时把视频 + 完整边框图层画入 Canvas (不绘制居中暂停键)
             let isRecording = true;
             const drawFrame = () => {
                 if (!isRecording) return;
 
-                // A. 视频底图
+                // A. 视频画面
                 ctx.drawImage(previewVideo, 0, 0, width, height);
 
-                // B. 动态弹幕 (如果开关开启)
+                // B. 动态弹幕
                 if (document.getElementById('sw-danmaku').checked) {
                     const fontSize = parseInt(document.getElementById('in-danmaku-size').value) * (width / 900);
                     ctx.font = `bold ${fontSize}px sans-serif`;
@@ -807,7 +814,7 @@
                     });
                 }
 
-                // C. 顶部渐变暗影与顶栏
+                // C. 顶栏
                 const topGrad = ctx.createLinearGradient(0, 0, 0, 110);
                 topGrad.addColorStop(0, 'rgba(0,0,0,0.88)');
                 topGrad.addColorStop(0.7, 'rgba(0,0,0,0.4)');
@@ -818,7 +825,6 @@
                 let curX = 24;
                 const topY = 32;
 
-                // 返回箭头
                 if (document.getElementById('sw-back-btn').checked) {
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 2.5;
@@ -829,7 +835,6 @@
                     curX += 34;
                 }
 
-                // Laya 品牌标
                 if (document.getElementById('sw-laya-badge').checked) {
                     const layaText = document.getElementById('disp-laya-label').textContent;
                     ctx.font = 'bold 13px sans-serif';
@@ -842,7 +847,6 @@
                     ctx.roundRect(curX, topY - 14, textW + 36, 26, 13);
                     ctx.fill(); ctx.stroke();
 
-                    // 图标蓝底
                     ctx.fillStyle = '#0D5BE1';
                     ctx.beginPath();
                     ctx.roundRect(curX + 4, topY - 10, 18, 18, 4);
@@ -856,7 +860,6 @@
                     curX += textW + 46;
                 }
 
-                // 免費通道标
                 if (document.getElementById('sw-free-pill').checked) {
                     const freeText = document.getElementById('disp-free-pill-text').textContent;
                     ctx.font = 'bold 12px sans-serif';
@@ -873,7 +876,6 @@
                     curX += textW + 36;
                 }
 
-                // 在看人数标签
                 if (document.getElementById('sw-viewer').checked) {
                     const viewText = document.getElementById('disp-viewer-text').textContent;
                     ctx.font = 'bold 12px sans-serif';
@@ -895,7 +897,6 @@
                     curX += textW + 32;
                 }
 
-                // 主标题与 VIP
                 ctx.fillStyle = '#fff';
                 ctx.font = '600 14px sans-serif';
                 const titleText = document.getElementById('disp-title').textContent;
@@ -912,7 +913,6 @@
                     ctx.fillText('VIP 原畫', curX + 5, topY + 3);
                 }
 
-                // 顶部右侧系统控制项
                 if (document.getElementById('sw-top-right').checked) {
                     ctx.font = '12px sans-serif';
                     ctx.fillStyle = '#2ecc71';
@@ -925,7 +925,7 @@
                     ctx.fillText('設置', width - 36, topY + 4);
                 }
 
-                // D. 第二行特权横幅 (如果开启)
+                // D. 特权横幅
                 if (document.getElementById('sw-banner').checked) {
                     const bannerText = '【免費通道】限時特權：' + document.getElementById('disp-banner-body').textContent;
                     ctx.font = '11.5px sans-serif';
@@ -945,7 +945,7 @@
                     ctx.fillText(document.getElementById('disp-banner-body').textContent, 34 + prefixW, topY + 40);
                 }
 
-                // E. 底部控制栏与进度条 (如果开启)
+                // E. 底部控制栏
                 if (document.getElementById('sw-bottom-bar').checked) {
                     const botGrad = ctx.createLinearGradient(0, height - 90, 0, height);
                     botGrad.addColorStop(0, 'transparent');
@@ -953,7 +953,6 @@
                     ctx.fillStyle = botGrad;
                     ctx.fillRect(0, height - 90, width, 90);
 
-                    // 进度条
                     const barY = height - 42;
                     ctx.fillStyle = 'rgba(255,255,255,0.25)';
                     ctx.fillRect(24, barY, width - 48, 4);
@@ -967,13 +966,18 @@
                     ctx.arc(24 + (width - 48) * pct, barY + 2, 5, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // 控制文字与标签
                     ctx.font = '12px monospace';
                     ctx.fillStyle = '#d0d4dc';
                     ctx.fillText(document.getElementById('disp-time').textContent, 24, height - 16);
 
+                    // 绘制底部弹幕数量统计 (如果开关开启)
+                    if (document.getElementById('sw-bot-danmaku-count').checked) {
+                        const botDanmakuVal = document.getElementById('disp-bot-danmaku-count').textContent;
+                        ctx.font = '12px sans-serif';
+                        ctx.fillText(botDanmakuVal, width - 260, height - 16);
+                    }
+
                     ctx.font = '12px sans-serif';
-                    ctx.fillText('● 彈幕 1.8W', width - 260, height - 16);
                     ctx.fillText('倍速 1.0X', width - 175, height - 16);
 
                     ctx.fillStyle = '#1877F2';
@@ -990,7 +994,6 @@
 
             drawFrame();
 
-            // 录制 5 秒后完成封包并自动下载
             setTimeout(() => {
                 isRecording = false;
                 recorder.stop();
