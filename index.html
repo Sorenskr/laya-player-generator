@@ -951,22 +951,27 @@
     bindText('in-dy-banner-title', 'disp-dy-banner-title');
     bindText('in-dy-banner-count', 'disp-dy-banner-count');
 
-    document.getElementById('sel-dy-author').addEventListener('change', e => {
-        document.getElementById('in-dy-author').value = e.target.value;
-        document.getElementById('disp-dy-author').textContent = e.target.value;
-    });
+    const selDyAuthor = document.getElementById('sel-dy-author');
+    if (selDyAuthor) {
+        selDyAuthor.addEventListener('change', e => {
+            document.getElementById('in-dy-author').value = e.target.value;
+            document.getElementById('disp-dy-author').textContent = e.target.value;
+        });
+    }
 
     const selBotRes = document.getElementById('sel-bot-res');
     const inBotRes = document.getElementById('in-bot-res');
-    selBotRes.addEventListener('change', (e) => {
-        if (e.target.value !== 'custom') {
-            inBotRes.value = e.target.value;
-            document.getElementById('disp-bot-res').textContent = e.target.value;
-        } else {
-            inBotRes.focus();
-            inBotRes.select();
-        }
-    });
+    if (selBotRes && inBotRes) {
+        selBotRes.addEventListener('change', (e) => {
+            if (e.target.value !== 'custom') {
+                inBotRes.value = e.target.value;
+                document.getElementById('disp-bot-res').textContent = e.target.value;
+            } else {
+                inBotRes.focus();
+                inBotRes.select();
+            }
+        });
+    }
 
     // 抖音 Tabs解析
     const renderDyTabs = (inputId, targetId, isBot) => {
