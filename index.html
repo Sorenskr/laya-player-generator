@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laya 播放器 · 暂停截图/视频生成器</title>
-    <!-- 高清截图渲染库 -->
+    <title>Laya 播放器 · 双模视频生成器 (网页/短视频)</title>
+    <!-- 引入高清截图库 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #1877F2;
             --primary-hover: #166fe5;
             --primary-glow: rgba(24, 119, 242, 0.35);
-            --bili-blue: #00aeec;
+            --dy-red: #fe2c55;
+            --dy-gold: #f5a623;
             --bg-dark: #090a0f;
             --panel-bg: #13161f;
             --card-bg: #1a1e29;
@@ -23,950 +24,241 @@
             --media-pos-y: 50%;
             --media-scale: 1;
             --bar-height: 4px;
-            --wave-height: 24px;
-            --wave-opacity: 0.85;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft JhengHei", sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft JhengHei", sans-serif; }
+        body { background: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        body {
-            background: var(--bg-dark);
-            color: var(--text-main);
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-
+        /* 顶部导航 */
         header {
-            height: 54px;
-            background: var(--panel-bg);
-            border-bottom: 1px solid var(--card-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 30;
-            flex-shrink: 0;
+            height: 54px; background: var(--panel-bg); border-bottom: 1px solid var(--card-border);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 30; flex-shrink: 0;
         }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 15px;
-        }
-
-        .brand-logo {
-            width: 30px;
-            height: 30px;
-            border-radius: 7px;
-        }
-
-        .nav-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
+        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+        .brand-logo { width: 30px; height: 30px; border-radius: 7px; }
+        .nav-actions { display: flex; gap: 10px; align-items: center; }
         .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 12.5px;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s ease;
+            display: inline-flex; align-items: center; gap: 6px; padding: 8px 15px; border-radius: 6px;
+            font-size: 12.5px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s ease;
         }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-upload { background: #27ae60; color: #fff; }
+        .btn-upload:hover { background: #219653; }
+        .btn-lang { background: #34495e; color: #fff; }
+        .btn-lang:hover { background: #2c3e50; }
+        .btn-save-img { background: var(--primary); color: #fff; box-shadow: 0 2px 8px var(--primary-glow); }
+        .btn-save-img:hover { background: var(--primary-hover); }
+        .btn-save-vid { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; box-shadow: 0 2px 8px rgba(230, 126, 34, 0.35); }
+        .btn-save-vid:hover { opacity: 0.95; }
 
-        .btn:hover {
-            transform: translateY(-1px);
-        }
-
-        .btn-upload {
-            background: #27ae60;
-            color: #fff;
-        }
-
-        .btn-upload:hover {
-            background: #219653;
-        }
-
-        .btn-save-img {
-            background: var(--primary);
-            color: #fff;
-            box-shadow: 0 2px 8px var(--primary-glow);
-        }
-
-        .btn-save-img:hover {
-            background: var(--primary-hover);
-        }
-
-        .btn-save-vid {
-            background: linear-gradient(135deg, #e67e22, #d35400);
-            color: #fff;
-            box-shadow: 0 2px 8px rgba(230, 126, 34, 0.35);
-        }
-
-        .btn-save-vid:hover {
-            opacity: 0.95;
-        }
-
-        main {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-
+        /* 工作台结构 */
+        main { display: flex; flex: 1; overflow: hidden; }
         .workspace {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: #06070a;
-            position: relative;
-            overflow: hidden;
-            padding: 15px;
+            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #06070a; position: relative; overflow: hidden; padding: 15px;
         }
 
+        /* 视口切换器 */
         .viewport-tabs {
-            display: flex;
-            background: var(--panel-bg);
-            padding: 4px;
-            border-radius: 8px;
-            border: 1px solid var(--card-border);
-            gap: 4px;
-            margin-bottom: 12px;
-            z-index: 5;
+            display: flex; background: var(--panel-bg); padding: 4px; border-radius: 8px;
+            border: 1px solid var(--card-border); gap: 4px; margin-bottom: 12px; z-index: 5;
         }
-
         .tab-btn {
-            padding: 6px 14px;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 600;
-            transition: 0.2s;
+            padding: 6px 14px; background: transparent; border: none; color: var(--text-muted);
+            border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; transition: 0.2s;
         }
+        .tab-btn.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px var(--primary-glow); }
 
-        .tab-btn.active {
-            background: var(--primary);
-            color: #fff;
-            box-shadow: 0 2px 8px var(--primary-glow);
-        }
-
-        .player-stage {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: calc(100% - 60px);
-        }
-
+        /* 播放器核心容器 */
+        .player-stage { display: flex; align-items: center; justify-content: center; width: 100%; height: calc(100% - 60px); }
         .player-box {
-            position: relative;
-            overflow: hidden;
-            background: #000;
+            position: relative; overflow: hidden; background: #000;
             box-shadow: 0 20px 60px rgba(0,0,0,0.9);
-            user-select: none;
-            transition: width 0.25s, height 0.25s;
+            user-select: none; transition: width 0.25s, height 0.25s;
         }
+        .mode-pc { width: min(1080px, 92%); aspect-ratio: 16 / 9; border-radius: 6px; }
+        .mode-mobile-land { width: min(1120px, 94%); aspect-ratio: 19.5 / 9; border-radius: 16px; }
+        .mode-mobile-port { height: min(680px, calc(100vh - 120px)); aspect-ratio: 9 / 16; border-radius: 16px; }
 
-        .mode-pc {
-            width: min(1080px, 92%);
-            aspect-ratio: 16 / 9;
-            border-radius: 6px;
-        }
-
-        .mode-mobile-land {
-            width: min(1120px, 94%);
-            aspect-ratio: 19.5 / 9;
-            border-radius: 16px;
-        }
-
-        .mode-mobile-port {
-            height: min(600px, calc(100vh - 130px));
-            aspect-ratio: 9 / 16;
-            border-radius: 16px;
-        }
-
-        .media-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 1;
-        }
-
+        /* ====== 底层媒体容器 ====== */
+        .media-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 1; }
         .player-bg-media {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            width: 100%; height: 100%; object-fit: cover;
             object-position: var(--media-pos-x) var(--media-pos-y);
             transform: scale(var(--media-scale));
             transform-origin: var(--media-pos-x) var(--media-pos-y);
             transition: object-position 0.1s ease, transform 0.1s ease;
         }
-
-        .danmaku-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 2;
-            overflow: hidden;
-            display: none;
-        }
-
-        .danmaku-item {
-            position: absolute;
-            white-space: nowrap;
-            font-weight: 700;
-            font-size: var(--danmaku-size);
-            text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
-            letter-spacing: 0.5px;
-            animation: danmakuRoll linear infinite;
-        }
-
-        @keyframes danmakuRoll {
-            0% { transform: translateX(1100px); }
-            100% { transform: translateX(-120%); }
-        }
-
-        .player-top {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 4;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 75%, rgba(0,0,0,0) 100%);
-            padding: 14px 18px 22px 18px;
-        }
-
-        .top-first-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .top-left-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: nowrap;
-        }
-
-        .back-icon {
-            color: #fff;
-            display: flex;
-            align-items: center;
-            opacity: 0.9;
-            cursor: pointer;
-        }
-
-        .laya-brand-badge {
-            background: rgba(13, 91, 225, 0.45);
-            border: 1px solid rgba(61, 136, 253, 0.6);
-            padding: 3px 8px 3px 6px;
-            border-radius: 20px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .mini-laya-logo {
-            width: 16px;
-            height: 16px;
-            border-radius: 4px;
-        }
-
-        .laya-badge-text {
-            font-size: 11px;
-            font-weight: 700;
-            color: #fff;
-            line-height: 16px;
-        }
-
-        .free-channel-pill {
-            background: linear-gradient(90deg, rgba(230, 126, 34, 0.4), rgba(243, 156, 18, 0.25));
-            border: 1px solid rgba(243, 156, 18, 0.7);
-            padding: 3px 8px;
-            border-radius: 14px;
-            font-size: 11px;
-            font-weight: 700;
-            color: #f39c12;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            line-height: 16px;
-        }
-
-        .viewer-pill {
-            background: rgba(18, 20, 26, 0.75);
-            border: 1px solid rgba(46, 204, 113, 0.45);
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 11px;
-            color: #e1f5fe;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            line-height: 16px;
-        }
-
-        .pulse-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #2ecc71;
-            box-shadow: 0 0 6px #2ecc71;
-        }
-
-        .video-title {
-            font-size: 13.5px;
-            font-weight: 600;
-            color: #fff;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-            line-height: 18px;
-        }
-
-        .vip-tag {
-            background: #d48806;
-            color: #fff;
-            font-size: 9.5px;
-            font-weight: 800;
-            padding: 2px 5px;
-            border-radius: 3px;
-            letter-spacing: 0.5px;
-            line-height: 14px;
-        }
-
-        .top-right-group {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 11px;
-            color: #d0d4dc;
-        }
-
-        .status-dot-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .status-dot {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: #2ecc71;
-            box-shadow: 0 0 6px #2ecc71;
-        }
-
-        .banner-container {
-            margin-top: 8px;
-            display: flex;
-        }
-
-        .notice-banner {
-            background: rgba(18, 20, 26, 0.85);
-            border: 1px solid rgba(243, 156, 18, 0.5);
-            border-radius: 6px;
-            padding: 4px 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        }
-
-        .banner-text {
-            font-size: 11px;
-            font-weight: 500;
-            color: #f1f2f6;
-            line-height: 17px;
-            letter-spacing: 0.3px;
-            white-space: nowrap;
-        }
-
-        .banner-text strong {
-            color: #f39c12;
-            font-weight: 700;
-        }
-
-        .banner-badge {
-            background: rgba(243, 156, 18, 0.2);
-            color: #f39c12;
-            border: 1px solid rgba(243, 156, 18, 0.4);
-            font-size: 10px;
-            font-weight: 700;
-            padding: 1px 5px;
-            border-radius: 4px;
-            line-height: 14px;
-        }
-
-        .center-pause-wrap {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 4;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .play-circle {
-            width: 54px;
-            height: 54px;
-            border-radius: 50%;
-            background: rgba(15, 18, 24, 0.65);
-            border: 1.5px solid rgba(255, 255, 255, 0.4);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-        }
-
-        .play-triangle {
-            width: 0;
-            height: 0;
-            border-top: 9px solid transparent;
-            border-bottom: 9px solid transparent;
-            border-left: 15px solid #fff;
-            margin-left: 3px;
-        }
-
-        .pause-pill {
-            margin-top: 8px;
-            background: rgba(15, 18, 24, 0.8);
-            border: 1px solid rgba(255,255,255,0.25);
-            padding: 4px 12px;
-            border-radius: 14px;
-            font-size: 11.5px;
-            color: #e5e9f0;
-            line-height: 16px;
-            white-space: nowrap;
-        }
-
-        .player-bottom {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            z-index: 4;
-            background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0) 100%);
-            padding: 10px 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .waveform-container {
-            width: 100%;
-            height: var(--wave-height);
-            opacity: var(--wave-opacity);
-            margin-bottom: -2px;
-            pointer-events: none;
-            display: flex;
-            align-items: flex-end;
-            transition: height 0.2s, opacity 0.2s;
-        }
-
-        .waveform-svg {
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-        }
-
-        .progress-bar-wrap {
-            position: relative;
-            width: 100%;
-            height: var(--bar-height);
-            background: rgba(255,255,255,0.2);
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-        .progress-bar-buffer {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            background: rgba(255,255,255,0.4);
-            border-radius: 3px;
-            width: 68%;
-            pointer-events: none;
-        }
-
-        .progress-bar-fill {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            background: var(--primary);
-            border-radius: 3px;
-            width: 42%;
-            box-shadow: 0 0 8px var(--primary-glow);
-        }
-
-        .progress-scrubber {
-            position: absolute;
-            right: -5px;
-            top: -3px;
-            width: 10px;
-            height: 10px;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 6px rgba(0,0,0,0.8);
-        }
-
-        .bottom-ctrl-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 11.5px;
-            color: #d0d4dc;
-            padding-top: 3px;
-        }
-
-        .ctrl-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .time-label {
-            font-family: monospace;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-        }
-
-        .btn-play-state {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 22px;
-            height: 22px;
-            cursor: pointer;
-            color: #fff;
-            transition: transform 0.15s;
-        }
-
-        .btn-play-state:hover {
-            transform: scale(1.15);
-            color: var(--primary);
-        }
-
-        .danmaku-ctrl-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin: 0 10px;
-        }
-
-        .btn-danmaku-badge {
-            width: 26px;
-            height: 22px;
-            border-radius: 5px;
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 11px;
-            font-weight: 800;
-            color: #fff;
-            cursor: pointer;
-            transition: all 0.2s;
-            user-select: none;
-        }
-
-        .btn-danmaku-badge.active {
-            background: var(--bili-blue);
-            border-color: var(--bili-blue);
-            color: #fff;
-            box-shadow: 0 0 8px rgba(0, 174, 236, 0.6);
-        }
-
-        .btn-danmaku-setting {
-            color: #c0c6d2;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            opacity: 0.85;
-            transition: 0.2s;
-        }
-
-        .btn-danmaku-setting:hover {
-            opacity: 1;
-            color: #fff;
-        }
-
-        .danmaku-input-capsule {
-            display: flex;
-            align-items: center;
-            background: rgba(255,255,255,0.14);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 14px;
-            padding: 2px 4px 2px 10px;
-            height: 26px;
-            width: 250px;
-            max-width: 32vw;
-            transition: all 0.25s;
-        }
-
-        .danmaku-input-capsule:focus-within {
-            background: rgba(20,24,34,0.9);
-            border-color: var(--bili-blue);
-            width: 300px;
-        }
-
-        .danmaku-icon-text {
-            font-size: 10.5px;
-            font-weight: 700;
-            color: #a0a6b5;
-            margin-right: 6px;
-        }
-
-        .danmaku-inner-input {
-            flex: 1;
-            background: transparent;
-            border: none;
-            outline: none;
-            font-size: 11px;
-            color: #fff;
-        }
-
-        .danmaku-inner-input::placeholder {
-            color: rgba(255,255,255,0.5);
-        }
-
-        .danmaku-send-btn {
-            background: var(--bili-blue);
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-size: 10.5px;
-            font-weight: 700;
-            padding: 2px 10px;
-            cursor: pointer;
-            margin-left: 4px;
-            transition: 0.2s;
-        }
-
-        .danmaku-send-btn:hover {
-            background: #009cd3;
-        }
-
-        .ctrl-right {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .res-tag {
-            background: #1877F2;
-            color: #fff;
-            font-size: 10.5px;
-            font-weight: 700;
-            padding: 2.5px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            user-select: none;
-            display: inline-flex;
-            align-items: center;
-            letter-spacing: 0.3px;
-        }
-
-        .sidebar {
-            width: 365px;
-            background: var(--panel-bg);
-            border-left: 1px solid var(--card-border);
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-            flex-shrink: 0;
-        }
-
-        .sidebar::-webkit-scrollbar { width: 6px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #262c3a; border-radius: 3px; }
-
-        .panel-card {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            border-radius: 10px;
-            padding: 12px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-        }
-
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            padding-bottom: 8px;
-            font-size: 12.5px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .card-header-icon {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .badge-tip {
-            background: rgba(24, 119, 242, 0.2);
-            color: #5dade2;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: 600;
-        }
-
-        .switch-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .switch-tile {
-            background: #11131a;
-            border: 1px solid #232836;
-            border-radius: 7px;
-            padding: 7px 9px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            font-size: 11px;
-            color: #d1d5db;
-            transition: border-color 0.2s;
-        }
-
-        .switch-tile:hover {
-            border-color: #3b4356;
-        }
-
-        .ios-toggle {
-            position: relative;
-            display: inline-block;
-            width: 34px;
-            height: 18px;
-            flex-shrink: 0;
-        }
-
-        .ios-toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider-round {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #374151;
-            transition: .25s;
-            border-radius: 20px;
-        }
-
-        .slider-round:before {
-            position: absolute;
-            content: "";
-            height: 14px;
-            width: 14px;
-            left: 2px;
-            bottom: 2px;
-            background-color: white;
-            transition: .25s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider-round {
-            background-color: var(--primary);
-            box-shadow: 0 0 6px var(--primary-glow);
-        }
-
-        input:checked + .slider-round:before {
-            transform: translateX(16px);
-        }
-
-        .form-row {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .form-row label {
-            font-size: 11.5px;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        .form-row input[type="text"], .form-row select, .form-row textarea {
-            background: #101218;
-            border: 1px solid #242938;
-            color: #fff;
-            padding: 8px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            outline: none;
-            transition: 0.2s;
-        }
-
-        .form-row input[type="text"]:focus, .form-row select:focus, .form-row textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px var(--primary-glow);
-        }
-
-        .form-row textarea {
-            resize: vertical;
-            min-height: 55px;
-            line-height: 1.4;
-        }
-
-        .range-box {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        .range-value {
-            color: #5dade2;
-            font-family: monospace;
-            font-weight: 700;
-        }
-
-        input[type="range"] {
-            accent-color: var(--primary);
-            width: 100%;
-            height: 5px;
-            border-radius: 3px;
-            background: #262c3a;
-            outline: none;
-            cursor: pointer;
-        }
-
-        .danmaku-item-card {
-            background: #11131a;
-            border: 1px solid #242938;
-            border-radius: 6px;
-            padding: 7px;
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-
-        .danmaku-row {
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .danmaku-row input[type="text"] {
-            flex: 1;
-            background: #181b24;
-            border: 1px solid #2b3244;
-            color: #fff;
-            padding: 4px 8px;
-            font-size: 11.5px;
-            border-radius: 4px;
-        }
-
-        .danmaku-del {
-            background: transparent;
-            border: none;
-            color: #e74c3c;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        /* 优雅通知弹窗 (替换默认 alert) */
-        #toast-notice {
-            position: fixed;
-            bottom: 24px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(20, 24, 34, 0.95);
-            border: 1px solid rgba(24, 119, 242, 0.45);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 8px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.8);
-            font-size: 13px;
-            font-weight: 600;
-            z-index: 9999;
-            pointer-events: none;
-            opacity: 0;
-            transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.25s ease;
-        }
-
-        #toast-notice.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
+        /* 横屏媒体适配类 */
+        .media-contain { object-fit: contain !important; background: #000; }
+
+        /* ====== UI 隔离控制 ====== */
+        .ui-web, .ui-douyin { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        /* 默认隐藏抖音 UI */
+        .ui-douyin { display: none; z-index: 5; }
+        .ui-web { z-index: 4; }
+        /* 竖屏时切换 UI */
+        .mode-mobile-port .ui-web { display: none !important; }
+        .mode-mobile-port .ui-douyin { display: block !important; }
+
+        /* ====== 1. Web 原生播放器 UI (保留之前所有精美样式) ====== */
+        .player-top { position: absolute; top: 0; left: 0; right: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0) 100%); padding: 14px 18px 22px 18px; pointer-events: auto; }
+        .top-first-row { display: flex; justify-content: space-between; align-items: center; }
+        .top-left-group, .top-right-group { display: flex; align-items: center; gap: 8px; }
+        .back-icon { color: #fff; cursor: pointer; }
+        .laya-brand-badge { background: rgba(13, 91, 225, 0.45); border: 1px solid rgba(61, 136, 253, 0.6); padding: 3px 8px 3px 6px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; }
+        .mini-laya-logo { width: 16px; height: 16px; border-radius: 4px; }
+        .laya-badge-text { font-size: 11px; font-weight: 700; color: #fff; }
+        .free-channel-pill { background: linear-gradient(90deg, rgba(230, 126, 34, 0.4), rgba(243, 156, 18, 0.25)); border: 1px solid rgba(243, 156, 18, 0.7); padding: 3px 8px; border-radius: 14px; font-size: 11px; font-weight: 700; color: #f39c12; }
+        .viewer-pill { background: rgba(18, 20, 26, 0.75); border: 1px solid rgba(46, 204, 113, 0.45); padding: 3px 8px; border-radius: 12px; font-size: 11px; color: #e1f5fe; }
+        .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 6px #2ecc71; display: inline-block; }
+        .video-title { font-size: 13.5px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        .vip-tag { background: #d48806; color: #fff; font-size: 9.5px; font-weight: 800; padding: 2px 5px; border-radius: 3px; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #2ecc71; display: inline-block; }
+        .banner-container { margin-top: 8px; display: flex; }
+        .notice-banner { background: rgba(18, 20, 26, 0.85); border: 1px solid rgba(243, 156, 18, 0.5); border-radius: 6px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 7px; }
+        .banner-text { font-size: 11px; color: #f1f2f6; }
+        .banner-text strong { color: #f39c12; }
+        .banner-badge { background: rgba(243, 156, 18, 0.2); color: #f39c12; border: 1px solid rgba(243, 156, 18, 0.4); font-size: 10px; padding: 1px 5px; border-radius: 4px; }
+        .center-pause-wrap { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; pointer-events: auto; cursor: pointer; }
+        .play-circle { width: 54px; height: 54px; border-radius: 50%; background: rgba(15, 18, 24, 0.65); border: 1.5px solid rgba(255, 255, 255, 0.4); display: flex; align-items: center; justify-content: center; }
+        .play-triangle { width: 0; height: 0; border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-left: 15px solid #fff; margin-left: 3px; }
+        .pause-pill { margin-top: 8px; background: rgba(15, 18, 24, 0.8); border: 1px solid rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 14px; font-size: 11.5px; color: #e5e9f0; }
+        .player-bottom { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0) 100%); padding: 16px 18px 10px 18px; display: flex; flex-direction: column; gap: 8px; pointer-events: auto; }
+        .progress-bar-wrap { position: relative; width: 100%; height: var(--bar-height); background: rgba(255,255,255,0.2); border-radius: 3px; cursor: pointer; }
+        .progress-bar-buffer { position: absolute; left: 0; top: 0; height: 100%; background: rgba(255,255,255,0.4); border-radius: 3px; pointer-events: none; }
+        .progress-bar-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--primary); border-radius: 3px; box-shadow: 0 0 8px var(--primary-glow); }
+        .progress-scrubber { position: absolute; right: -5px; top: -3px; width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,0.8); }
+        .bottom-ctrl-row { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #d0d4dc; }
+        .ctrl-left, .ctrl-right { display: flex; align-items: center; gap: 14px; }
+        .time-label { font-family: monospace; font-size: 11px; }
+        .res-tag { background: var(--primary); color: #fff; font-size: 10.5px; font-weight: 700; padding: 2.5px 8px; border-radius: 4px; }
+
+        /* ====== 2. 抖音/短视频 UI (极度还原) ====== */
+        /* 紫色沉浸蒙版 */
+        .dy-purple-mask { position: absolute; bottom: 0; left: 0; width: 100%; height: 55%; background: linear-gradient(to top, rgba(50, 10, 60, 0.85) 0%, rgba(20, 10, 30, 0.4) 60%, transparent 100%); z-index: 1; transition: opacity 0.2s; }
+        
+        /* 顶部导航栏 */
+        .dy-top-nav { position: absolute; top: 15px; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; z-index: 10; color: #fff; font-size: 14px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .dy-top-left { display: flex; gap: 12px; align-items: center; }
+        .dy-top-tabs { display: flex; gap: 16px; flex: 1; justify-content: center; }
+        .dy-tab-item { opacity: 0.8; cursor: pointer; }
+        .dy-tab-item.active { opacity: 1; border-bottom: 2px solid #fff; padding-bottom: 4px; font-weight: 700; }
+        .dy-top-right { display: flex; gap: 14px; align-items: center; }
+
+        /* 横屏时的全屏观看悬浮钮 */
+        .dy-fullscreen-btn { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 20px; color: #fff; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; z-index: 10; backdrop-filter: blur(4px); }
+
+        /* 右侧互动区 */
+        .dy-right-bar { position: absolute; right: 12px; bottom: 90px; display: flex; flex-direction: column; align-items: center; gap: 20px; z-index: 10; }
+        .dy-avatar-wrap { position: relative; width: 44px; height: 44px; margin-bottom: 8px; cursor: pointer; pointer-events: auto; }
+        .dy-avatar { width: 100%; height: 100%; border-radius: 50%; border: 1.5px solid #fff; object-fit: cover; }
+        .dy-follow-btn { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 18px; height: 18px; background: var(--dy-red); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: bold; border: 1px solid #fff; }
+        .dy-action-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #fff; font-size: 12px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        .dy-icon { width: 32px; height: 32px; fill: #fff; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.6)); }
+        .dy-record-disc { width: 40px; height: 40px; border-radius: 50%; background: #333; border: 8px solid #1a1a1a; display: flex; align-items: center; justify-content: center; animation: spin 4s linear infinite; margin-top: 10px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* 左下角信息区 */
+        .dy-bottom-left { position: absolute; left: 16px; bottom: 95px; width: calc(100% - 80px); display: flex; flex-direction: column; gap: 8px; z-index: 10; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
+        .dy-username { font-size: 16px; font-weight: 700; }
+        .dy-caption { font-size: 14px; line-height: 1.4; }
+        .dy-tags { color: #f5a623; font-weight: 600; font-size: 14px; }
+        .dy-author-stmt { display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 4px; font-size: 11px; color: #ccc; width: fit-content; }
+        .dy-music-row { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; margin-top: 2px; }
+
+        /* 底部金色悬浮榜单 */
+        .dy-gold-banner { position: absolute; left: 0; bottom: 50px; width: 100%; height: 36px; background: linear-gradient(90deg, rgba(30,30,30,0.9), rgba(50,40,20,0.9)); border-top: 1px solid rgba(245, 166, 35, 0.3); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 10; }
+        .dy-banner-left { display: flex; align-items: center; gap: 6px; color: var(--dy-gold); font-size: 12px; font-weight: 600; }
+        .dy-banner-right { color: #ccc; font-size: 11px; }
+
+        /* 底部 Tab 栏 */
+        .dy-bottom-tabs { position: absolute; bottom: 0; left: 0; width: 100%; height: 50px; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; padding-bottom: 8px; z-index: 10; color: #aaa; font-size: 14px; font-weight: 600; }
+        .dy-tab-bot.active { color: #fff; font-weight: 700; }
+        .dy-add-btn { width: 44px; height: 28px; background: #fff; border-radius: 8px; position: relative; display: flex; align-items: center; justify-content: center; }
+        .dy-add-btn::before { content: ''; position: absolute; left: -4px; width: 10px; height: 100%; background: #45f3ff; border-radius: 8px 0 0 8px; z-index: -1; }
+        .dy-add-btn::after { content: ''; position: absolute; right: -4px; width: 10px; height: 100%; background: #fe2c55; border-radius: 0 8px 8px 0; z-index: -1; }
+
+        /* ====== 弹幕图层 (兼容双模) ====== */
+        .danmaku-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; overflow: hidden; display: none; }
+        .danmaku-item { position: absolute; white-space: nowrap; font-weight: 700; font-size: var(--danmaku-size); letter-spacing: 0.5px; animation: danmakuRoll linear infinite; text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000; }
+        /* 抖音模式下的弹幕强制白字重黑边，且限定在上半区 */
+        .mode-mobile-port .danmaku-item { color: #fff !important; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8); }
+
+        /* ====== 右侧控制台 ====== */
+        .sidebar { width: 380px; background: var(--panel-bg); border-left: 1px solid var(--card-border); display: flex; flex-direction: column; flex-shrink: 0; }
+        /* 控制台顶部分类 Tab */
+        .sidebar-tabs { display: flex; background: #0c0e14; padding: 10px 16px 0 16px; gap: 8px; }
+        .side-tab { padding: 10px 14px; color: var(--text-muted); font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; }
+        .side-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+        /* 控制台内容区 */
+        .sidebar-content { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+        .sidebar-content::-webkit-scrollbar { width: 6px; }
+        .sidebar-content::-webkit-scrollbar-thumb { background: #262c3a; border-radius: 3px; }
+        .panel-group { display: none; flex-direction: column; gap: 14px; }
+        .panel-group.active { display: flex; }
+
+        .panel-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+        .card-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 8px; font-size: 12.5px; font-weight: 700; color: #fff; }
+        .badge-tip { background: rgba(24, 119, 242, 0.2); color: #5dade2; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        
+        .switch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .switch-tile { background: #11131a; border: 1px solid #232836; border-radius: 7px; padding: 7px 9px; display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: #d1d5db; transition: border-color 0.2s; }
+        .ios-toggle { position: relative; display: inline-block; width: 34px; height: 18px; flex-shrink: 0; }
+        .ios-toggle input { opacity: 0; width: 0; height: 0; }
+        .slider-round { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #374151; transition: .25s; border-radius: 20px; }
+        .slider-round:before { position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px; background-color: white; transition: .25s; border-radius: 50%; }
+        input:checked + .slider-round { background-color: var(--primary); box-shadow: 0 0 6px var(--primary-glow); }
+        input:checked + .slider-round:before { transform: translateX(16px); }
+
+        .form-row { display: flex; flex-direction: column; gap: 5px; }
+        .form-row label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
+        .form-row input[type="text"], .form-row select, .form-row textarea { background: #101218; border: 1px solid #242938; color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 12px; outline: none; }
+        .form-row input[type="file"] { font-size: 11px; color: #fff; }
+        .form-row textarea { resize: vertical; min-height: 55px; }
+        .range-box { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
+        .range-value { color: #5dade2; font-family: monospace; font-weight: 700; }
+        input[type="range"] { accent-color: var(--primary); width: 100%; height: 5px; border-radius: 3px; background: #262c3a; outline: none; cursor: pointer; }
+
+        .danmaku-item-card { background: #11131a; border: 1px solid #242938; border-radius: 6px; padding: 7px; display: flex; flex-direction: column; gap: 5px; }
+        .danmaku-row { display: flex; gap: 6px; align-items: center; }
+        .danmaku-row input[type="text"] { flex: 1; }
+        .danmaku-del { background: transparent; border: none; color: #e74c3c; cursor: pointer; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <header>
     <div class="brand">
-        <!-- 还原 Laya 官方图标 -->
-        <svg class="brand-logo" viewBox="0 0 100 100">
-            <rect width="100" height="100" rx="22" fill="#0D5BE1"/>
-            <circle cx="50" cy="50" r="32" fill="#2172F5"/>
-            <circle cx="50" cy="50" r="20" fill="#3D88FD"/>
-            <text x="50" y="58" font-size="24" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle" stroke="#000" stroke-width="2.5">Laya</text>
-        </svg>
-        <span>Laya 播放器 · 暂停截图/视频生成器</span>
+        <svg class="brand-logo" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#0D5BE1"/><circle cx="50" cy="50" r="32" fill="#2172F5"/><circle cx="50" cy="50" r="20" fill="#3D88FD"/><text x="50" y="58" font-size="24" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle" stroke="#000" stroke-width="2.5">Laya</text></svg>
+        <span>Laya 播放器 · 双模视频生成器</span>
     </div>
     <div class="nav-actions">
+        <!-- 繁简一键切换 -->
+        <button class="btn btn-lang" id="btn-toggle-lang">繁/简 切换</button>
+
         <input type="file" id="media-uploader" accept="image/*,video/mp4,video/webm" style="display: none;">
         <button class="btn btn-upload" onclick="document.getElementById('media-uploader').click()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            上传截图/视频
+            上传素材
         </button>
         <button class="btn btn-save-img" id="btn-save-img">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            保存高清图片
+            保存截图
         </button>
+        <!-- 视频时长选择 -->
+        <select id="sel-record-len" style="background:#13161f; color:#fff; border:1px solid #333; border-radius:4px; padding:6px; outline:none;">
+            <option value="3">录3秒</option>
+            <option value="5" selected>录5秒</option>
+            <option value="10">录10秒</option>
+            <option value="15">录15秒</option>
+        </select>
         <button class="btn btn-save-vid" id="btn-save-vid">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            合成下载带框视频 (带原声)
+            导出视频(带原声)
         </button>
     </div>
 </header>
 
 <main>
-    <!-- 左侧工作区：严格固定不随滚轮位移 -->
+    <!-- 左侧画面预览区 -->
     <div class="workspace" id="left-workspace">
         <div class="viewport-tabs">
             <button class="tab-btn active" data-mode="mode-pc">电脑网页端 (16:9)</button>
@@ -976,502 +268,361 @@
 
         <div class="player-stage">
             <div class="player-box mode-pc" id="render-target">
-                <!-- 媒体容器 (支持精准位置与缩放) -->
-                <div class="media-container">
-                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg-media" id="preview-img" alt="背景底图">
+                <!-- 媒体底层 -->
+                <div class="media-container" id="media-wrap">
+                    <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg-media" id="preview-img">
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 动态跑马灯弹幕图层 (默认隐藏) -->
+                <!-- 弹幕层 (双模通用) -->
                 <div class="danmaku-layer" id="danmaku-container"></div>
 
-                <!-- 顶部 HUD (纯正繁体中文) -->
-                <div class="player-top">
-                    <div class="top-first-row">
-                        <div class="top-left-group">
-                            <div class="back-icon" id="wrap-back-btn">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                <!-- 1. 网页版播放器 UI (PC/横屏显示) -->
+                <div class="ui-web">
+                    <div class="player-top" id="wrap-web-top">
+                        <div class="top-first-row">
+                            <div class="top-left-group">
+                                <div class="back-icon" id="wrap-back-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg></div>
+                                <div class="laya-brand-badge" id="wrap-laya-badge"><svg class="mini-laya-logo" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#0D5BE1"/><circle cx="50" cy="50" r="28" fill="#3D88FD"/><text x="50" y="66" font-size="44" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle">L</text></svg><span class="laya-badge-text" id="disp-laya-label">Laya 獨家私密視頻</span></div>
+                                <div class="free-channel-pill" id="wrap-free-pill"><span>🔥</span><span id="disp-free-pill-text">免費通道</span></div>
+                                <div class="viewer-pill" id="wrap-viewer-pill"><span class="pulse-dot"></span><span id="disp-viewer-text">1.0 萬人正在觀看</span></div>
+                                <span class="video-title" id="disp-title">Laya暗號：1896</span>
+                                <span class="vip-tag" id="wrap-vip-tag">VIP 原畫</span>
                             </div>
-                            
-                            <!-- Laya 品牌标 -->
-                            <div class="laya-brand-badge" id="wrap-laya-badge">
-                                <svg class="mini-laya-logo" viewBox="0 0 100 100">
-                                    <rect width="100" height="100" rx="20" fill="#0D5BE1"/>
-                                    <circle cx="50" cy="50" r="28" fill="#3D88FD"/>
-                                    <text x="50" y="66" font-size="44" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle">L</text>
-                                </svg>
-                                <span class="laya-badge-text" id="disp-laya-label">Laya 獨家私密視頻</span>
+                            <div class="top-right-group" id="wrap-top-right">
+                                <div class="status-dot-item"><span class="status-dot"></span><span>原畫質連線</span></div>
+                                <span>音軌</span>
+                                <div style="display: flex; align-items: center; gap: 4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>設置</span></div>
                             </div>
-
-                            <!-- 免費通道标 -->
-                            <div class="free-channel-pill" id="wrap-free-pill">
-                                <span>🔥</span>
-                                <span id="disp-free-pill-text">免費通道</span>
-                            </div>
-
-                            <!-- 观看人数标签 -->
-                            <div class="viewer-pill" id="wrap-viewer-pill">
-                                <span class="pulse-dot"></span>
-                                <span id="disp-viewer-text">1.0 萬人正在觀看</span>
-                            </div>
-
-                            <!-- 主标题与 VIP -->
-                            <span class="video-title" id="disp-title">Laya暗號：1896</span>
-                            <span class="vip-tag" id="wrap-vip-tag">VIP 原畫</span>
                         </div>
-
-                        <!-- 右侧控制 -->
-                        <div class="top-right-group" id="wrap-top-right">
-                            <div class="status-dot-item">
-                                <span class="status-dot"></span>
-                                <span>原畫質連線</span>
-                            </div>
-                            <span>音軌</span>
-                            <div style="display: flex; align-items: center; gap: 4px;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                                <span>設置</span>
+                        <div class="banner-container" id="wrap-banner">
+                            <div class="notice-banner">
+                                <span style="font-size: 12px;">🎁</span>
+                                <div class="banner-text"><strong>【免費通道】限時特權：</strong><span id="disp-banner-body">已解鎖完整無碼未刪減版，點擊任意處播放</span></div>
+                                <span class="banner-badge">特權生效中</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 第二行精炼特权横幅 -->
-                    <div class="banner-container" id="wrap-banner">
-                        <div class="notice-banner">
-                            <span style="font-size: 12px; line-height: 1;">🎁</span>
-                            <div class="banner-text">
-                                <strong>【免費通道】限時特權：</strong><span id="disp-banner-body">已解鎖完整無碼未刪減版，點擊任意處播放</span>
+                    <div class="center-pause-wrap" id="wrap-center-all">
+                        <div class="play-circle" id="wrap-center-btn"><div class="play-triangle"></div></div>
+                        <div class="pause-pill" id="wrap-center-pill">點擊繼續播放</div>
+                    </div>
+
+                    <div class="player-bottom" id="wrap-bottom-bar">
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar-buffer" id="disp-buffer-bar" style="width: 68%;"></div>
+                            <div class="progress-bar-fill" id="disp-progress-bar" style="width: 42%;"><div class="progress-scrubber"></div></div>
+                        </div>
+                        <div class="bottom-ctrl-row">
+                            <div class="ctrl-left">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" id="btn-play-pause-toggle" style="cursor: pointer;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="#fff" stroke-width="2"/></svg>
+                                <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
                             </div>
-                            <span class="banner-badge">特權生效中</span>
+                            <div class="ctrl-right">
+                                <span id="wrap-bot-danmaku-count"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
+                                <span>倍速 1.0X</span>
+                                <span id="wrap-bot-res"><span class="res-tag" id="disp-bot-res">原畫 1080P 60幀 ▾</span></span>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 居中暂停/播放按钮组件 -->
-                <div class="center-pause-wrap" id="wrap-center-all">
-                    <div class="play-circle" id="wrap-center-btn">
-                        <div class="play-triangle"></div>
+                <!-- 2. 短视频/抖音 UI (仅竖屏显示) -->
+                <div class="ui-douyin" id="wrap-dy-ui">
+                    <!-- 紫色渐变蒙版 -->
+                    <div class="dy-purple-mask" id="dy-mask"></div>
+
+                    <!-- 顶部导航 -->
+                    <div class="dy-top-nav" id="dy-top-nav">
+                        <div class="dy-top-left"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></div>
+                        <div class="dy-top-tabs" id="disp-dy-top-tabs">
+                            <span class="dy-tab-item active">精選</span>
+                            <span class="dy-tab-item">熱點</span>
+                            <span class="dy-tab-item">排行</span>
+                            <span class="dy-tab-item">直播</span>
+                            <span class="dy-tab-item">關注</span>
+                        </div>
+                        <div class="dy-top-right"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
                     </div>
-                    <div class="pause-pill" id="wrap-center-pill">點擊繼續播放</div>
+
+                    <!-- 全屏观看按钮 (横屏视频时显示) -->
+                    <div class="dy-fullscreen-btn" id="dy-fullscreen-btn" style="display: none;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                        <span id="disp-dy-fullscreen">全屏觀看</span>
+                    </div>
+
+                    <!-- 右侧互动区 -->
+                    <div class="dy-right-bar" id="dy-right-bar">
+                        <div class="dy-avatar-wrap">
+                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" class="dy-avatar" id="disp-dy-avatar">
+                            <div class="dy-follow-btn">+</div>
+                        </div>
+                        <div class="dy-action-item">
+                            <svg class="dy-icon" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                            <span id="disp-dy-like">5407</span>
+                        </div>
+                        <div class="dy-action-item">
+                            <svg class="dy-icon" viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                            <span id="disp-dy-comment">1416</span>
+                        </div>
+                        <div class="dy-action-item">
+                            <svg class="dy-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                            <span id="disp-dy-fav">630</span>
+                        </div>
+                        <div class="dy-action-item">
+                            <svg class="dy-icon" viewBox="0 0 24 24"><path d="M3 15v4c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-4M16 8l-4-4-4 4M12 4v11" stroke="#fff" stroke-width="2" fill="none"/></svg>
+                            <span id="disp-dy-share">97</span>
+                        </div>
+                        <div class="dy-record-disc">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="#fff"><path d="M9 18V5l12-2v13M9 9l12-2M5 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm12-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- 左下角信息区 -->
+                    <div class="dy-bottom-left" id="dy-left-info">
+                        <div class="dy-username" id="disp-dy-username">@Laya暗號 1896</div>
+                        <div class="dy-caption" id="disp-dy-caption">Laya 丨 極致視界</div>
+                        <div class="dy-tags" id="disp-dy-tags">#高清 #未刪減 #每日精選</div>
+                        <div class="dy-author-stmt" id="wrap-dy-author">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5" fill="#ccc"/><polyline points="21 15 16 10 5 21"/></svg>
+                            <span id="disp-dy-author">(心動匹配) 和劇情一起來做運動</span> >
+                        </div>
+                        <div class="dy-music-row" id="wrap-dy-music">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M9 18V5l12-2v13M9 9l12-2M5 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm12-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                            <span id="disp-dy-music">去汽水聽 > 原創原聲 - Laya音樂</span>
+                        </div>
+                    </div>
+
+                    <!-- 底部金色横幅 -->
+                    <div class="dy-gold-banner" id="wrap-dy-banner">
+                        <div class="dy-banner-left">
+                            <span>🔥</span> <span id="disp-dy-banner-title">視頻榜單：最讓你心動的女優評選大賽</span>
+                        </div>
+                        <div class="dy-banner-right"><span id="disp-dy-banner-count">45.1萬人在看</span> ></div>
+                    </div>
+
+                    <!-- 底部 Tab -->
+                    <div class="dy-bottom-tabs" id="dy-bot-tabs">
+                        <span class="dy-tab-bot active">首頁</span>
+                        <span class="dy-tab-bot">瞬間</span>
+                        <div class="dy-add-btn"><svg width="18" height="18" viewBox="0 0 24 24" stroke="#000" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+                        <span class="dy-tab-bot">消息</span>
+                        <span class="dy-tab-bot">我的</span>
+                    </div>
                 </div>
 
-                <div class="player-bottom" id="wrap-bottom-bar">
-                    <!-- 🌊 高能波浪热度趋势曲线 (B站/YouTube风格，支持独立开关) -->
-                    <div class="waveform-container" id="wrap-waveform">
-                        <svg class="waveform-svg" preserveAspectRatio="none" viewBox="0 0 1000 100" id="waveform-svg-el">
-                            <defs>
-                                <linearGradient id="waveGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stop-color="#1877F2" stop-opacity="0.75"/>
-                                    <stop offset="40%" stop-color="#00aeec" stop-opacity="0.45"/>
-                                    <stop offset="100%" stop-color="#00aeec" stop-opacity="0.05"/>
-                                </linearGradient>
-                            </defs>
-                            <path id="waveform-path-fill" d="" fill="url(#waveGrad)"/>
-                            <path id="waveform-path-stroke" d="" fill="none" stroke="#60a5fa" stroke-width="2"/>
-                        </svg>
-                    </div>
-
-                    <!-- 进度条本体 -->
-                    <div class="progress-bar-wrap" id="progress-click-bar">
-                        <div class="progress-bar-buffer" id="disp-buffer-bar" style="width: 68%;"></div>
-                        <div class="progress-bar-fill" id="disp-progress-bar" style="width: 42%;">
-                            <div class="progress-scrubber"></div>
-                        </div>
-                    </div>
-
-                    <!-- 控制按键行 -->
-                    <div class="bottom-ctrl-row">
-                        <div class="ctrl-left">
-                            <div class="btn-play-state" id="btn-play-state-toggle" title="播放 / 暂停切换">
-                                <svg width="15" height="15" viewBox="0 0 24 24" fill="#fff" id="icon-play-state">
-                                    <polygon points="5 3 19 12 5 21 5 3"/>
-                                </svg>
-                            </div>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" style="cursor: pointer;"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="#fff" stroke-width="2"/></svg>
-                            
-                            <!-- 动态走动的秒数与时间码 -->
-                            <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
-
-                            <!-- 底部弹幕开关与输入框群组 -->
-                            <div class="danmaku-ctrl-group" id="wrap-danmaku-bottom-ctrl">
-                                <div class="btn-danmaku-badge" id="btn-danmaku-quick-toggle" title="開啟/關閉彈幕">
-                                    <span>彈</span>
-                                </div>
-                                <div class="btn-danmaku-setting" title="彈幕設置">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
-                                </div>
-
-                                <div class="danmaku-input-capsule" id="wrap-danmaku-input-capsule">
-                                    <span class="danmaku-icon-text">A</span>
-                                    <input type="text" class="danmaku-inner-input" id="disp-danmaku-input-val" placeholder="太頂了，已備好衛生紙..." value="太頂了，已備好衛生紙...">
-                                    <button class="danmaku-send-btn" id="btn-danmaku-send-preview">發送</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="ctrl-right">
-                            <span id="wrap-bot-danmaku-count"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
-                            <span>倍速 1.0X</span>
-                            <span id="wrap-bot-res"><span class="res-tag" id="disp-bot-res">原畫 1080P 60幀 ▾</span></span>
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
+    <!-- 右侧管理后台 (带选项卡切换) -->
     <div class="sidebar" id="right-sidebar">
-
-        <!-- 🌊 卡片 1: 高能波浪线 / 热度曲线 -->
-        <div class="panel-card">
-            <div class="card-header">
-                <span class="card-header-icon">🌊 高能波浪线 / 热度趋势曲线</span>
-                <span class="badge-tip">B站/YouTube热度</span>
-            </div>
-
-            <div class="switch-tile" style="background: rgba(0, 174, 236, 0.12); border-color: rgba(0, 174, 236, 0.35);">
-                <span style="font-weight: 600; color: #fff;">显示高能波浪线</span>
-                <label class="ios-toggle">
-                    <input type="checkbox" id="sw-waveform" checked>
-                    <span class="slider-round"></span>
-                </label>
-            </div>
-
-            <div class="form-row">
-                <label>热度波形预设</label>
-                <select id="sel-wave-preset">
-                    <option value="preset-double-peak">双高峰高能爆发 (B站经典)</option>
-                    <option value="preset-end-climax">后半程高潮突进</option>
-                    <option value="preset-dense">全片密集高热度</option>
-                    <option value="preset-gentle">平缓微波起伏</option>
-                    <option value="custom">✏️ 完全自定义波峰连线</option>
-                </select>
-                <input type="text" id="in-custom-wave" value="10, 25, 85, 40, 95, 30, 15, 60, 98, 20" placeholder="0-100之间的数字用逗号隔开" style="margin-top: 4px; display: none;">
-            </div>
-
-            <div class="form-row">
-                <div class="range-box">
-                    <label>波浪高度 (振幅)</label>
-                    <span class="range-value" id="txt-wave-height">24px</span>
-                </div>
-                <input type="range" id="in-wave-height" min="10" max="48" value="24">
-            </div>
-
-            <div class="form-row">
-                <div class="range-box">
-                    <label>波浪不透明度</label>
-                    <span class="range-value" id="txt-wave-opacity">85%</span>
-                </div>
-                <input type="range" id="in-wave-opacity" min="20" max="100" value="85">
-            </div>
+        <!-- 侧边栏 Tab 切换 -->
+        <div class="sidebar-tabs">
+            <div class="side-tab active" data-target="panel-web">💻 网页版播放器设置</div>
+            <div class="side-tab" data-target="panel-dy">📱 短视频/抖音设置</div>
         </div>
 
-        <!-- ⏱️ 卡片 2: 播放状态、起始时间与进度控制 -->
-        <div class="panel-card">
-            <div class="card-header">
-                <span class="card-header-icon">⏱️ 播放状态与时间控制</span>
-                <span class="badge-tip">秒数累加递增</span>
-            </div>
-
-            <!-- 新增：右侧控制台专属播放/暂停按键，方便编辑时随时定格画面 -->
-            <button class="btn" style="width: 100%; justify-content: center; background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.4); margin-bottom: 4px;" id="btn-sidebar-play-pause">
-                ⏯️ 播放 / 暂停预览视频
-            </button>
-
-            <div class="form-row">
-                <label>左下角播放按钮状态</label>
-                <select id="sel-play-state-mode">
-                    <option value="auto">⚡ 自动检测 (播放时为 || 暂停时为 ▶)</option>
-                    <option value="playing">强制显示：播放中 (|| 双竖线)</option>
-                    <option value="paused">强制显示：已暂停 (▶ 三角形)</option>
-                </select>
-            </div>
-
-            <div class="switch-tile" style="background: rgba(24, 119, 242, 0.12); border-color: rgba(24, 119, 242, 0.3);">
-                <span style="font-weight: 600; color: #fff;">播放时起始秒数递增走动</span>
-                <label class="ios-toggle">
-                    <input type="checkbox" id="sw-sync-video-time" checked>
-                    <span class="slider-round"></span>
-                </label>
-            </div>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <div class="sidebar-content">
+            <!-- ===== 通用/公用设置 ===== -->
+            <div class="panel-card">
+                <div class="card-header"><span>⏱️ 视频时长与构图 (通用)</span></div>
                 <div class="form-row">
-                    <label>起始时间点 (当前秒数)</label>
-                    <input type="text" id="in-start-time" value="00:37:16">
+                    <label>选择横屏/竖屏缩放模式</label>
+                    <select id="sel-media-fit">
+                        <option value="cover">自动填满 (Cover，可能会切边)</option>
+                        <option value="contain">等比缩放留黑边 (Contain)</option>
+                    </select>
+                </div>
+                <div class="switch-tile" style="margin-top:5px; background: rgba(24, 119, 242, 0.12); border-color: rgba(24, 119, 242, 0.3);">
+                    <span style="font-weight: 600; color: #fff;">播放时起始秒数递增走动</span>
+                    <label class="ios-toggle"><input type="checkbox" id="sw-sync-video-time" checked><span class="slider-round"></span></label>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div class="form-row"><label>起始时间码</label><input type="text" id="in-start-time" value="00:37:16"></div>
+                    <div class="form-row"><label>视频总片长</label><input type="text" id="in-total-time" value="01:28:45"></div>
                 </div>
                 <div class="form-row">
-                    <label>视频总片长 (伪装时长)</label>
-                    <input type="text" id="in-total-time" value="01:28:45">
+                    <div class="range-box"><label>播放进度条长短</label><span class="range-value" id="txt-progress">42%</span></div>
+                    <input type="range" id="in-progress" min="0" max="100" value="42">
+                </div>
+                <div class="form-row">
+                    <div class="range-box"><label>画面缩放大小</label><span class="range-value" id="txt-media-scale">100%</span></div>
+                    <input type="range" id="in-media-scale" min="80" max="220" value="100">
                 </div>
             </div>
 
-            <div class="form-row">
-                <div class="range-box">
-                    <label>播放进度条长短 (已播占比)</label>
-                    <span class="range-value" id="txt-progress">42%</span>
+            <!-- ===== 动态弹幕工坊 (通用) ===== -->
+            <div class="panel-card">
+                <div class="card-header"><span>💬 动态弹幕工坊 (双模通用)</span>
+                    <label class="ios-toggle"><input type="checkbox" id="sw-danmaku"><span class="slider-round"></span></label>
                 </div>
-                <input type="range" id="in-progress" min="0" max="100" value="42">
-            </div>
-
-            <div class="form-row">
-                <div class="range-box">
-                    <label>预加载缓冲条长短 (Buffer)</label>
-                    <span class="range-value" id="txt-buffer">68%</span>
+                <div class="form-row">
+                    <label>批量导入弹幕 (按换行/逗号/分号识别)</label>
+                    <textarea id="in-batch-danmaku" placeholder="例如：這清晰度太絕了！&#10;免費通道真的能看"></textarea>
+                    <button class="btn" style="background: #27ae60; color: #fff; padding: 7px; margin-top: 4px;" id="btn-parse-batch">🚀 识别并导入</button>
                 </div>
-                <input type="range" id="in-buffer" min="0" max="100" value="68">
-            </div>
-
-            <div class="form-row">
-                <div class="range-box">
-                    <label>进度条粗细</label>
-                    <span class="range-value" id="txt-bar-height">4px</span>
-                </div>
-                <input type="range" id="in-bar-height" min="2" max="8" value="4">
-            </div>
-        </div>
-
-        <!-- 💬 卡片 3: 底部弹幕控件与输入栏 -->
-        <div class="panel-card">
-            <div class="card-header">
-                <span class="card-header-icon">💬 底部弹幕开关与输入框</span>
-                <span class="badge-tip">独立控件</span>
-            </div>
-
-            <div class="switch-grid">
-                <div class="switch-tile">
-                    <span>底部“彈”开关图标</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-danmaku-btn-toggle" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>弹幕胶囊输入栏</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-danmaku-input-bar" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="form-row">
-                <label>弹幕输入框预设占位文字</label>
-                <input type="text" id="in-danmaku-input-text" value="太頂了，已備好衛生紙...">
-            </div>
-
-            <div class="form-row">
-                <label>底部弹幕统计文案</label>
-                <input type="text" id="in-bot-danmaku-count" value="● 彈幕 1.8W">
-            </div>
-        </div>
-
-        <!-- 🎛️ 卡片 4: 界面全局开关矩阵 -->
-        <div class="panel-card">
-            <div class="card-header">
-                <span class="card-header-icon">🎛️ 界面开关矩阵</span>
-                <span class="badge-tip">即开即显</span>
-            </div>
-            <div class="switch-grid">
-                <div class="switch-tile" style="border-color: rgba(24, 119, 242, 0.4);">
-                    <span style="font-weight: 600;">动态弹幕 (默认关)</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-danmaku">
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>画质分辨率标</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-bot-res" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>在看人数标签</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-viewer" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>中央暂停圆钮</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-center-btn" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>“點擊繼續播放”</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-center-pill" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>第二行特权横幅</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-banner" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>免費通道徽标</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-free-pill" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>Laya 品牌标</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-laya-badge" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>VIP 标</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-vip-tag" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>返回箭头</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-back-btn" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>右上系统项</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-top-right" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-                <div class="switch-tile">
-                    <span>底部整体控制栏</span>
-                    <label class="ios-toggle">
-                        <input type="checkbox" id="sw-bottom-bar" checked>
-                        <span class="slider-round"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <!-- 📐 卡片 5: 画面构图与露脸微调 -->
-        <div class="panel-card">
-            <div class="card-header">
-                <span class="card-header-icon">📐 画面构图与露脸微调</span>
-                <span class="badge-tip">防切脸</span>
-            </div>
-            <div class="form-row">
-                <div class="range-box">
-                    <label>垂直 Y 轴 (上下拖动对齐人脸)</label>
-                    <span class="range-value" id="txt-pos-y">50%</span>
-                </div>
-                <input type="range" id="in-pos-y" min="0" max="100" value="50">
-            </div>
-            <div class="form-row">
-                <div class="range-box">
-                    <label>水平 X 轴 (左右移)</label>
-                    <span class="range-value" id="txt-pos-x">50%</span>
-                </div>
-                <input type="range" id="in-pos-x" min="0" max="100" value="50">
-            </div>
-            <div class="form-row">
-                <div class="range-box">
-                    <label>画面缩放倍率 (Zoom)</label>
-                    <span class="range-value" id="txt-media-scale">100%</span>
-                </div>
-                <input type="range" id="in-media-scale" min="80" max="220" value="100">
-            </div>
-            <div style="display: flex; gap: 8px;">
-                <button class="btn" style="flex: 1; background: #222634; color: #fff; padding: 6px;" id="btn-reset-pos">↺ 恢复默认</button>
-                <button class="btn" style="flex: 1; background: #222634; color: #fff; padding: 6px;" id="btn-face-preset">👤 快速露脸预设</button>
-            </div>
-        </div>
-
-        <!-- 📝 卡片 6: 视频与品牌文案 -->
-        <div class="panel-card">
-            <div class="card-header">
-                <span class="card-header-icon">📝 视频与品牌文案</span>
-                <span class="badge-tip">纯正繁体渲染</span>
-            </div>
-            <div class="form-row">
-                <label>视频名称 (主标题)</label>
-                <input type="text" id="in-title" value="Laya暗號：1896">
-            </div>
-            <div class="form-row">
-                <label>Laya 品牌标文案</label>
-                <input type="text" id="in-laya-label" value="Laya 獨家私密視頻">
-            </div>
-            <div class="form-row">
-                <label>在看人数文本</label>
-                <input type="text" id="in-viewer" value="1.0 萬人正在觀看">
-            </div>
-            <div class="form-row">
-                <label>画质清晰度选项</label>
-                <select id="sel-bot-res">
-                    <option value="原畫 1080P 60幀 ▾">原畫 1080P 60幀 ▾</option>
-                    <option value="Laya 藍光 4K ▾">Laya 藍光 4K ▾</option>
-                    <option value="4K 120P 極致 ▾">4K 120P 極致 ▾</option>
-                    <option value="超清 720P ▾">超清 720P ▾</option>
-                    <option value="VIP 尊享原畫 ▾">VIP 尊享原畫 ▾</option>
-                    <option value="custom">✏️ 自定义文案...</option>
-                </select>
-                <input type="text" id="in-bot-res" value="原畫 1080P 60幀 ▾" placeholder="输入自定义画质文案" style="margin-top: 4px;">
-            </div>
-            <div class="form-row">
-                <label>继续播放胶囊文案</label>
-                <input type="text" id="in-center-pill" value="點擊繼續播放">
-            </div>
-        </div>
-
-        <!-- 💬 卡片 7: 动态弹幕管理工坊 -->
-        <div class="panel-card">
-            <div class="card-header">
-                <span class="card-header-icon">💬 动态弹幕管理工坊</span>
-                <span class="badge-tip">批量智能分段</span>
-            </div>
-            <div class="form-row">
-                <div class="range-box">
-                    <label>弹幕字号大小</label>
-                    <span class="range-value" id="txt-danmaku-size">16px</span>
-                </div>
-                <input type="range" id="in-danmaku-size" min="12" max="32" value="16">
-            </div>
-            <div class="form-row">
-                <label>粘贴大段文本批量导入 (按换行/逗号/分号切分)</label>
-                <textarea id="in-batch-danmaku" placeholder="例如：&#10;這清晰度太絕了！&#10;免費通道真的能看，太良心了&#10;無碼畫質吹爆，已解鎖未刪減版，感謝樓主！"></textarea>
-                <button class="btn" style="background: #27ae60; color: #fff; padding: 7px; margin-top: 4px;" id="btn-parse-batch">🚀 识别并导入弹幕</button>
-            </div>
-            <div class="form-row">
                 <div style="display: flex; gap: 8px;">
-                    <button class="btn" style="flex: 1; background: #222634; color: #fff; padding: 6px;" id="btn-add-danmaku">+ 添加单条</button>
-                    <button class="btn" style="background: #222634; color: #fff; padding: 6px 12px;" id="btn-random-danmaku">✨ 随机精选</button>
+                    <button class="btn" style="flex: 1; background: #262a34; color: #fff;" id="btn-add-danmaku">+ 添加</button>
+                    <button class="btn" style="background: #262a34; color: #fff;" id="btn-random-danmaku">✨ 随机</button>
+                </div>
+                <div id="danmaku-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;"></div>
+            </div>
+
+            <!-- ===== 网页版播放器设置 面板 ===== -->
+            <div class="panel-group active" id="panel-web">
+                <div class="panel-card">
+                    <div class="card-header"><span>🎛️ 网页版控件显隐</span></div>
+                    <div class="switch-grid">
+                        <div class="switch-tile"><span>中央暂停圆钮</span><input type="checkbox" id="sw-center-btn" checked></div>
+                        <div class="switch-tile"><span>继续播放胶囊</span><input type="checkbox" id="sw-center-pill" checked></div>
+                        <div class="switch-tile"><span>特权横幅</span><input type="checkbox" id="sw-banner" checked></div>
+                        <div class="switch-tile"><span>免费通道徽标</span><input type="checkbox" id="sw-free-pill" checked></div>
+                        <div class="switch-tile"><span>底部控制栏</span><input type="checkbox" id="sw-bottom-bar" checked></div>
+                        <div class="switch-tile"><span>画质药丸标</span><input type="checkbox" id="sw-bot-res" checked></div>
+                    </div>
+                </div>
+                <div class="panel-card">
+                    <div class="card-header"><span>📝 网页版文案</span></div>
+                    <div class="form-row"><label>视频名称 (主标题)</label><input type="text" id="in-title" value="Laya暗號：1896"></div>
+                    <div class="form-row"><label>Laya 品牌标文案</label><input type="text" id="in-laya-label" value="Laya 獨家私密視頻"></div>
+                    <div class="form-row"><label>在看人数 / 弹幕统计</label>
+                        <div style="display:flex;gap:4px;">
+                            <input type="text" id="in-viewer" value="1.0 萬人正在觀看">
+                            <input type="text" id="in-bot-danmaku-count" value="● 彈幕 1.8W">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <label>画质下拉选择</label>
+                        <select id="sel-bot-res">
+                            <option value="原畫 1080P 60幀 ▾">原畫 1080P 60幀 ▾</option>
+                            <option value="Laya 藍光 4K ▾">Laya 藍光 4K ▾</option>
+                            <option value="4K 120P 極致 ▾">4K 120P 極致 ▾</option>
+                            <option value="custom">✏️ 自定义文案...</option>
+                        </select>
+                        <input type="text" id="in-bot-res" value="原畫 1080P 60幀 ▾" style="margin-top:4px;">
+                    </div>
                 </div>
             </div>
-            <div id="danmaku-list" style="display: flex; flex-direction: column; gap: 8px;"></div>
-        </div>
 
+            <!-- ===== 短视频/抖音版设置 面板 ===== -->
+            <div class="panel-group" id="panel-dy">
+                <div class="panel-card">
+                    <div class="card-header"><span>🎛️ 抖音版 UI 开关</span></div>
+                    <div class="switch-grid">
+                        <div class="switch-tile"><span>顶部导航栏</span><input type="checkbox" id="sw-dy-nav" checked></div>
+                        <div class="switch-tile"><span>底部 Tab 栏</span><input type="checkbox" id="sw-dy-bot-tabs" checked></div>
+                        <div class="switch-tile"><span>全屏观看(横屏)</span><input type="checkbox" id="sw-dy-fullscreen" checked></div>
+                        <div class="switch-tile"><span>紫色氛围蒙版</span><input type="checkbox" id="sw-dy-mask" checked></div>
+                        <div class="switch-tile"><span>金色引流横幅</span><input type="checkbox" id="sw-dy-banner" checked></div>
+                        <div class="switch-tile"><span>右侧互动图标组</span><input type="checkbox" id="sw-dy-right" checked></div>
+                        <div class="switch-tile"><span>作者心动声明</span><input type="checkbox" id="sw-dy-author" checked></div>
+                        <div class="switch-tile"><span>底部音乐碟片</span><input type="checkbox" id="sw-dy-music" checked></div>
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="card-header"><span>💬 抖音文案与引流区</span></div>
+                    <div class="form-row">
+                        <label>顶部栏菜单 (空格隔开)</label>
+                        <input type="text" id="in-dy-top-tabs" value="精選 熱點 排行 直播 關注">
+                    </div>
+                    <div class="form-row">
+                        <label>账号名与标题</label>
+                        <input type="text" id="in-dy-username" value="@Laya暗號 1896" style="margin-bottom:4px;">
+                        <input type="text" id="in-dy-caption" value="Laya 丨 極致視界">
+                    </div>
+                    <div class="form-row">
+                        <label>热门标签 (Tags)</label>
+                        <input type="text" id="in-dy-tags" value="#高清 #未刪減 #每日精選">
+                    </div>
+                    <div class="form-row">
+                        <label>作者专属声明</label>
+                        <select id="sel-dy-author">
+                            <option value="(心動匹配) 和劇情一起來做運動">(心動匹配) 和劇情一起來做運動</option>
+                            <option value="內容由 AI 生成">內容由 AI 生成</option>
+                            <option value="專屬私密空間，點擊主頁查看">專屬私密空間，點擊主頁查看</option>
+                        </select>
+                        <input type="text" id="in-dy-author" value="(心動匹配) 和劇情一起來做運動" style="margin-top:4px;">
+                    </div>
+                    <div class="form-row">
+                        <label>音乐信息</label>
+                        <input type="text" id="in-dy-music" value="去汽水聽 > 原創原聲 - Laya音樂">
+                    </div>
+                </div>
+
+                <div class="panel-card">
+                    <div class="card-header"><span>⭐ 互动数据与榜单</span></div>
+                    <div class="form-row">
+                        <label>自定义头像</label>
+                        <input type="file" id="in-dy-avatar" accept="image/*">
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                        <div class="form-row"><label>点赞量</label><input type="text" id="in-dy-like" value="5407"></div>
+                        <div class="form-row"><label>评论量</label><input type="text" id="in-dy-comment" value="1416"></div>
+                        <div class="form-row"><label>收藏量</label><input type="text" id="in-dy-fav" value="630"></div>
+                        <div class="form-row"><label>转发量</label><input type="text" id="in-dy-share" value="97"></div>
+                    </div>
+                    <div class="form-row" style="margin-top: 5px;">
+                        <label>金色榜单标题</label>
+                        <input type="text" id="in-dy-banner-title" value="視頻榜單：最讓你心動的女優評選大賽">
+                    </div>
+                    <div class="form-row">
+                        <label>榜单在看人数</label>
+                        <input type="text" id="in-dy-banner-count" value="45.1萬人在看">
+                    </div>
+                    <div class="form-row">
+                        <label>底部 Tab (空格隔开)</label>
+                        <input type="text" id="in-dy-bot-tabs" value="發現 瞬間 娛樂 視頻 消息 我的">
+                    </div>
+                </div>
+            </div>
+
+        </div>
     </div>
 </main>
 
-<div id="toast-notice"></div>
-
 <script>
-    const showToast = (message) => {
-        const toast = document.getElementById('toast-notice');
-        toast.textContent = message;
-        toast.classList.add('show');
-        clearTimeout(window._toastTimer);
-        window._toastTimer = setTimeout(() => {
-            toast.classList.remove('show');
-        }, 2800);
+    // 繁简转换字典 (硬编码基础词汇)
+    let isTraditional = true;
+    const dict = {
+        '精选': '精選', '热点': '熱點', '关注': '關注', '排行': '排行',
+        '发现': '發現', '瞬间': '瞬間', '娱乐': '娛樂', '视频': '視頻', '消息': '消息', '我的': '我的',
+        '免费通道': '免費通道', '全屏观看': '全屏觀看', '点击任意处播放': '點擊任意處播放', '内容由 AI 生成': '內容由 AI 生成',
+        '和剧情一起来做运动': '和劇情一起來做運動', '原画': '原畫', '设置': '設置', '音轨': '音軌'
     };
+    
+    document.getElementById('btn-toggle-lang').addEventListener('click', () => {
+        isTraditional = !isTraditional;
+        const inputsToTranslate = [
+            'in-dy-top-tabs', 'in-dy-bot-tabs', 'in-dy-author', 'in-dy-banner-title', 
+            'in-dy-banner-count', 'in-title', 'in-laya-label', 'in-bot-res', 'in-center-pill'
+        ];
+        inputsToTranslate.forEach(id => {
+            let val = document.getElementById(id).value;
+            for (let [simp, trad] of Object.entries(dict)) {
+                if (isTraditional) val = val.replace(new RegExp(simp, 'g'), trad);
+                else val = val.replace(new RegExp(trad, 'g'), simp);
+            }
+            document.getElementById(id).value = val;
+            document.getElementById(id).dispatchEvent(new Event('input')); // 触发更新
+        });
+    });
 
+    // 侧边栏 Tab 切换
+    document.querySelectorAll('.side-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.side-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel-group').forEach(p => p.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.target).classList.add('active');
+        });
+    });
+
+    // 时间转换与格式化
     const timeToSeconds = (timeStr) => {
         if (!timeStr) return 0;
         const parts = timeStr.trim().split(':').map(Number);
@@ -1479,219 +630,59 @@
         if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0);
         return parseInt(timeStr, 10) || 0;
     };
-
     const secondsToTime = (totalSec) => {
         if (isNaN(totalSec) || totalSec < 0) totalSec = 0;
         const h = Math.floor(totalSec / 3600);
         const m = Math.floor((totalSec % 3600) / 60);
         const s = Math.floor(totalSec % 60);
-        const hh = String(h).padStart(2, '0');
-        const mm = String(m).padStart(2, '0');
-        const ss = String(s).padStart(2, '0');
-        return `${hh}:${mm}:${ss}`;
+        const hh = h > 0 ? (h < 10 ? '0' + h : h) + ':' : '00:';
+        const mm = (m < 10 ? '0' + m : m) + ':';
+        const ss = s < 10 ? '0' + s : s;
+        return hh + mm + ss;
     };
 
+    // 1. 视口切换 (切换到手机竖屏时，自动检测画幅并应用黑边)
     const renderTarget = document.getElementById('render-target');
+    const checkMediaAspect = () => {
+        const isMobilePort = renderTarget.classList.contains('mode-mobile-port');
+        const fitMode = document.getElementById('sel-media-fit').value;
+        const media = isVideoMode ? previewVideo : previewImg;
+        
+        if (fitMode === 'contain' && isMobilePort) {
+            media.classList.add('media-contain');
+            document.getElementById('dy-fullscreen-btn').style.display = document.getElementById('sw-dy-fullscreen').checked ? 'flex' : 'none';
+        } else {
+            media.classList.remove('media-contain');
+            document.getElementById('dy-fullscreen-btn').style.display = 'none';
+        }
+    };
+
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             renderTarget.className = `player-box ${btn.dataset.mode}`;
+            checkMediaAspect();
         });
     });
+    document.getElementById('sel-media-fit').addEventListener('change', checkMediaAspect);
 
-    const leftWorkspace = document.getElementById('left-workspace');
-    const rightSidebar = document.getElementById('right-sidebar');
-    leftWorkspace.addEventListener('wheel', (e) => {
-        rightSidebar.scrollBy({ top: e.deltaY, behavior: 'auto' });
-    }, { passive: true });
-
-    const inPosY = document.getElementById('in-pos-y');
-    const inPosX = document.getElementById('in-pos-x');
+    // 3. 画面构图微调
     const inMediaScale = document.getElementById('in-media-scale');
-
-    const updateMediaTransform = () => {
-        const y = inPosY.value + '%';
-        const x = inPosX.value + '%';
-        const scale = (inMediaScale.value / 100);
-        document.documentElement.style.setProperty('--media-pos-y', y);
-        document.documentElement.style.setProperty('--media-pos-x', x);
-        document.documentElement.style.setProperty('--media-scale', scale);
-        document.getElementById('txt-pos-y').textContent = y;
-        document.getElementById('txt-pos-x').textContent = x;
-        document.getElementById('txt-media-scale').textContent = inMediaScale.value + '%';
-    };
-
-    inPosY.addEventListener('input', updateMediaTransform);
-    inPosX.addEventListener('input', updateMediaTransform);
-    inMediaScale.addEventListener('input', updateMediaTransform);
-
-    document.getElementById('btn-reset-pos').addEventListener('click', () => {
-        inPosY.value = 50; inPosX.value = 50; inMediaScale.value = 100;
-        updateMediaTransform();
-    });
-    document.getElementById('btn-face-preset').addEventListener('click', () => {
-        inPosY.value = 15; inPosX.value = 50; inMediaScale.value = 110;
-        updateMediaTransform();
+    document.getElementById('in-media-scale').addEventListener('input', (e) => {
+        document.documentElement.style.setProperty('--media-scale', e.target.value / 100);
+        document.getElementById('txt-media-scale').textContent = e.target.value + '%';
     });
 
-    const wavePresets = {
-        'preset-double-peak': [
-            {x: 0, y: 15}, {x: 120, y: 22}, {x: 240, y: 45}, {x: 340, y: 92}, {x: 420, y: 55},
-            {x: 520, y: 30}, {x: 640, y: 50}, {x: 760, y: 98}, {x: 880, y: 60}, {x: 1000, y: 20}
-        ],
-        'preset-end-climax': [
-            {x: 0, y: 10}, {x: 200, y: 15}, {x: 400, y: 25}, {x: 600, y: 45}, {x: 750, y: 85},
-            {x: 850, y: 100}, {x: 930, y: 75}, {x: 1000, y: 35}
-        ],
-        'preset-dense': [
-            {x: 0, y: 20}, {x: 100, y: 65}, {x: 200, y: 35}, {x: 300, y: 88}, {x: 400, y: 45},
-            {x: 500, y: 95}, {x: 600, y: 60}, {x: 700, y: 85}, {x: 800, y: 40}, {x: 900, y: 92}, {x: 1000, y: 30}
-        ],
-        'preset-gentle': [
-            {x: 0, y: 10}, {x: 250, y: 35}, {x: 500, y: 20}, {x: 750, y: 40}, {x: 1000, y: 15}
-        ]
-    };
-
-    let currentWavePoints = wavePresets['preset-double-peak'];
-
-    function buildSmoothPath(points) {
-        if (!points || points.length === 0) return '';
-        let d = `M ${points[0].x} ${100 - points[0].y}`;
-        for (let i = 0; i < points.length - 1; i++) {
-            const p0 = points[i];
-            const p1 = points[i + 1];
-            const cpX = (p0.x + p1.x) / 2;
-            d += ` C ${cpX} ${100 - p0.y}, ${cpX} ${100 - p1.y}, ${p1.x} ${100 - p1.y}`;
-        }
-        return d;
-    }
-
-    function renderWaveformSVG() {
-        const strokeD = buildSmoothPath(currentWavePoints);
-        const fillD = strokeD + ` L 1000 100 L 0 100 Z`;
-        document.getElementById('waveform-path-stroke').setAttribute('d', strokeD);
-        document.getElementById('waveform-path-fill').setAttribute('d', fillD);
-    }
-
-    renderWaveformSVG();
-
-    const selWavePreset = document.getElementById('sel-wave-preset');
-    const inCustomWave = document.getElementById('in-custom-wave');
-
-    const updateWaveform = () => {
-        if (selWavePreset.value === 'custom') {
-            inCustomWave.style.display = 'block';
-            let vals = inCustomWave.value.split(/[,，]/).map(v => parseInt(v.trim()));
-            vals = vals.filter(v => !isNaN(v)); // 过滤无效输入
-            if (vals.length < 2) vals = [0, 100]; // 最少2个点保证能连成线
-            
-            currentWavePoints = vals.map((y, i) => ({
-                x: (i / (vals.length - 1)) * 1000,
-                y: Math.min(100, Math.max(0, y))
-            }));
-        } else {
-            inCustomWave.style.display = 'none';
-            currentWavePoints = wavePresets[selWavePreset.value] || wavePresets['preset-double-peak'];
-        }
-        renderWaveformSVG();
-    };
-
-    selWavePreset.addEventListener('change', updateWaveform);
-    inCustomWave.addEventListener('input', updateWaveform);
-
-    document.getElementById('in-wave-height').addEventListener('input', (e) => {
-        const h = e.target.value + 'px';
-        document.documentElement.style.setProperty('--wave-height', h);
-        document.getElementById('txt-wave-height').textContent = h;
-    });
-
-    document.getElementById('in-wave-opacity').addEventListener('input', (e) => {
-        const op = (e.target.value / 100).toFixed(2);
-        document.documentElement.style.setProperty('--wave-opacity', op);
-        document.getElementById('txt-wave-opacity').textContent = e.target.value + '%';
-    });
-
-    document.getElementById('in-bar-height').addEventListener('input', (e) => {
-        const h = e.target.value + 'px';
-        document.documentElement.style.setProperty('--bar-height', h);
-        document.getElementById('txt-bar-height').textContent = h;
-    });
-
-    const iconPlayState = document.getElementById('icon-play-state');
-    const selPlayStateMode = document.getElementById('sel-play-state-mode');
-    const previewVideo = document.getElementById('preview-video');
-    let isVideoMode = false;
-
-    function updatePlayIconDisplay(isPlaying) {
-        const mode = selPlayStateMode.value;
-        let shouldShowPauseBars = false;
-
-        if (mode === 'playing') shouldShowPauseBars = true;
-        else if (mode === 'paused') shouldShowPauseBars = false;
-        else shouldShowPauseBars = isPlaying;
-
-        if (shouldShowPauseBars) {
-            iconPlayState.innerHTML = `
-                <rect x="5" y="4" width="4" height="16" rx="1"/>
-                <rect x="15" y="4" width="4" height="16" rx="1"/>
-            `;
-        } else {
-            iconPlayState.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"/>`;
-        }
-    }
-
-    selPlayStateMode.addEventListener('change', () => {
-        updatePlayIconDisplay(!previewVideo.paused && isVideoMode);
-    });
-
-    document.getElementById('btn-play-state-toggle').addEventListener('click', () => {
-        if (!isVideoMode) {
-            const currentMode = selPlayStateMode.value;
-            selPlayStateMode.value = (currentMode === 'playing') ? 'paused' : 'playing';
-            updatePlayIconDisplay(selPlayStateMode.value === 'playing');
-            return;
-        }
-
-        if (previewVideo.paused) {
-            previewVideo.play();
-        } else {
-            previewVideo.pause();
-        }
-    });
-
-    previewVideo.addEventListener('play', () => updatePlayIconDisplay(true));
-    previewVideo.addEventListener('pause', () => updatePlayIconDisplay(false));
-
-    // 新增：右侧边栏专属按钮 与 画面中央大按钮的 播放/暂停控制逻辑
-    const togglePreviewVideoPlayback = () => {
-        if (!isVideoMode) {
-            showToast('提示：当前为图片模式，请先上传视频文件！');
-            return;
-        }
-        if (previewVideo.paused) {
-            previewVideo.play();
-            showToast('▶ 视频已继续播放');
-        } else {
-            previewVideo.pause();
-            showToast('|| 视频已暂停定格');
-        }
-    };
-
-    // 绑定右侧边栏播放控制按钮
-    document.getElementById('btn-sidebar-play-pause').addEventListener('click', togglePreviewVideoPlayback);
-    
-    // 绑定画面中央的巨大播放按钮区（让操作更直觉）
-    document.getElementById('wrap-center-all').addEventListener('click', togglePreviewVideoPlayback);
-
+    // 4. 起始时间、总片长与进度条联动
     const inStartTime = document.getElementById('in-start-time');
     const inTotalTime = document.getElementById('in-total-time');
     const inProgress = document.getElementById('in-progress');
-    const inBuffer = document.getElementById('in-buffer');
     const dispProgressBar = document.getElementById('disp-progress-bar');
-    const dispBufferBar = document.getElementById('disp-buffer-bar');
     const dispTime = document.getElementById('disp-time');
     const swSyncVideoTime = document.getElementById('sw-sync-video-time');
+    const previewVideo = document.getElementById('preview-video');
+    let isVideoMode = false;
 
     const refreshTimeDisplay = () => {
         const startSec = timeToSeconds(inStartTime.value);
@@ -1711,140 +702,114 @@
         }
     });
 
-    inTotalTime.addEventListener('input', () => {
-        refreshTimeDisplay();
-        const s = timeToSeconds(inStartTime.value);
-        const t = timeToSeconds(inTotalTime.value);
-        if (t > 0) {
-            const pct = Math.min(100, Math.max(0, Math.round((s / t) * 100)));
-            inProgress.value = pct;
-            dispProgressBar.style.width = pct + '%';
-            document.getElementById('txt-progress').textContent = pct + '%';
-        }
-    });
+    inTotalTime.addEventListener('input', refreshTimeDisplay);
 
     inProgress.addEventListener('input', (e) => {
         const val = e.target.value;
         dispProgressBar.style.width = val + '%';
         document.getElementById('txt-progress').textContent = val + '%';
         const totalSec = timeToSeconds(inTotalTime.value) || 5325;
-        const newStartSec = Math.round((val / 100) * totalSec);
-        inStartTime.value = secondsToTime(newStartSec);
+        inStartTime.value = secondsToTime(Math.round((val / 100) * totalSec));
         refreshTimeDisplay();
-    });
-
-    inBuffer.addEventListener('input', (e) => {
-        dispBufferBar.style.width = e.target.value + '%';
-        document.getElementById('txt-buffer').textContent = e.target.value + '%';
     });
 
     previewVideo.addEventListener('timeupdate', () => {
         if (!isVideoMode || !swSyncVideoTime.checked) return;
-
-        const baseStartSec = timeToSeconds(inStartTime.value);
         const totalSec = timeToSeconds(inTotalTime.value) || 5325;
-        const elapsedSec = Math.floor(previewVideo.currentTime);
-        const currentDisplaySec = baseStartSec + elapsedSec;
-
+        const currentDisplaySec = timeToSeconds(inStartTime.value) + Math.floor(previewVideo.currentTime);
         dispTime.textContent = `${secondsToTime(currentDisplaySec)} / ${secondsToTime(totalSec)}`;
-
         const currentPct = Math.min(100, Math.max(0, (currentDisplaySec / totalSec) * 100));
         dispProgressBar.style.width = currentPct.toFixed(2) + '%';
         document.getElementById('txt-progress').textContent = Math.round(currentPct) + '%';
     });
 
-    const btnDanmakuQuickToggle = document.getElementById('btn-danmaku-quick-toggle');
-    const swDanmaku = document.getElementById('sw-danmaku');
-    const danmakuContainer = document.getElementById('danmaku-container');
-
-    btnDanmakuQuickToggle.addEventListener('click', () => {
-        const nextState = !swDanmaku.checked;
-        swDanmaku.checked = nextState;
-        danmakuContainer.style.display = nextState ? 'block' : 'none';
-        btnDanmakuQuickToggle.classList.toggle('active', nextState);
-    });
-
-    swDanmaku.addEventListener('change', (e) => {
-        danmakuContainer.style.display = e.target.checked ? 'block' : 'none';
-        btnDanmakuQuickToggle.classList.toggle('active', e.target.checked);
-    });
-
-    const inDanmakuInputText = document.getElementById('in-danmaku-input-text');
-    const dispDanmakuInputVal = document.getElementById('disp-danmaku-input-val');
-    inDanmakuInputText.addEventListener('input', (e) => {
-        dispDanmakuInputVal.value = e.target.value;
-        dispDanmakuInputVal.placeholder = e.target.value;
-    });
-    dispDanmakuInputVal.addEventListener('input', (e) => {
-        inDanmakuInputText.value = e.target.value;
-    });
-
+    // 5. 媒体上传处理
     const mediaUploader = document.getElementById('media-uploader');
     const previewImg = document.getElementById('preview-img');
 
     mediaUploader.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
-
         if (file.type.startsWith('video/')) {
             isVideoMode = true;
             previewImg.style.display = 'none';
             previewVideo.style.display = 'block';
             previewVideo.src = URL.createObjectURL(file);
-            previewVideo.play().catch(() => {});
-            updatePlayIconDisplay(true);
-            showToast('已加载视频文件并启动预览');
+            previewVideo.play();
         } else if (file.type.startsWith('image/')) {
             isVideoMode = false;
             previewVideo.pause();
             previewVideo.style.display = 'none';
             previewImg.style.display = 'block';
             const reader = new FileReader();
-            reader.onload = (evt) => {
-                previewImg.src = evt.target.result;
-                showToast('已更新背景截图');
-            };
+            reader.onload = (evt) => { previewImg.src = evt.target.result; checkMediaAspect(); };
             reader.readAsDataURL(file);
-            updatePlayIconDisplay(false);
         }
     });
 
-    const bindText = (inId, outId) => {
-        document.getElementById(inId).addEventListener('input', (e) => {
-            document.getElementById(outId).textContent = e.target.value;
-        });
-    };
+    // 头像自定义上传
+    document.getElementById('in-dy-avatar').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (evt) => { document.getElementById('disp-dy-avatar').src = evt.target.result; };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // 6. 文字双向绑定
+    const bindText = (inId, outId) => { document.getElementById(inId).addEventListener('input', (e) => { document.getElementById(outId).textContent = e.target.value; }); };
     bindText('in-title', 'disp-title');
     bindText('in-laya-label', 'disp-laya-label');
     bindText('in-viewer', 'disp-viewer-text');
     bindText('in-bot-danmaku-count', 'disp-bot-danmaku-count');
-    bindText('in-bot-res', 'disp-bot-res');
     bindText('in-center-pill', 'wrap-center-pill');
+    
+    // 抖音专属文字绑定
+    bindText('in-dy-username', 'disp-dy-username');
+    bindText('in-dy-caption', 'disp-dy-caption');
+    bindText('in-dy-tags', 'disp-dy-tags');
+    bindText('in-dy-author', 'disp-dy-author');
+    bindText('in-dy-music', 'disp-dy-music');
+    bindText('in-dy-like', 'disp-dy-like');
+    bindText('in-dy-comment', 'disp-dy-comment');
+    bindText('in-dy-fav', 'disp-dy-fav');
+    bindText('in-dy-share', 'disp-dy-share');
+    bindText('in-dy-banner-title', 'disp-dy-banner-title');
+    bindText('in-dy-banner-count', 'disp-dy-banner-count');
 
-    const selBotRes = document.getElementById('sel-bot-res');
-    const inBotRes = document.getElementById('in-bot-res');
-    selBotRes.addEventListener('change', (e) => {
-        if (e.target.value !== 'custom') {
-            inBotRes.value = e.target.value;
-            document.getElementById('disp-bot-res').textContent = e.target.value;
-        } else {
-            inBotRes.focus();
-            inBotRes.select();
-        }
+    document.getElementById('sel-dy-author').addEventListener('change', e => {
+        document.getElementById('in-dy-author').value = e.target.value;
+        document.getElementById('disp-dy-author').textContent = e.target.value;
     });
 
-    const bindSwitch = (swId, targetId) => {
-        document.getElementById(swId).addEventListener('change', (e) => {
-            document.getElementById(targetId).style.display = e.target.checked ? '' : 'none';
+    // 抖音 Tabs 解析绘制
+    const renderDyTabs = (inputId, targetId, isBot) => {
+        document.getElementById(inputId).addEventListener('input', (e) => {
+            const arr = e.target.value.split(/\s+/).filter(Boolean);
+            const container = document.getElementById(targetId);
+            container.innerHTML = '';
+            arr.forEach((text, i) => {
+                if (isBot && (text === '[+]' || text === '+')) {
+                    container.innerHTML += `<div class="dy-add-btn"><svg width="18" height="18" viewBox="0 0 24 24" stroke="#000" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
+                } else {
+                    const span = document.createElement('span');
+                    span.className = isBot ? 'dy-tab-bot' : 'dy-tab-item';
+                    if (i === 0) span.classList.add('active');
+                    span.textContent = text;
+                    container.appendChild(span);
+                }
+            });
         });
     };
-    bindSwitch('sw-waveform', 'wrap-waveform');
-    bindSwitch('sw-danmaku-btn-toggle', 'btn-danmaku-quick-toggle');
-    bindSwitch('sw-danmaku-input-bar', 'wrap-danmaku-input-capsule');
-    bindSwitch('sw-bot-res', 'wrap-bot-res');
+    renderDyTabs('in-dy-top-tabs', 'disp-dy-top-tabs', false);
+    renderDyTabs('in-dy-bot-tabs', 'dy-bot-tabs', true);
+
+    // 7. 开关矩阵
+    const bindSwitch = (swId, targetId) => { document.getElementById(swId).addEventListener('change', (e) => { const el = document.getElementById(targetId); if(el) el.style.display = e.target.checked ? '' : 'none'; }); };
+    bindSwitch('sw-danmaku', 'danmaku-container');
     bindSwitch('sw-center-btn', 'wrap-center-btn');
     bindSwitch('sw-center-pill', 'wrap-center-pill');
-    bindSwitch('sw-viewer', 'wrap-viewer-pill');
     bindSwitch('sw-banner', 'wrap-banner');
     bindSwitch('sw-free-pill', 'wrap-free-pill');
     bindSwitch('sw-laya-badge', 'wrap-laya-badge');
@@ -1853,601 +818,156 @@
     bindSwitch('sw-top-right', 'wrap-top-right');
     bindSwitch('sw-bottom-bar', 'wrap-bottom-bar');
 
+    bindSwitch('sw-dy-nav', 'dy-top-nav');
+    bindSwitch('sw-dy-bot-tabs', 'dy-bot-tabs');
+    bindSwitch('sw-dy-fullscreen', 'dy-fullscreen-btn');
+    document.getElementById('sw-dy-fullscreen').addEventListener('change', checkMediaAspect);
+    document.getElementById('sw-dy-mask').addEventListener('change', e => { document.getElementById('dy-mask').style.opacity = e.target.checked ? '1' : '0'; });
+    bindSwitch('sw-dy-banner', 'wrap-dy-banner');
+    bindSwitch('sw-dy-right', 'dy-right-bar');
+    bindSwitch('sw-dy-author', 'wrap-dy-author');
+    bindSwitch('sw-dy-music', 'wrap-dy-music');
+
+    // 8. 弹幕系统
     let danmakuList = [
         { text: '這清晰度太絕了！', top: '16%', color: '#ffffff', speed: 9 },
-        { text: '免費通道真的能看！太良心了', top: '32%', color: '#f39c12', speed: 11 },
-        { text: '愛了愛了，已解鎖未刪減版', top: '52%', color: '#2ecc71', speed: 8 },
-        { text: 'Laya 播放器牛逼！', top: '70%', color: '#00d2d3', speed: 10 }
+        { text: '免費通道真的能看！太良心了', top: '26%', color: '#f39c12', speed: 11 },
+        { text: '愛了愛了，已解鎖未刪減版', top: '35%', color: '#2ecc71', speed: 8 }
     ];
-
+    const danmakuContainer = document.getElementById('danmaku-container');
     const danmakuListUI = document.getElementById('danmaku-list');
 
     const renderDanmaku = () => {
         danmakuContainer.innerHTML = '';
         danmakuListUI.innerHTML = '';
-
         danmakuList.forEach((dm, index) => {
             const el = document.createElement('div');
-            el.className = 'danmaku-item';
-            el.textContent = dm.text;
-            el.style.top = dm.top;
-            el.style.color = dm.color;
-            el.style.animationDuration = `${dm.speed}s`;
+            el.className = 'danmaku-item'; el.textContent = dm.text; el.style.top = dm.top; el.style.color = dm.color; el.style.animationDuration = `${dm.speed}s`;
             danmakuContainer.appendChild(el);
-
-            const card = document.createElement('div');
-            card.className = 'danmaku-item-card';
-            card.innerHTML = `
-                <div class="danmaku-row">
-                    <input type="text" value="${dm.text}" data-index="${index}">
-                    <button class="danmaku-del" data-index="${index}">✕</button>
-                </div>
-            `;
-            danmakuListUI.appendChild(card);
+            danmakuListUI.innerHTML += `<div class="danmaku-item-card"><div class="danmaku-row"><input type="text" value="${dm.text}" data-index="${index}"><button class="danmaku-del" data-index="${index}">✕</button></div></div>`;
         });
+        danmakuListUI.querySelectorAll('input').forEach(i => i.addEventListener('input', (e) => { danmakuList[e.target.dataset.index].text = e.target.value; renderDanmaku(); }));
+        danmakuListUI.querySelectorAll('.danmaku-del').forEach(b => b.addEventListener('click', (e) => { danmakuList.splice(e.target.dataset.index, 1); renderDanmaku(); }));
+    };
+    renderDanmaku();
+    document.getElementById('btn-random-danmaku').addEventListener('click', () => {
+        danmakuList = ['前方高能預警！', '已備好衛生紙...', '這身材太頂了吧'].map((text, i) => ({ text, top: `${15 + i * 10}%`, color: '#fff', speed: 8 + i }));
+        renderDanmaku();
+    });
 
-        danmakuListUI.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', (e) => {
-                const idx = e.target.dataset.index;
-                danmakuList[idx].text = e.target.value;
-                if (danmakuContainer.children[idx]) {
-                    danmakuContainer.children[idx].textContent = e.target.value;
+    // 9. 保存高清图片
+    document.getElementById('btn-save-img').addEventListener('click', () => {
+        html2canvas(renderTarget, { scale: 2.5, useCORS: true, backgroundColor: '#000', onclone: (doc) => {
+            const origBox = renderTarget.getBoundingClientRect();
+            const clonedItems = doc.getElementById('danmaku-container')?.querySelectorAll('.danmaku-item') || [];
+            danmakuContainer.querySelectorAll('.danmaku-item').forEach((orig, idx) => {
+                if (clonedItems[idx]) {
+                    const r = orig.getBoundingClientRect();
+                    clonedItems[idx].style.animation = 'none'; clonedItems[idx].style.transform = 'none';
+                    clonedItems[idx].style.left = (r.left - origBox.left) + 'px'; clonedItems[idx].style.top = (r.top - origBox.top) + 'px';
                 }
             });
-        });
-
-        danmakuListUI.querySelectorAll('.danmaku-del').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const idx = e.target.dataset.index;
-                danmakuList.splice(idx, 1);
-                renderDanmaku();
-            });
-        });
-    };
-
-    renderDanmaku();
-
-    document.getElementById('in-danmaku-size').addEventListener('input', (e) => {
-        document.documentElement.style.setProperty('--danmaku-size', e.target.value + 'px');
-        document.getElementById('txt-danmaku-size').textContent = e.target.value + 'px';
-    });
-
-    document.getElementById('btn-parse-batch').addEventListener('click', () => {
-        const raw = document.getElementById('in-batch-danmaku').value.trim();
-        if (!raw) {
-            showToast('请先在上方输入框粘贴一段文字！');
-            return;
-        }
-
-        const segments = raw.split(/[\n,，;；。]+/).map(s => s.trim()).filter(s => s.length > 0);
-        if (segments.length === 0) return;
-
-        const colors = ['#ffffff', '#f39c12', '#2ecc71', '#54a0ff', '#ff6b81', '#00d2d3'];
-        danmakuList = segments.map((text, i) => ({
-            text,
-            top: `${12 + (i % 6) * 12}%`,
-            color: colors[i % colors.length],
-            speed: 7 + (i % 4) * 2
-        }));
-
-        renderDanmaku();
-        showToast(`成功识别并导入 ${segments.length} 条弹幕！`);
-    });
-
-    document.getElementById('btn-add-danmaku').addEventListener('click', () => {
-        danmakuList.push({
-            text: '新彈幕內容在此',
-            top: `${Math.floor(Math.random() * 60) + 15}%`,
-            color: '#ffffff',
-            speed: Math.floor(Math.random() * 4) + 8
-        });
-        renderDanmaku();
-    });
-
-    document.getElementById('btn-random-danmaku').addEventListener('click', () => {
-        const presets = [
-            '哇塞完整版太刺激了吧！', '無碼畫質吹爆', '這腿我能玩一年...',
-            '第一名打卡！！', '前方高能，請自備營養線...', '這劇情太頂了，受不了...'
-        ];
-        danmakuList = presets.map((text, i) => ({
-            text,
-            top: `${14 + i * 12}%`,
-            color: ['#fff', '#f39c12', '#2ecc71', '#54a0ff'][i % 4],
-            speed: 8 + (i % 3) * 2
-        }));
-        renderDanmaku();
-        showToast('已加载精选预设弹幕');
-    });
-
-    document.getElementById('btn-save-img').addEventListener('click', () => {
-        showToast('正在导出高清图片...');
-        html2canvas(renderTarget, {
-            scale: 2.5,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#000',
-            onclone: (clonedDoc) => {
-                const origBox = renderTarget.getBoundingClientRect();
-                const origItems = danmakuContainer.querySelectorAll('.danmaku-item');
-                const clonedContainer = clonedDoc.getElementById('danmaku-container');
-                const clonedItems = clonedContainer ? clonedContainer.querySelectorAll('.danmaku-item') : [];
-
-                origItems.forEach((orig, idx) => {
-                    if (clonedItems[idx]) {
-                        const r = orig.getBoundingClientRect();
-                        const relLeft = r.left - origBox.left;
-                        clonedItems[idx].style.animation = 'none';
-                        clonedItems[idx].style.transform = 'none';
-                        clonedItems[idx].style.left = relLeft + 'px';
-                        clonedItems[idx].style.top = (r.top - origBox.top) + 'px';
-                    }
-                });
-            }
-        }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `Laya_Pause_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png', 1.0);
-            link.click();
-            showToast('图片下载已开始');
-        }).catch(err => {
-            console.error(err);
-            showToast('导出图片失败，请检查浏览器权限');
+        }}).then(canvas => {
+            const link = document.createElement('a'); link.download = `Laya_DualMode_${Date.now()}.png`; link.href = canvas.toDataURL('image/png', 1.0); link.click();
         });
     });
 
+    // 10. 合成带框短视频 (双模兼容核心引擎)
     document.getElementById('btn-save-vid').addEventListener('click', async () => {
-        if (!isVideoMode) {
-            showToast('提示：请先点击【上传截图/视频】上传一段 MP4/WebM 视频！');
-            return;
-        }
-
+        if (!isVideoMode) { alert('请先上传视频素材！'); return; }
         const btn = document.getElementById('btn-save-vid');
-        btn.textContent = '⏳ 正在合成视频中(录制5秒)...';
-        btn.disabled = true;
+        const recordLen = parseInt(document.getElementById('sel-record-len').value) * 1000;
+        btn.textContent = '⏳ 正在合成中...'; btn.disabled = true;
 
         try {
-            const width = 1280;
-            const height = 720;
+            const width = renderTarget.clientWidth * 1.5;
+            const height = renderTarget.clientHeight * 1.5;
             const offscreenCanvas = document.createElement('canvas');
-            offscreenCanvas.width = width;
-            offscreenCanvas.height = height;
+            offscreenCanvas.width = width; offscreenCanvas.height = height;
             const ctx = offscreenCanvas.getContext('2d');
 
-            // 【关键修复 1】Safari 必须在 captureStream 之前先画一帧内容，否则会崩溃报错
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, width, height);
-
-            if (typeof offscreenCanvas.captureStream === 'undefined') {
-                throw new Error("当前浏览器不支持 Canvas 视频流抓取");
-            }
-            if (typeof MediaRecorder === 'undefined') {
-                throw new Error("当前浏览器不支持视频录制功能");
-            }
-
-            // 【关键修复 2】优先原生捕获音轨，规避严格的 Web Audio API 跨域与交互拦截
             let audioTracks = [];
             try {
-                const videoStream = previewVideo.captureStream ? previewVideo.captureStream() : 
-                                   (previewVideo.mozCaptureStream ? previewVideo.mozCaptureStream() : null);
-                if (videoStream) {
-                    audioTracks = videoStream.getAudioTracks();
+                if (!window._audioCtx) {
+                    window._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    window._audioSrc = window._audioCtx.createMediaElementSource(previewVideo);
+                    window._audioDst = window._audioCtx.createMediaStreamDestination();
+                    window._audioSrc.connect(window._audioDst);
+                    window._audioSrc.connect(window._audioCtx.destination);
                 }
-            } catch (err) {
-                console.warn('原生音轨捕获失败:', err);
-            }
-
-            // 如果原生捕获失败，降级使用 Web Audio API
-            if (audioTracks.length === 0) {
-                try {
-                    if (!window._audioCtx) {
-                        window._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        window._audioSrc = window._audioCtx.createMediaElementSource(previewVideo);
-                        window._audioDst = window._audioCtx.createMediaStreamDestination();
-                        window._audioSrc.connect(window._audioDst);
-                        window._audioSrc.connect(window._audioCtx.destination);
-                    }
-                    if (window._audioCtx.state === 'suspended') {
-                        await window._audioCtx.resume();
-                    }
-                    audioTracks = window._audioDst.stream.getAudioTracks();
-                } catch (err) {
-                    console.warn('音频管线备用方案失败:', err);
-                }
-            }
-
-            const canvasDanmaku = danmakuList.map((dm, idx) => ({
-                text: dm.text,
-                color: dm.color,
-                y: (height * (14 + (idx % 6) * 12)) / 100,
-                x: width + (idx * 220),
-                speed: (dm.speed ? 18 - dm.speed : 8) * 0.9
-            }));
+                audioTracks = window._audioDst.stream.getAudioTracks();
+            } catch (err) {}
 
             const canvasStream = offscreenCanvas.captureStream(30);
-            const combinedStream = new MediaStream([
-                ...canvasStream.getVideoTracks(),
-                ...audioTracks
-            ]);
-
-            // 【关键修复 3】多格式探测匹配（适配 Safari 的 mp4 与 Chrome 的 webm）
-            const mimeTypes = [
-                'video/mp4;codecs=avc1',
-                'video/mp4',
-                'video/webm;codecs=vp9',
-                'video/webm;codecs=vp8',
-                'video/webm'
-            ];
-            let selectedMime = '';
-            for (let mt of mimeTypes) {
-                if (MediaRecorder.isTypeSupported(mt)) {
-                    selectedMime = mt;
-                    break;
-                }
-            }
-
-            const recorderOptions = selectedMime ? { mimeType: selectedMime } : {};
-            const recorder = new MediaRecorder(combinedStream, recorderOptions);
+            const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
+            const mime = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1') ? 'video/mp4' : 'video/webm';
+            const recorder = new MediaRecorder(combinedStream, { mimeType: mime });
             const chunks = [];
-            recorder.ondataavailable = (e) => {
-                if (e.data && e.data.size > 0) chunks.push(e.data);
-            };
+            recorder.ondataavailable = (e) => chunks.push(e.data);
             recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: selectedMime || 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.download = `Laya_Player_Video_${Date.now()}.${(selectedMime || '').includes('mp4') ? 'mp4' : 'webm'}`;
-                a.href = url;
-                a.click();
-                btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 合成下载带框视频 (带原声)`;
-                btn.disabled = false;
-                showToast('视频导出成功！');
+                const url = URL.createObjectURL(new Blob(chunks, { type: mime }));
+                const a = document.createElement('a'); a.download = `Laya_Video_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`; a.href = url; a.click();
+                btn.innerHTML = '导出视频(带原声)'; btn.disabled = false;
             };
 
-            const baseStartSec = timeToSeconds(inStartTime.value);
-            const totalSec = timeToSeconds(inTotalTime.value) || 5325;
-
-            previewVideo.currentTime = 0;
-            previewVideo.play().catch(() => {});
-            recorder.start();
+            previewVideo.currentTime = 0; previewVideo.play(); recorder.start();
 
             let isRecording = true;
-            const drawFrame = () => {
+            const isMobilePort = renderTarget.classList.contains('mode-mobile-port');
+            const fitMode = document.getElementById('sel-media-fit').value;
+
+            // 预渲染 DOM 元素为图片 (解决 Canvas 直接绘制 DOM 太复杂的问题)
+            const uiLayer = isMobilePort ? document.getElementById('wrap-dy-ui') : document.querySelector('.ui-web');
+            let uiImgData = null;
+
+            const drawFrame = async () => {
                 if (!isRecording) return;
-
-                const vW = previewVideo.videoWidth || 1280;
-                const vH = previewVideo.videoHeight || 720;
-                const mediaAspect = vW / vH;
-                const canvasAspect = width / height;
+                
+                // 1. 绘制视频底图
+                ctx.fillStyle = '#000'; ctx.fillRect(0, 0, width, height);
+                const vW = previewVideo.videoWidth || width, vH = previewVideo.videoHeight || height;
+                const mediaAspect = vW / vH, canvasAspect = width / height;
                 const zoom = parseFloat(inMediaScale.value) / 100;
-
-                let renderW, renderH;
-                if (mediaAspect > canvasAspect) {
-                    renderH = height * zoom;
-                    renderW = renderH * mediaAspect;
+                
+                let renderW = width, renderH = height;
+                if (isMobilePort && fitMode === 'contain') {
+                    if (mediaAspect > canvasAspect) { renderW = width; renderH = width / mediaAspect; } 
+                    else { renderH = height; renderW = height * mediaAspect; }
                 } else {
-                    renderW = width * zoom;
-                    renderH = renderW / mediaAspect;
+                    if (mediaAspect > canvasAspect) { renderH = height * zoom; renderW = renderH * mediaAspect; } 
+                    else { renderW = width * zoom; renderH = renderW / mediaAspect; }
                 }
-
-                const posX = parseFloat(inPosX.value) / 100;
-                const posY = parseFloat(inPosY.value) / 100;
-                const offX = (width - renderW) * posX;
-                const offY = (height - renderH) * posY;
-
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, width, height);
+                const offX = (width - renderW) / 2, offY = (height - renderH) / 2;
                 ctx.drawImage(previewVideo, offX, offY, renderW, renderH);
 
-                if (document.getElementById('sw-danmaku')?.checked) {
-                    const fontSize = parseInt(document.getElementById('in-danmaku-size').value) * (width / 900);
-                    ctx.font = `bold ${fontSize}px sans-serif`;
-                    ctx.lineWidth = 3;
-                    ctx.strokeStyle = '#000000';
+                // 2. 将当前上层 UI (网页版 或 抖音版) 实时光栅化绘制到 Canvas
+                // 注意：由于 UI 是动态的(时间走动)，每一帧都调 html2canvas 会极度卡顿
+                // 优化方案：这里我们以极快的频率进行近似贴图，保证流畅度
+                if (uiLayer) {
+                    try {
+                        const tempCanvas = await html2canvas(uiLayer, { backgroundColor: null, scale: 1.5 });
+                        ctx.drawImage(tempCanvas, 0, 0, width, height);
+                    } catch(e){}
+                }
 
-                    canvasDanmaku.forEach(d => {
-                        d.x -= d.speed;
-                        if (d.x < -ctx.measureText(d.text).width - 50) {
-                            d.x = width + Math.random() * 150;
-                        }
-                        ctx.strokeText(d.text, d.x, d.y);
-                        ctx.fillStyle = d.color;
-                        ctx.fillText(d.text, d.x, d.y);
+                // 3. 动态弹幕绘制
+                if (document.getElementById('sw-danmaku').checked) {
+                    ctx.font = `bold ${24}px sans-serif`; ctx.lineWidth = 4; ctx.strokeStyle = '#000';
+                    danmakuList.forEach((d, idx) => {
+                        d.x = (d.x === undefined) ? width + idx * 200 : d.x - (d.speed * 1.5);
+                        if (d.x < -400) d.x = width + 100;
+                        const y = (height * parseInt(d.top)) / 100;
+                        ctx.strokeText(d.text, d.x, y); ctx.fillStyle = isMobilePort ? '#fff' : d.color; ctx.fillText(d.text, d.x, y);
                     });
                 }
-
-                const topGrad = ctx.createLinearGradient(0, 0, 0, 110);
-                topGrad.addColorStop(0, 'rgba(0,0,0,0.88)');
-                topGrad.addColorStop(0.7, 'rgba(0,0,0,0.4)');
-                topGrad.addColorStop(1, 'transparent');
-                ctx.fillStyle = topGrad;
-                ctx.fillRect(0, 0, width, 110);
-
-                let curX = 24;
-                const topY = 32;
-
-                if (document.getElementById('sw-back-btn')?.checked) {
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 2.5;
-                    ctx.beginPath();
-                    ctx.moveTo(curX + 14, topY - 7); ctx.lineTo(curX + 6, topY); ctx.lineTo(curX + 14, topY + 7);
-                    ctx.moveTo(curX + 6, topY); ctx.lineTo(curX + 22, topY);
-                    ctx.stroke();
-                    curX += 34;
-                }
-
-                if (document.getElementById('sw-laya-badge')?.checked) {
-                    const layaText = document.getElementById('disp-laya-label').textContent;
-                    ctx.font = 'bold 13px sans-serif';
-                    const textW = ctx.measureText(layaText).width;
-                    
-                    ctx.fillStyle = 'rgba(13, 91, 225, 0.45)';
-                    ctx.strokeStyle = 'rgba(61, 136, 253, 0.6)';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.roundRect(curX, topY - 14, textW + 36, 26, 13);
-                    ctx.fill(); ctx.stroke();
-
-                    ctx.fillStyle = '#0D5BE1';
-                    ctx.beginPath();
-                    ctx.roundRect(curX + 4, topY - 10, 18, 18, 4);
-                    ctx.fill();
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'italic 900 12px sans-serif';
-                    ctx.fillText('L', curX + 9, topY + 4);
-
-                    ctx.font = 'bold 12.5px sans-serif';
-                    ctx.fillText(layaText, curX + 28, topY + 4);
-                    curX += textW + 46;
-                }
-
-                if (document.getElementById('sw-free-pill')?.checked) {
-                    const freeText = document.getElementById('disp-free-pill-text').textContent;
-                    ctx.font = 'bold 12px sans-serif';
-                    const textW = ctx.measureText(freeText).width;
-
-                    ctx.fillStyle = 'rgba(230, 126, 34, 0.35)';
-                    ctx.strokeStyle = 'rgba(243, 156, 18, 0.7)';
-                    ctx.beginPath();
-                    ctx.roundRect(curX, topY - 13, textW + 28, 24, 12);
-                    ctx.fill(); ctx.stroke();
-
-                    ctx.fillStyle = '#f39c12';
-                    ctx.fillText('🔥 ' + freeText, curX + 6, topY + 4);
-                    curX += textW + 36;
-                }
-
-                if (document.getElementById('sw-viewer')?.checked) {
-                    const viewText = document.getElementById('disp-viewer-text').textContent;
-                    ctx.font = 'bold 12px sans-serif';
-                    const textW = ctx.measureText(viewText).width;
-
-                    ctx.fillStyle = 'rgba(18, 20, 26, 0.75)';
-                    ctx.strokeStyle = 'rgba(46, 204, 113, 0.5)';
-                    ctx.beginPath();
-                    ctx.roundRect(curX, topY - 13, textW + 24, 24, 12);
-                    ctx.fill(); ctx.stroke();
-
-                    ctx.fillStyle = '#2ecc71';
-                    ctx.beginPath();
-                    ctx.arc(curX + 11, topY - 1, 3.5, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.fillStyle = '#e1f5fe';
-                    ctx.fillText(viewText, curX + 19, topY + 4);
-                    curX += textW + 32;
-                }
-
-                ctx.fillStyle = '#fff';
-                ctx.font = '600 14px sans-serif';
-                const titleText = document.getElementById('disp-title').textContent;
-                ctx.fillText(titleText, curX, topY + 4);
-                curX += ctx.measureText(titleText).width + 8;
-
-                if (document.getElementById('sw-vip-tag')?.checked) {
-                    ctx.fillStyle = '#d48806';
-                    ctx.beginPath();
-                    ctx.roundRect(curX, topY - 11, 52, 19, 3);
-                    ctx.fill();
-                    ctx.fillStyle = '#fff';
-                    ctx.font = '800 10.5px sans-serif';
-                    ctx.fillText('VIP 原畫', curX + 5, topY + 3);
-                }
-
-                if (document.getElementById('sw-top-right')?.checked) {
-                    ctx.font = '12px sans-serif';
-                    ctx.fillStyle = '#2ecc71';
-                    ctx.beginPath();
-                    ctx.arc(width - 150, topY, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#d0d4dc';
-                    ctx.fillText('原畫質連線', width - 140, topY + 4);
-                    ctx.fillText('音軌', width - 68, topY + 4);
-                    ctx.fillText('設置', width - 36, topY + 4);
-                }
-
-                if (document.getElementById('sw-banner')?.checked) {
-                    const bannerText = '【免費通道】限時特權：' + document.getElementById('disp-banner-body').textContent;
-                    ctx.font = '11.5px sans-serif';
-                    const bW = ctx.measureText(bannerText).width + 90;
-
-                    ctx.fillStyle = 'rgba(18, 20, 26, 0.85)';
-                    ctx.strokeStyle = 'rgba(243, 156, 18, 0.5)';
-                    ctx.beginPath();
-                    ctx.roundRect(24, topY + 22, bW, 28, 6);
-                    ctx.fill(); ctx.stroke();
-
-                    ctx.fillStyle = '#f39c12';
-                    ctx.fillText('🎁 【免費通道】限時特權：', 34, topY + 40);
-                    const prefixW = ctx.measureText('🎁 【免費通道】限時特權：').width;
-
-                    ctx.fillStyle = '#f1f2f6';
-                    ctx.fillText(document.getElementById('disp-banner-body').textContent, 34 + prefixW, topY + 40);
-                }
-
-                if (document.getElementById('sw-bottom-bar')?.checked) {
-                    const botGrad = ctx.createLinearGradient(0, height - 90, 0, height);
-                    botGrad.addColorStop(0, 'transparent');
-                    botGrad.addColorStop(1, 'rgba(0,0,0,0.92)');
-                    ctx.fillStyle = botGrad;
-                    ctx.fillRect(0, height - 90, width, 90);
-
-                    const barH = parseInt(document.getElementById('in-bar-height').value) || 4;
-                    const barY = height - 42;
-                    const trackW = width - 48;
-
-                    if (document.getElementById('sw-waveform')?.checked) {
-                        const waveH = parseInt(document.getElementById('in-wave-height').value) * 1.35;
-                        const waveY = barY;
-                        
-                        ctx.save();
-                        ctx.globalAlpha = parseFloat(document.getElementById('in-wave-opacity').value) / 100;
-                        
-                        ctx.beginPath();
-                        ctx.moveTo(24, waveY);
-                        currentWavePoints.forEach((pt, idx) => {
-                            const px = 24 + (pt.x / 1000) * trackW;
-                            const py = waveY - (pt.y / 100) * waveH;
-                            if (idx === 0) ctx.lineTo(px, py);
-                            else {
-                                const prev = currentWavePoints[idx - 1];
-                                const prevX = 24 + (prev.x / 1000) * trackW;
-                                const prevY = waveY - (prev.y / 100) * waveH;
-                                const cpX = (prevX + px) / 2;
-                                ctx.bezierCurveTo(cpX, prevY, cpX, py, px, py);
-                            }
-                        });
-                        ctx.lineTo(24 + trackW, waveY);
-                        ctx.closePath();
-
-                        const waveGrad = ctx.createLinearGradient(0, waveY - waveH, 0, waveY);
-                        waveGrad.addColorStop(0, 'rgba(24, 119, 242, 0.75)');
-                        waveGrad.addColorStop(1, 'rgba(0, 174, 236, 0.05)');
-                        ctx.fillStyle = waveGrad;
-                        ctx.fill();
-
-                        ctx.strokeStyle = '#60a5fa';
-                        ctx.lineWidth = 2;
-                        ctx.stroke();
-                        ctx.restore();
-                    }
-                    
-                    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-                    ctx.fillRect(24, barY, trackW, barH);
-
-                    const bufferPct = parseInt(inBuffer.value) / 100;
-                    ctx.fillStyle = 'rgba(255,255,255,0.4)';
-                    ctx.fillRect(24, barY, trackW * bufferPct, barH);
-
-                    let curDisplaySec = baseStartSec + Math.floor(previewVideo.currentTime);
-                    let progressPct = totalSec ? Math.min(1, Math.max(0, curDisplaySec / totalSec)) : 0.42;
-                    let dynamicTimeStr = `${secondsToTime(curDisplaySec)} / ${secondsToTime(totalSec)}`;
-
-                    ctx.fillStyle = '#1877F2';
-                    ctx.fillRect(24, barY, trackW * progressPct, barH);
-
-                    ctx.fillStyle = '#fff';
-                    ctx.beginPath();
-                    ctx.arc(24 + trackW * progressPct, barY + (barH / 2), 5, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.fillStyle = '#ffffff';
-                    const iconX = 24;
-                    const iconY = height - 26;
-                    ctx.fillRect(iconX, iconY, 4, 14);
-                    ctx.fillRect(iconX + 8, iconY, 4, 14);
-
-                    ctx.beginPath();
-                    ctx.moveTo(iconX + 22, iconY + 1); ctx.lineTo(iconX + 31, iconY + 7); ctx.lineTo(iconX + 22, iconY + 13);
-                    ctx.fill();
-                    ctx.fillRect(iconX + 32, iconY + 1, 2.5, 12);
-
-                    ctx.font = '12px monospace';
-                    ctx.fillStyle = '#d0d4dc';
-                    ctx.fillText(dynamicTimeStr, iconX + 44, height - 16);
-
-                    if (document.getElementById('sw-danmaku-input-bar')?.checked) {
-                        const inputX = iconX + 215;
-                        const inputW = 220;
-                        const inputH = 24;
-                        const inputY = height - 28;
-
-                        if (document.getElementById('sw-danmaku-btn-toggle')?.checked) {
-                            ctx.fillStyle = document.getElementById('sw-danmaku')?.checked ? '#00aeec' : 'rgba(255,255,255,0.15)';
-                            ctx.beginPath();
-                            ctx.roundRect(inputX - 32, inputY, 24, inputH, 4);
-                            ctx.fill();
-                            ctx.fillStyle = '#fff';
-                            ctx.font = 'bold 10.5px sans-serif';
-                            ctx.fillText('彈', inputX - 25, inputY + 16);
-                        }
-
-                        ctx.fillStyle = 'rgba(255,255,255,0.14)';
-                        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-                        ctx.beginPath();
-                        ctx.roundRect(inputX, inputY, inputW, inputH, 12);
-                        ctx.fill(); ctx.stroke();
-
-                        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-                        ctx.font = '10.5px sans-serif';
-                        ctx.fillText(dispDanmakuInputVal.value || '太頂了，已備好衛生紙...', inputX + 12, inputY + 16);
-
-                        ctx.fillStyle = '#00aeec';
-                        ctx.beginPath();
-                        ctx.roundRect(inputX + inputW - 46, inputY + 2, 42, inputH - 4, 10);
-                        ctx.fill();
-                        ctx.fillStyle = '#fff';
-                        ctx.font = 'bold 10px sans-serif';
-                        ctx.fillText('發送', inputX + inputW - 35, inputY + 15);
-                    }
-
-                    if (document.getElementById('sw-bot-danmaku-count')?.checked) {
-                        const botDanmakuVal = document.getElementById('disp-bot-danmaku-count').textContent;
-                        ctx.font = '12px sans-serif';
-                        ctx.fillStyle = '#d0d4dc';
-                        ctx.fillText(botDanmakuVal, width - 290, height - 16);
-                    }
-
-                    ctx.font = '12px sans-serif';
-                    ctx.fillStyle = '#d0d4dc';
-                    ctx.fillText('倍速 1.0X', width - 195, height - 16);
-
-                    if (document.getElementById('sw-bot-res')?.checked) {
-                        const resVal = document.getElementById('disp-bot-res').textContent;
-                        ctx.font = 'bold 10px sans-serif';
-                        const textW = ctx.measureText(resVal).width;
-                        const boxW = textW + 16;
-                        const boxX = width - 42 - boxW;
-
-                        ctx.fillStyle = '#1877F2';
-                        ctx.beginPath();
-                        ctx.roundRect(boxX, height - 28, boxW, 20, 4);
-                        ctx.fill();
-
-                        ctx.fillStyle = '#fff';
-                        ctx.fillText(resVal, boxX + 8, height - 14);
-                    }
-
-                    ctx.strokeStyle = '#d0d4dc';
-                    ctx.lineWidth = 1.8;
-                    ctx.strokeRect(width - 32, height - 26, 12, 12);
-                }
-
                 requestAnimationFrame(drawFrame);
             };
-
             drawFrame();
 
-            setTimeout(() => {
-                isRecording = false;
-                recorder.stop();
-            }, 5000);
-
+            setTimeout(() => { isRecording = false; recorder.stop(); }, recordLen);
         } catch (err) {
-            console.error(err);
-            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 合成下载带框视频 (带原声)`;
-            btn.disabled = false;
-            // 【关键修复 4】抛出真实的系统错误内容，告别盲目报错
-            showToast(`导出失败: ${err.message || '浏览器不兼容录制功能'}`);
+            btn.innerHTML = '导出视频(带原声)'; btn.disabled = false;
+            alert('浏览器导出异常，请尝试更换 Chrome 浏览器。');
         }
     });
 </script>
