@@ -4,469 +4,1014 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Laya 播放器 · 视频暂停界面生成器</title>
-    <!-- 引入高兼容性 html2canvas -->
+    <!-- 引入 Tailwind CSS 库 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入高兼容度 html2canvas 图像渲染引擎 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <style>
-        :root {
-            --primary: #1877F2;
-            --primary-hover: #166fe5;
-            --bg-dark: #0b0d11;
-            --panel-bg: #16181f;
-            --border-color: #262a34;
-            --text-main: #f0f2f5;
-            --text-muted: #8b92a0;
-        }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
-        body { background: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* 顶部导航 (简体中文) */
-        header {
-            height: 52px; background: var(--panel-bg); border-bottom: 1px solid var(--border-color);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 10;
-        }
-        .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
-        .brand-logo { width: 30px; height: 30px; border-radius: 7px; }
-        .nav-actions { display: flex; gap: 10px; }
-        .btn {
-            display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px;
-            font-size: 13px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s;
-        }
-        .btn-upload { background: #2ecc71; color: #fff; }
-        .btn-upload:hover { background: #27ae60; }
-        .btn-save { background: var(--primary); color: #fff; }
-        .btn-save:hover { background: var(--primary-hover); }
-
-        /* 工作台 */
-        main { display: flex; flex: 1; overflow: hidden; }
-        .workspace {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
-            padding-top: 18px; background: #07080a; position: relative; overflow-y: auto;
-        }
-
-        /* 视口切换器 */
-        .viewport-tabs {
-            display: flex; background: var(--panel-bg); padding: 4px; border-radius: 8px;
-            border: 1px solid var(--border-color); gap: 4px; margin-bottom: 14px;
-        }
-        .tab-btn {
-            padding: 6px 14px; background: transparent; border: none; color: var(--text-muted);
-            border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;
-        }
-        .tab-btn.active { background: var(--primary); color: #fff; }
-
-        /* 播放器舞台 (导出的目标元素) */
-        .player-box {
-            position: relative; overflow: hidden; background: #000;
-            box-shadow: 0 12px 36px rgba(0,0,0,0.7);
-            user-select: none;
-        }
-        .mode-pc { width: 920px; aspect-ratio: 16 / 9; border-radius: 6px; }
-        .mode-mobile-land { width: 940px; aspect-ratio: 19.5 / 9; border-radius: 16px; }
-        .mode-mobile-port { height: 600px; aspect-ratio: 9 / 16; border-radius: 16px; }
-
-        /* 视频底图 */
-        .player-bg {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover; z-index: 1;
-        }
-
-        /* 顶部真实流媒体 HUD */
-        .player-top {
-            position: absolute; top: 0; left: 0; right: 0; z-index: 3;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%);
-            padding: 14px 20px 24px 20px;
-        }
-        .top-first-row {
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .top-left-group {
-            display: flex; align-items: center; gap: 10px;
-        }
-        .back-icon {
-            color: #fff; display: flex; align-items: center; opacity: 0.9; cursor: pointer;
-        }
-
-        /* 品牌标 */
-        .laya-brand-badge {
-            background: rgba(13, 91, 225, 0.4); border: 1px solid rgba(61, 136, 253, 0.5);
-            padding: 3px 8px 3px 5px; border-radius: 20px; display: flex; align-items: center; gap: 5px;
-        }
-        .mini-laya-logo { width: 18px; height: 18px; border-radius: 4px; }
-        .laya-badge-text { font-size: 11px; font-weight: 700; color: #fff; letter-spacing: 0.2px; }
-
-        /* 免費通道标 (第一行徽章) */
-        .free-channel-pill {
-            background: linear-gradient(90deg, rgba(230, 126, 34, 0.35), rgba(243, 156, 18, 0.2));
-            border: 1px solid rgba(243, 156, 18, 0.6);
-            padding: 3px 8px; border-radius: 14px; font-size: 11px; font-weight: 700; color: #f39c12;
-            display: flex; align-items: center; gap: 4px;
-        }
-
-        /* 主标题与 VIP 标 */
-        .video-title { font-size: 13.5px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-        .vip-tag {
-            background: #d48806; color: #fff; font-size: 9.5px; font-weight: 800;
-            padding: 2px 5px; border-radius: 3px; letter-spacing: 0.5px;
-        }
-
-        /* 顶部右侧系统控制项 */
-        .top-right-group {
-            display: flex; align-items: center; gap: 14px; font-size: 11px; color: #d0d4dc;
-        }
-        .status-dot-item { display: flex; align-items: center; gap: 5px; }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
-
-        /* 第二行：精炼通知横幅 (彻底杜绝文字压扁被切的 Bug) */
-        .banner-container {
-            margin-top: 10px;
-            display: flex;
-        }
-        .notice-banner {
-            background: rgba(18, 20, 26, 0.85);
-            border: 1px solid rgba(243, 156, 18, 0.45);
-            border-radius: 6px;
-            padding: 5px 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        }
-        .banner-icon { font-size: 12px; line-height: 1; }
-        .banner-text {
-            font-size: 11px;
-            font-weight: 500;
-            color: #f1f2f6;
-            line-height: 18px; /* 固化行高，解决切字 */
-            letter-spacing: 0.3px;
-            white-space: nowrap;
-        }
-        .banner-text strong { color: #f39c12; font-weight: 700; }
-        .banner-badge {
-            background: rgba(243, 156, 18, 0.2);
-            color: #f39c12;
-            border: 1px solid rgba(243, 156, 18, 0.4);
-            font-size: 10px;
-            font-weight: 700;
-            padding: 1px 6px;
-            border-radius: 4px;
-            line-height: 14px;
-            margin-left: 4px;
-        }
-
-        /* 居中播放/暂停按钮 */
-        .center-pause-wrap {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 3; display: flex; flex-direction: column; align-items: center; cursor: pointer;
-        }
-        .play-circle {
-            width: 54px; height: 54px; border-radius: 50%;
-            background: rgba(15, 18, 24, 0.6);
-            border: 1.5px solid rgba(255, 255, 255, 0.35);
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        .play-triangle {
-            width: 0; height: 0;
-            border-top: 9px solid transparent;
-            border-bottom: 9px solid transparent;
-            border-left: 15px solid #fff;
-            margin-left: 3px;
-        }
-        .pause-pill {
-            margin-top: 8px;
-            background: rgba(15, 18, 24, 0.7);
-            border: 1px solid rgba(255,255,255,0.15);
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            color: #e5e9f0;
-            line-height: 16px;
-        }
-
-        /* 底部控制栏 */
-        .player-bottom {
-            position: absolute; bottom: 0; left: 0; right: 0; z-index: 3;
-            background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 100%);
-            padding: 16px 20px 10px 20px;
-            display: flex; flex-direction: column; gap: 8px;
-        }
-        .progress-bar-wrap {
-            position: relative; width: 100%; height: 4px; background: rgba(255,255,255,0.25);
-            border-radius: 2px; cursor: pointer;
-        }
-        .progress-bar-fill {
-            height: 100%; background: #1877F2; border-radius: 2px; position: relative; width: 34%;
-        }
-        .progress-scrubber {
-            position: absolute; right: -5px; top: -3px; width: 10px; height: 10px;
-            background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,0.8);
-        }
-        .bottom-ctrl-row {
-            display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #d0d4dc;
-        }
-        .ctrl-left { display: flex; align-items: center; gap: 14px; }
-        .time-label { font-family: monospace; font-size: 11px; letter-spacing: 0.5px; }
-        .ctrl-right { display: flex; align-items: center; gap: 14px; }
-        .res-tag {
-            background: #1877F2; color: #fff; font-size: 10px; font-weight: 700;
-            padding: 2px 7px; border-radius: 4px;
-        }
-
-        /* 右侧管理后台 (标准简体中文) */
-        .sidebar {
-            width: 330px; background: var(--panel-bg); border-left: 1px solid var(--border-color);
-            padding: 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
-        }
-        .panel-title { font-size: 13px; font-weight: 700; color: #fff; border-left: 3px solid var(--primary); padding-left: 8px; }
-        .form-item { display: flex; flex-direction: column; gap: 6px; }
-        .form-item label { font-size: 12px; color: var(--text-muted); font-weight: 600; }
-        .form-item input[type="text"] {
-            background: #0f1115; border: 1px solid var(--border-color); color: #fff;
-            padding: 8px 10px; border-radius: 5px; font-size: 12.5px; outline: none;
-        }
-        .form-item input[type="range"] { accent-color: var(--primary); }
-        .range-header { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
-        .switch-wrap { display: flex; align-items: center; justify-content: space-between; font-size: 12px; }
-    </style>
-</head>
-<body>
-
-<header>
-    <div class="brand">
-        <!-- 还原 Laya 官方图标 -->
-        <svg class="brand-logo" viewBox="0 0 100 100">
-            <rect width="100" height="100" rx="22" fill="#0D5BE1"/>
-            <circle cx="50" cy="50" r="32" fill="#2172F5"/>
-            <circle cx="50" cy="50" r="20" fill="#3D88FD"/>
-            <text x="50" y="58" font-size="24" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle" stroke="#000" stroke-width="2.5">Laya</text>
-        </svg>
-        <span>Laya 播放器 · 暂停截图生成器</span>
-    </div>
-    <div class="nav-actions">
-        <input type="file" id="file-uploader" accept="image/*" style="display: none;">
-        <button class="btn btn-upload" onclick="document.getElementById('file-uploader').click()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            上传视频截图
-        </button>
-        <button class="btn btn-save" id="btn-save-main">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            保存高清图片
-        </button>
-    </div>
-</header>
-
-<main>
-    <div class="workspace">
-        <!-- 视口切换器 -->
-        <div class="viewport-tabs">
-            <button class="tab-btn active" data-mode="mode-pc">电脑网页端 (16:9)</button>
-            <button class="tab-btn" data-mode="mode-mobile-land">手机横屏 (19.5:9)</button>
-            <button class="tab-btn" data-mode="mode-mobile-port">手机竖屏 (9:16)</button>
-        </div>
-
-        <!-- 截图渲染目标 -->
-        <div class="player-box mode-pc" id="render-target">
-            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg" id="preview-img">
-
-            <!-- 顶部 HUD (纯正繁体中文) -->
-            <div class="player-top">
-                <div class="top-first-row">
-                    <div class="top-left-group">
-                        <div class="back-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-                        </div>
-                        
-                        <!-- Laya 品牌标 -->
-                        <div class="laya-brand-badge">
-                            <svg class="mini-laya-logo" viewBox="0 0 100 100">
-                                <rect width="100" height="100" rx="20" fill="#0D5BE1"/>
-                                <text x="50" y="58" font-size="28" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle" stroke="#000" stroke-width="2">Laya</text>
-                            </svg>
-                            <span class="laya-badge-text" id="disp-laya-label">Laya 獨家私密視頻</span>
-                        </div>
-
-                        <!-- 免費通道标 -->
-                        <div class="free-channel-pill" id="disp-free-pill">
-                            <span>🔥</span>
-                            <span id="disp-free-pill-text">免費通道</span>
-                        </div>
-
-                        <!-- 标题与 VIP -->
-                        <span class="video-title" id="disp-title">XXXX · 4K 極限視界</span>
-                        <span class="vip-tag">VIP 原畫</span>
-                    </div>
-
-                    <!-- 右侧控制 -->
-                    <div class="top-right-group">
-                        <div class="status-dot-item">
-                            <span class="status-dot"></span>
-                            <span>原畫質連線</span>
-                        </div>
-                        <span>音軌</span>
-                        <div style="display: flex; align-items: center; gap: 4px;">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                            <span>設置</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 第二行：精炼通知横幅 (绝不切字) -->
-                <div class="banner-container" id="wrap-banner">
-                    <div class="notice-banner">
-                        <span class="banner-icon">🎁</span>
-                        <div class="banner-text">
-                            <strong>【免費通道】限時特權：</strong><span id="disp-banner-body">已解鎖完整無碼未刪減版，點擊任意處播放</span>
-                        </div>
-                        <span class="banner-badge">特權生效中</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 居中暂停/播放按钮 -->
-            <div class="center-pause-wrap">
-                <div class="play-circle">
-                    <div class="play-triangle"></div>
-                </div>
-                <div class="pause-pill">點擊繼續播放</div>
-            </div>
-
-            <!-- 底部控制条 (纯正繁体中文) -->
-            <div class="player-bottom">
-                <div class="progress-bar-wrap">
-                    <div class="progress-bar-fill" id="disp-progress-bar" style="width: 34%;">
-                        <div class="progress-scrubber"></div>
-                    </div>
-                </div>
-                <div class="bottom-ctrl-row">
-                    <div class="ctrl-left">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="#fff" stroke-width="2"/></svg>
-                        <span class="time-label" id="disp-time">00:03:33 / 01:28:45</span>
-                    </div>
-                    <div class="ctrl-right">
-                        <span>● 彈幕 1.8W</span>
-                        <span>倍速 1.0X</span>
-                        <span class="res-tag">Laya 藍光 4K ▾</span>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 右侧管理后台 (全中文简体) -->
-    <div class="sidebar">
-        <div class="panel-title">视频与品牌文案</div>
-        <div class="form-item">
-            <label>视频名称 (主标题)</label>
-            <input type="text" id="in-title" value="XXXX · 4K 極限視界">
-        </div>
-        <div class="form-item">
-            <label>Laya 品牌标文案</label>
-            <input type="text" id="in-laya-label" value="Laya 獨家私密視頻">
-        </div>
-
-        <div class="panel-title" style="margin-top: 8px;">免费通道与特权横幅</div>
-        <div class="form-item">
-            <label>顶部胶囊文本</label>
-            <input type="text" id="in-free-pill" value="免費通道">
-        </div>
-        <div class="form-item">
-            <label>横幅正文说明</label>
-            <input type="text" id="in-banner-body" value="已解鎖完整無碼未刪減版，點擊任意處播放">
-        </div>
-        <div class="switch-wrap">
-            <label style="font-size: 12px; color: var(--text-muted);">显示第二行横幅</label>
-            <input type="checkbox" id="switch-banner" checked>
-        </div>
-
-        <div class="panel-title" style="margin-top: 8px;">时间与进度</div>
-        <div class="form-item">
-            <label>时间码</label>
-            <input type="text" id="in-time" value="00:03:33 / 01:28:45">
-        </div>
-        <div class="form-item">
-            <div class="range-header">
-                <label>播放进度条</label>
-                <span id="txt-progress">34%</span>
-            </div>
-            <input type="range" id="in-progress" min="0" max="100" value="34">
-        </div>
-    </div>
-</main>
-
-<script>
-    // 视口切换
-    const renderTarget = document.getElementById('render-target');
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderTarget.className = `player-box ${btn.dataset.mode}`;
-        });
-    });
-
-    // 图片上传与剪贴板直接粘贴
-    const fileUploader = document.getElementById('file-uploader');
-    const previewImg = document.getElementById('preview-img');
-
-    const handleImg = (file) => {
-        if (!file || !file.type.startsWith('image/')) return;
-        const reader = new FileReader();
-        reader.onload = (e) => { previewImg.src = e.target.result; };
-        reader.readAsDataURL(file);
-    };
-
-    fileUploader.addEventListener('change', (e) => handleImg(e.target.files[0]));
-
-    window.addEventListener('paste', (e) => {
-        const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-        for (const item of items) {
-            if (item.type.indexOf('image') !== -1) {
-                handleImg(item.getAsFile());
-                break;
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        laya: {
+                            blue: '#0D5BE1',
+                            light: '#2575fc',
+                            gold: '#f59e0b',
+                            dark: '#080a0f'
+                        },
+                        studio: {
+                            base: '#080a10',
+                            panel: '#11141c',
+                            card: '#161b26',
+                            border: '#232a3b',
+                            hover: '#2a3347'
+                        }
+                    }
+                }
             }
         }
-    });
+    </script>
 
-    // 动态文字绑定
-    const bindText = (inId, outId) => {
-        document.getElementById(inId).addEventListener('input', (e) => {
-            document.getElementById(outId).textContent = e.target.value;
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Noto+Sans+TC:wght@500;700;900&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        }
+
+        /* 专门为播放器繁体中文设计的字体栈，彻底杜绝文字上下边缘被切断或压扁 */
+        .player-tc-font {
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Plus Jakarta Sans", sans-serif;
+            text-rendering: geometricPrecision;
+            line-height: 1.4 !important;
+        }
+
+        /* 强化繁体文字安全容器，保证所有文字在任何缩放倍率下上下均有安全呼吸区 */
+        .tc-safe {
+            line-height: 1.45 !important;
+            display: inline-flex;
+            align-items: center;
+            padding-top: 1px;
+            padding-bottom: 1px;
+        }
+
+        /* 隐藏滚动条但保留滚动功能 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* 底图高质量渲染增强 */
+        .crisp-canvas-img {
+            image-rendering: -webkit-optimize-contrast;
+            image-rendering: crisp-edges;
+            object-fit: cover;
+        }
+
+        /* 滑块控件现代样式 */
+        input[type="range"] {
+            -webkit-appearance: none;
+            background: #1c2438;
+            height: 4px;
+            border-radius: 9999px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 6px rgba(59, 130, 246, 0.7);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+
+        /* 电影级微光阴影渐变 */
+        .vignette-ambient {
+            background: linear-gradient(180deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0) 24%, rgba(0,0,0,0) 72%, rgba(0,0,0,0.85) 100%);
+        }
+
+        /* iOS 质感紧凑微动开关 */
+        .switch-toggle {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+        .switch-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #262e42;
+            transition: .2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 9999px;
+        }
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #cbd5e1;
+            transition: .2s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 50%;
+        }
+        input:checked + .switch-slider {
+            background-color: #2563eb;
+        }
+        input:checked + .switch-slider:before {
+            transform: translateX(14px);
+            background-color: #ffffff;
+        }
+
+        /* 免費通道呼吸金光动画 */
+        @keyframes vipPulse {
+            0%, 100% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.35); }
+            50% { box-shadow: 0 0 12px rgba(245, 158, 11, 0.7); }
+        }
+        .vip-glow {
+            animation: vipPulse 2.8s infinite ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="bg-studio-base text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- 隐藏式文件输入控件 -->
+    <input type="file" id="global-uploader" accept="image/*" class="hidden">
+
+    <!-- 顶部操作导航栏 (标准简体中文) -->
+    <header class="h-14 border-b border-studio-border bg-[#0b0e17] px-4 sm:px-6 flex items-center justify-between z-30 sticky top-0 shadow-lg flex-shrink-0">
+        <div class="flex items-center space-x-3">
+            <!-- Laya 官方立体矢量徽标 -->
+            <div class="w-8 h-8 rounded-xl overflow-hidden shadow-md shadow-blue-600/40 flex-shrink-0 ring-1 ring-blue-400/50">
+                <svg viewBox="0 0 100 100" class="w-full h-full">
+                    <defs>
+                        <radialGradient id="hdrLayaGrad" cx="50%" cy="50%" r="50%">
+                            <stop offset="0%" stop-color="#4e8dff"/>
+                            <stop offset="50%" stop-color="#1a68fa"/>
+                            <stop offset="90%" stop-color="#0a4cd0"/>
+                            <stop offset="100%" stop-color="#053bb0"/>
+                        </radialGradient>
+                    </defs>
+                    <rect width="100" height="100" rx="22" fill="url(#hdrLayaGrad)"/>
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="5"/>
+                    <circle cx="50" cy="50" r="25" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="4"/>
+                    <g transform="translate(11, 63) rotate(-6) skewX(-7)">
+                        <text x="2" y="3" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#000" letter-spacing="-1">Laya</text>
+                        <text x="0" y="0" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#ffffff" stroke="#000" stroke-width="4.5" paint-order="stroke fill" letter-spacing="-1">Laya</text>
+                    </g>
+                </svg>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-sm sm:text-base font-extrabold text-white tracking-wide">Laya 播放器 · 视频暂停界面生成器</h1>
+                    <span class="text-[10px] bg-blue-600/90 text-blue-100 font-bold px-1.5 py-0.5 rounded border border-blue-400/40">Studio 4K Ultra</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 顶部操作快捷键 -->
+        <div class="flex items-center gap-2.5">
+            <button id="btn-top-upload" class="flex items-center space-x-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition transform active:scale-95 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>上传视频截图</span>
+            </button>
+
+            <button id="btn-top-save" class="flex items-center space-x-1.5 px-4 py-1.5 bg-gradient-to-r from-blue-600 via-laya-blue to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-extrabold rounded-lg shadow-md shadow-blue-500/30 transition transform active:scale-95 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>保存高清图片 (PNG)</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        
+        <!-- 左侧画布工作区：大画面高占比视口 -->
+        <main class="flex-1 bg-[#05060a] px-3 sm:px-6 pt-3 pb-8 flex flex-col items-center justify-start relative overflow-y-auto no-scrollbar">
+            
+            <!-- 视口模式选择与快捷提示栏 (简体中文操作) -->
+            <div class="w-full max-w-[1160px] flex flex-wrap items-center justify-between gap-2.5 mb-2 z-10">
+                <div class="flex items-center bg-studio-panel p-1 rounded-xl border border-studio-border shadow-inner text-xs font-semibold">
+                    <button id="tab-desktop" class="px-3.5 py-1.5 rounded-lg transition text-white bg-blue-600 flex items-center gap-1.5 shadow">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <span>电脑端 16:9 (大幅面)</span>
+                    </button>
+                    <button id="tab-mobile-land" class="px-3.5 py-1.5 rounded-lg transition text-slate-400 hover:text-white flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" transform="rotate(-90 12 12)"/></svg>
+                        <span>手机横屏 19.5:9</span>
+                    </button>
+                    <button id="tab-mobile-port" class="px-3.5 py-1.5 rounded-lg transition text-slate-400 hover:text-white flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        <span>手机竖屏 9:16</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button id="btn-quick-upload" class="text-xs bg-studio-panel hover:bg-studio-hover text-emerald-400 font-semibold px-3 py-1.5 rounded-lg border border-studio-border flex items-center gap-1.5 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <span>更换截图底图</span>
+                    </button>
+                    <div class="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 bg-studio-panel/90 px-3 py-1.5 rounded-lg border border-studio-border">
+                        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>可直接按 <kbd class="px-1.5 py-0.5 bg-slate-800 text-cyan-300 rounded font-mono border border-slate-700">Ctrl+V</kbd> 粘贴</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 播放器渲染导出目标：纯净高质感流媒体架构 (100% 纯正繁体中文内容) -->
+            <div id="player-export-node" class="relative overflow-hidden rounded-xl shadow-2xl transition-all duration-200 ring-1 ring-white/10 bg-black flex items-center justify-center aspect-video w-full max-w-[1160px] select-none player-tc-font">
+                
+                <!-- 1. 视频底图媒体层 (保持 100% 超清原画质) -->
+                <img id="player-bg-image" 
+                     src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1920&q=95" 
+                     alt="Video Screenshot"
+                     class="absolute inset-0 w-full h-full crisp-canvas-img z-0 pointer-events-none"
+                     crossorigin="anonymous"
+                />
+
+                <!-- 电影级微渐变氛围层 -->
+                <div class="absolute inset-0 vignette-ambient pointer-events-none z-[1]"></div>
+                <!-- 调节变暗遮罩 (默认 0%) -->
+                <div id="pause-vignette-mask" class="absolute inset-0 bg-black/0 pointer-events-none z-[2]"></div>
+
+                <!-- ===================================================================================== -->
+                <!-- A. 电脑端播放器 UI 皮肤 (100% 繁体中文，独立布局，去除 backdrop-filter，杜绝文字截断错位) -->
+                <!-- ===================================================================================== -->
+                <div id="skin-desktop" class="absolute inset-0 flex flex-col justify-between z-10 pointer-events-none">
+                    
+                    <!-- 电脑端顶部控制群 -->
+                    <div id="layer-dt-topbar" class="p-4 sm:p-5 bg-gradient-to-b from-black/90 via-black/45 to-transparent flex flex-col gap-2.5 text-white">
+                        <div class="flex items-center justify-between w-full">
+                            <!-- 顶部左侧：返回键 + 品牌标 + 免费通道标 + 视频标题 + VIP 蓝光 -->
+                            <div class="flex items-center gap-3 flex-wrap">
+                                <!-- 返回箭头 -->
+                                <div id="el-dt-back" class="hover:text-blue-400 transition pr-0.5 flex items-center justify-center cursor-pointer">
+                                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                                </div>
+
+                                <!-- Laya 品牌胶囊标签 -->
+                                <div id="el-dt-brand-badge" class="inline-flex items-center gap-2 bg-[#0e1422]/95 px-3 py-1.5 rounded-full border border-blue-400/50 shadow-md">
+                                    <div class="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-white/30">
+                                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                                            <defs>
+                                                <radialGradient id="dtBadgeGrad" cx="50%" cy="50%" r="50%">
+                                                    <stop offset="0%" stop-color="#4e8dff"/>
+                                                    <stop offset="50%" stop-color="#1a68fa"/>
+                                                    <stop offset="100%" stop-color="#053bb0"/>
+                                                </radialGradient>
+                                            </defs>
+                                            <rect width="100" height="100" fill="url(#dtBadgeGrad)"/>
+                                            <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="5"/>
+                                            <g transform="translate(10, 64) rotate(-6) skewX(-7)">
+                                                <text x="2" y="2.5" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#000" letter-spacing="-1">Laya</text>
+                                                <text x="0" y="0" font-family="'Impact', 'Arial Black', sans-serif" font-weight="900" font-size="34" fill="#ffffff" stroke="#000" stroke-width="4.5" paint-order="stroke fill" letter-spacing="-1">Laya</text>
+                                            </g>
+                                        </svg>
+                                    </div>
+                                    <span id="dt-brand-tag" class="text-xs font-bold tracking-wide text-blue-100 tc-safe">Laya 獨家私密視頻</span>
+                                </div>
+
+                                <!-- 【免費通道】精品质感微标 (繁体) -->
+                                <div id="el-dt-free-badge" class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold tracking-wide bg-[#241a0c]/95 text-amber-300 border border-amber-400/60 shadow-md vip-glow">
+                                    <span id="dt-free-tag-text" class="tc-safe">🔥 免費通道</span>
+                                </div>
+
+                                <!-- 视频主标题与清晰度标记 (繁体) -->
+                                <div class="flex items-center gap-2">
+                                    <span id="dt-video-title" class="text-sm font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tc-safe">XXXX · 4K 極限視界</span>
+                                    <span id="el-dt-vip-tag" class="text-[10px] bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black px-2 py-0.5 rounded shadow tc-safe">VIP 原畫</span>
+                                </div>
+                            </div>
+
+                            <!-- 顶部右侧专属电脑端控制 (严格 items-center 居中，绝无文字偏离溢出) -->
+                            <div id="el-dt-top-sys" class="flex items-center gap-5 text-slate-200 text-xs font-medium">
+                                <span class="hover:text-blue-400 cursor-pointer transition inline-flex items-center gap-1.5 tc-safe">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    <span id="dt-status-conn-text">原畫質連線</span>
+                                </span>
+                                <span id="dt-audio-track-text" class="hover:text-blue-400 cursor-pointer transition tc-safe">音軌</span>
+                                <span class="hover:text-blue-400 cursor-pointer transition inline-flex items-center gap-1.5 tc-safe">
+                                    <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
+                                    <span>設置</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 纤薄精致流媒体原生【免費通道】通知横幅 (安全高度与内边距，文字饱满清晰不切字) -->
+                        <div id="el-dt-banner" class="w-full max-w-2xl bg-[#0b101b]/95 border border-amber-500/50 rounded-lg px-4 py-2 flex items-center justify-between text-xs text-amber-100 shadow-xl mt-1">
+                            <div class="flex items-center gap-2.5 overflow-hidden flex-1 mr-3">
+                                <span class="text-sm flex-shrink-0">🎁</span>
+                                <span class="font-medium tracking-wide text-white drop-shadow tc-safe">
+                                    <strong class="text-amber-400 font-bold" id="dt-banner-prefix">【免費通道】限時特權：</strong><span id="dt-banner-body">已解鎖完整無碼未刪減版，點擊任意處立即播放</span>
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <span id="dt-banner-status-tag" class="bg-amber-500/20 text-amber-300 font-bold text-[11px] px-2.5 py-1 rounded border border-amber-400/50 tc-safe">
+                                    特權生效中
+                                </span>
+                                <span class="text-slate-400 hover:text-white text-xs cursor-pointer ml-1">×</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 电脑端居中暂停播放圆钮 (独立开关，无模糊层) -->
+                    <div id="layer-dt-center-btn" class="self-center flex flex-col items-center gap-2.5">
+                        <div id="dt-center-btn" class="w-16 h-16 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center text-white shadow-2xl transition hover:scale-105 cursor-pointer">
+                            <svg class="w-8 h-8 fill-current ml-1" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        </div>
+                        <!-- 文字胶囊设置充裕 padding 与正常行高 -->
+                        <div id="el-dt-center-pill" class="px-4 py-1.5 rounded-full bg-black/75 border border-white/30 text-white text-xs font-semibold tracking-wider shadow-lg flex items-center justify-center">
+                            <span id="dt-center-pill-text" class="tc-safe">點擊繼續播放</span>
+                        </div>
+                    </div>
+
+                    <!-- 电脑端底部专业控制栏 (单一流媒体进度条，绝无双层叠加) -->
+                    <div id="layer-dt-bottombar" class="px-5 pb-4 pt-10 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col gap-2.5">
+                        
+                        <!-- 真实的单个流媒体交互式进度条 -->
+                        <div class="relative w-full h-1.5 group cursor-pointer bg-white/20 rounded-full transition-all hover:h-2">
+                            <div id="dt-buffer-bar" class="absolute left-0 top-0 bottom-0 bg-white/35 rounded-full" style="width: 58%;"></div>
+                            <div id="dt-progress-bar" class="absolute left-0 top-0 bottom-0 bg-gradient-to-r from-blue-500 via-laya-blue to-cyan-400 rounded-full shadow-[0_0_8px_rgba(37,99,235,0.7)]" style="width: 34%;">
+                                <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-white rounded-full shadow-md border-2 border-blue-600 scale-0 group-hover:scale-100 transition-transform"></div>
+                            </div>
+                        </div>
+
+                        <!-- 单排控制器行 (繁体字) -->
+                        <div class="flex items-center justify-between text-white text-xs pt-1">
+                            <!-- 左侧按键与时间码 -->
+                            <div class="flex items-center gap-4">
+                                <button class="hover:text-blue-400 transition cursor-pointer flex items-center justify-center">
+                                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                </button>
+                                <button class="hover:text-blue-400 transition hidden sm:flex items-center justify-center cursor-pointer">
+                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                                </button>
+                                <!-- 音量 -->
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 fill-current text-slate-200" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>
+                                    <div class="w-14 h-1 bg-white/30 rounded-full overflow-hidden hidden sm:block">
+                                        <div class="w-4/5 h-full bg-blue-400"></div>
+                                    </div>
+                                </div>
+                                <!-- 标准唯一时间码 -->
+                                <span class="font-mono text-slate-200 text-xs tracking-wide tc-safe" id="dt-time-text">00:03:33 / 01:28:45</span>
+                            </div>
+
+                            <!-- 右侧画质、倍速、弹幕与全屏 (纯正繁体) -->
+                            <div class="flex items-center gap-3 font-medium">
+                                <div id="el-dt-danmaku" class="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/15 px-2.5 py-1 rounded text-[11px] text-slate-200 cursor-pointer">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    <span id="dt-danmaku-text" class="tc-safe">彈幕 1.8W</span>
+                                </div>
+                                <span id="el-dt-speed" class="bg-white/10 hover:bg-white/15 px-2.5 py-1 rounded text-[11px] cursor-pointer tc-safe">
+                                    <span id="dt-speed-text">倍速 1.0X</span>
+                                </span>
+                                <!-- 正规流媒体画质下拉 -->
+                                <span id="el-dt-quality" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded text-[11px] font-bold shadow-sm flex items-center gap-1.5 cursor-pointer">
+                                    <span id="dt-quality-text" class="tc-safe">Laya 藍光 4K</span>
+                                    <span class="text-[9px]">▾</span>
+                                </span>
+                                <button class="hover:text-blue-400 transition cursor-pointer flex items-center justify-center">
+                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================================================== -->
+                <!-- B. 手机端播放器 UI 皮肤 (独立控制，当切换到手机模式时显示) -->
+                <!-- ===================================================================================== -->
+                <div id="skin-mobile" class="absolute inset-0 flex-col justify-between z-10 pointer-events-none hidden">
+                    
+                    <!-- 手机端顶部：拟真手机状态栏 + 视频控制栏 -->
+                    <div class="pt-2 px-4 pb-4 bg-gradient-to-b from-black/90 via-black/45 to-transparent flex flex-col gap-2.5 text-white">
+                        <!-- 拟真手机状态栏 (时钟、5G、电池) -->
+                        <div id="el-mb-sys-bar" class="flex items-center justify-between text-[11px] font-medium tracking-tight text-slate-200 px-1">
+                            <span id="mb-sys-time" class="font-semibold tc-safe">18:55</span>
+                            <div class="flex items-center gap-2">
+                                <span id="mb-network-text" class="text-[10px] tracking-tighter">5G</span>
+                                <svg class="w-3.5 h-3 fill-current" viewBox="0 0 20 20">
+                                    <rect x="1" y="14" width="3" height="5" rx="0.5"/>
+                                    <rect x="6" y="10" width="3" height="9" rx="0.5"/>
+                                    <rect x="11" y="6" width="3" height="13" rx="0.5"/>
+                                    <rect x="16" y="2" width="3" height="17" rx="0.5"/>
+                                </svg>
+                                <div class="flex items-center gap-0.5">
+                                    <div class="w-5 h-2.5 rounded-sm border border-white/80 p-0.5 flex items-center">
+                                        <div id="mb-battery-fill" class="h-full bg-white rounded-2xs" style="width: 78%;"></div>
+                                    </div>
+                                    <div class="w-0.5 h-1 bg-white/80 rounded-r"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 手机端播放器标题栏 -->
+                        <div class="flex items-center justify-between mt-0.5">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 flex items-center justify-center">
+                                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                                </div>
+                                <span id="mb-video-title" class="text-xs sm:text-sm font-bold text-white drop-shadow truncate max-w-[200px] sm:max-w-xs tc-safe">XXXX · 4K 極限視界</span>
+                                <span id="el-mb-free-badge" class="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded border border-amber-400/40 tc-safe">
+                                    🔥 免費通道
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-3 text-xs">
+                                <span class="tc-safe">投屏</span>
+                                <span class="tc-safe">···</span>
+                            </div>
+                        </div>
+
+                        <!-- 手机端通知横幅 -->
+                        <div id="el-mb-banner" class="w-full bg-[#0b101b]/95 border border-amber-500/40 rounded-lg px-3 py-1.5 flex items-center justify-between text-[11px] text-amber-100 shadow mt-0.5">
+                            <div class="flex items-center gap-1.5 overflow-hidden">
+                                <span>🎁</span>
+                                <span id="mb-banner-body" class="truncate font-medium text-white tc-safe">【免費通道】限時解鎖無碼未刪減版</span>
+                            </div>
+                            <span class="text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded flex-shrink-0 ml-1 tc-safe">特權生效</span>
+                        </div>
+                    </div>
+
+                    <!-- 手机端居中暂停键 -->
+                    <div id="layer-mb-center-btn" class="self-center flex flex-col items-center gap-2">
+                        <div id="mb-center-btn" class="w-14 h-14 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center text-white shadow-2xl">
+                            <svg class="w-7 h-7 fill-current ml-1" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        </div>
+                        <div id="el-mb-center-pill" class="px-3 py-1 rounded-full bg-black/75 border border-white/30 text-white text-[11px] font-medium flex items-center justify-center">
+                            <span id="mb-center-pill-text" class="tc-safe">點擊繼續播放</span>
+                        </div>
+                    </div>
+
+                    <!-- 手机端底部紧凑控制条 -->
+                    <div id="layer-mb-bottombar" class="px-4 pb-3 pt-6 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col gap-2">
+                        <div class="relative w-full h-1 bg-white/20 rounded-full">
+                            <div id="mb-progress-bar" class="absolute left-0 top-0 bottom-0 bg-blue-500 rounded-full" style="width: 34%;">
+                                <div class="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-white rounded-full shadow"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between text-white text-[11px]">
+                            <span id="mb-time-text" class="font-mono tc-safe">00:03:33 / 01:28:45</span>
+                            <div class="flex items-center gap-3">
+                                <span class="tc-safe">彈幕</span>
+                                <span class="bg-blue-600 px-2 py-0.5 rounded font-bold text-[10px] tc-safe">Laya 超清 4K</span>
+                                <span>⛶</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+        <!-- 右侧属性配置控制台 (100% 简体中文后台操作界面) -->
+        <aside class="w-full lg:w-[410px] bg-studio-panel border-t lg:border-t-0 lg:border-l border-studio-border p-4 sm:p-5 overflow-y-auto no-scrollbar flex flex-col gap-5 flex-shrink-0 z-20">
+            
+            <!-- 核心快捷操作 -->
+            <div class="grid grid-cols-2 gap-2.5">
+                <button id="btn-side-upload" class="flex items-center justify-center gap-2 py-2.5 px-3 bg-emerald-600/90 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg border border-emerald-500/40 shadow transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span>上传截图底图</span>
+                </button>
+                <button id="btn-side-save" class="flex items-center justify-center gap-2 py-2.5 px-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-extrabold rounded-lg shadow-md transition cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                    <span>导出高清图片</span>
+                </button>
+            </div>
+
+            <!-- 1. 全局元素显示开关矩阵 -->
+            <div class="bg-studio-card p-3.5 rounded-xl border border-studio-border flex flex-col gap-2.5">
+                <div class="flex items-center justify-between border-b border-studio-border/70 pb-2">
+                    <span class="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        播放器元素显隐控制 (开关矩阵)
+                    </span>
+                    <span class="text-[10px] text-slate-400">实时生效</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-x-3 gap-y-2 pt-1 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">中央暂停按键</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-center-btn" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">继续播放胶囊字</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-center-pill" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">第二行限免横幅</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-banner" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">免费通道微标</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-free-badge" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">Laya 品牌标签</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-brand-badge" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">VIP 原画标</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-vip-tag" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">顶部返回箭头</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-back" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">右上系统状态栏</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-top-sys" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">底部整体控制栏</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-bottombar" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-300">弹幕 / 倍速 / 画质</span>
+                        <label class="switch-toggle">
+                            <input type="checkbox" id="sw-ctrl-tags" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. 视频与品牌文案编辑 (输出繁体) -->
+            <div class="bg-studio-card p-3.5 rounded-xl border border-studio-border flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-studio-border/70 pb-2">
+                    <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                        视频与品牌文案编辑
+                    </span>
+                    <span class="text-[10px] text-cyan-400">导出的文字为繁体</span>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-300">视频主标题</label>
+                    <input type="text" id="in-video-title" value="XXXX · 4K 極限視界" 
+                           class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-300">Laya 品牌标文案</label>
+                        <input type="text" id="in-brand-tag" value="Laya 獨家私密視頻" 
+                               class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-blue-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-300">VIP 标识文案</label>
+                        <input type="text" id="in-vip-tag" value="VIP 原畫" 
+                               class="w-full bg-studio-panel border border-studio-border text-amber-300 text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-amber-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. 免费通道与限免横幅文案 -->
+            <div class="bg-studio-card p-3.5 rounded-xl border border-studio-border flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-studio-border/70 pb-2">
+                    <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                        免费通道与特权横幅设置
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-300">微标文案</label>
+                        <input type="text" id="in-free-pill" value="🔥 免費通道" 
+                               class="w-full bg-studio-panel border border-studio-border text-amber-300 text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-amber-500">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[11px] font-semibold text-slate-300">横幅右侧状态标</label>
+                        <input type="text" id="in-banner-tag" value="特權生效中" 
+                               class="w-full bg-studio-panel border border-studio-border text-amber-300 text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-amber-500">
+                    </div>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-300">横幅正文说明</label>
+                    <textarea id="in-banner-body" rows="2" 
+                              class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-amber-500 resize-none">已解鎖完整無碼未刪減版，點擊任意處立即播放</textarea>
+                </div>
+            </div>
+
+            <!-- 4. 中央暂停按钮细节定制 -->
+            <div class="bg-studio-card p-3.5 rounded-xl border border-studio-border flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-studio-border/70 pb-2">
+                    <span class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                        中央暂停键细节调节
+                    </span>
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-300">胶囊说明文本</label>
+                    <input type="text" id="in-center-pill-text" value="點擊繼續播放" 
+                           class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-indigo-500">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[11px] text-slate-300">
+                        <span>按键尺寸大小</span>
+                        <span id="txt-btn-size" class="font-mono text-indigo-400">64px</span>
+                    </div>
+                    <input type="range" id="in-btn-size" min="36" max="92" value="64" class="w-full">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[11px] text-slate-300">
+                        <span>画面变暗遮罩 (暗角)</span>
+                        <span id="txt-vignette" class="font-mono text-indigo-400">0%</span>
+                    </div>
+                    <input type="range" id="in-vignette" min="0" max="80" value="0" class="w-full">
+                </div>
+            </div>
+
+            <!-- 5. 播放时间与进度控制 -->
+            <div class="bg-studio-card p-3.5 rounded-xl border border-studio-border flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-studio-border/70 pb-2">
+                    <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                        播放时间码与双进度条
+                    </span>
+                    <span id="txt-progress" class="text-xs font-mono font-bold text-emerald-400">34%</span>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[11px] text-slate-300">
+                        <span>当前播放进度</span>
+                        <span id="txt-progress-val" class="font-mono">34%</span>
+                    </div>
+                    <input type="range" id="in-progress" min="0" max="100" value="34" class="w-full">
+                </div>
+
+                <div class="space-y-1">
+                    <div class="flex justify-between text-[11px] text-slate-300">
+                        <span>缓冲预加载条</span>
+                        <span id="txt-buffer-val" class="font-mono">58%</span>
+                    </div>
+                    <input type="range" id="in-buffer" min="0" max="100" value="58" class="w-full">
+                </div>
+
+                <div class="space-y-1">
+                    <label class="text-[11px] font-semibold text-slate-300">播放时间码字符串</label>
+                    <input type="text" id="in-time-code" value="00:03:33 / 01:28:45" 
+                           class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2.5 py-1.5 outline-none font-mono focus:border-emerald-500">
+                </div>
+            </div>
+
+            <!-- 6. 底部状态与操作文案定制 -->
+            <div class="bg-studio-card p-3.5 rounded-xl border border-studio-border flex flex-col gap-3">
+                <div class="flex items-center justify-between border-b border-studio-border/70 pb-2">
+                    <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                        <span class="w-1.5 h-1.5 rounded-full bg-pink-500"></span>
+                        控制栏标签文字编辑
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400">画质标签</label>
+                        <input type="text" id="in-quality-text" value="Laya 藍光 4K" 
+                               class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2 py-1 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400">倍速标签</label>
+                        <input type="text" id="in-speed-text" value="倍速 1.0X" 
+                               class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2 py-1 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400">弹幕标签</label>
+                        <input type="text" id="in-danmaku-text" value="彈幕 1.8W" 
+                               class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2 py-1 outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400">音轨文案</label>
+                        <input type="text" id="in-audio-text" value="音軌" 
+                               class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2 py-1 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400">手机电池电量</label>
+                        <input type="range" id="in-battery" min="1" max="100" value="78" class="w-full">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] text-slate-400">手机系统时间</label>
+                        <input type="text" id="in-sys-time" value="18:55" 
+                               class="w-full bg-studio-panel border border-studio-border text-white text-xs rounded-lg px-2 py-1 outline-none font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 全局大通栏保存按钮 -->
+            <button id="btn-bottom-save" class="w-full py-3.5 bg-gradient-to-r from-blue-600 via-laya-blue to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-extrabold rounded-xl shadow-lg shadow-blue-600/30 transition transform active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2 mt-auto">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>保存高清截图 (2.5X 无损 PNG)</span>
+            </button>
+        </aside>
+
+    </div>
+
+    <!-- 简易 Toast 提示浮层 -->
+    <div id="toast-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900/95 border border-white/20 text-white text-xs sm:text-sm font-medium px-4 py-2 rounded-xl shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+        <span id="toast-icon">✨</span>
+        <span id="toast-text">提示信息</span>
+    </div>
+
+    <script>
+        // 获取主要容器节点
+        const playerNode = document.getElementById('player-export-node');
+        const bgImage = document.getElementById('player-bg-image');
+        const vignetteMask = document.getElementById('pause-vignette-mask');
+        const fileUploader = document.getElementById('global-uploader');
+
+        // 皮肤容器
+        const skinDesktop = document.getElementById('skin-desktop');
+        const skinMobile = document.getElementById('skin-mobile');
+
+        // 视口按钮
+        const tabDesktop = document.getElementById('tab-desktop');
+        const tabMobileLand = document.getElementById('tab-mobile-land');
+        const tabMobilePort = document.getElementById('tab-mobile-port');
+
+        // Toast 浮层提示
+        let toastTimer = null;
+        function showToast(text, icon = '✅') {
+            const toast = document.getElementById('toast-message');
+            document.getElementById('toast-text').textContent = text;
+            document.getElementById('toast-icon').textContent = icon;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2300);
+        }
+
+        // 视口模式切换 (电脑大屏 16:9 / 手机横屏 19.5:9 / 手机竖屏 9:16)
+        function switchViewport(mode) {
+            [tabDesktop, tabMobileLand, tabMobilePort].forEach(b => {
+                b.className = 'px-3.5 py-1.5 rounded-lg transition text-slate-400 hover:text-white flex items-center gap-1.5';
+            });
+
+            if (mode === 'desktop') {
+                tabDesktop.className = 'px-3.5 py-1.5 rounded-lg transition text-white bg-blue-600 flex items-center gap-1.5 shadow';
+                playerNode.style.maxWidth = '1160px';
+                playerNode.style.width = '100%';
+                playerNode.style.height = 'auto';
+                playerNode.style.aspectRatio = '16 / 9';
+                playerNode.style.borderRadius = '0.75rem';
+
+                skinDesktop.classList.remove('hidden');
+                skinDesktop.classList.add('flex');
+                skinMobile.classList.remove('flex');
+                skinMobile.classList.add('hidden');
+                showToast('已切换至电脑端 16:9 大幅面', '💻');
+            } else if (mode === 'mobile-land') {
+                tabMobileLand.className = 'px-3.5 py-1.5 rounded-lg transition text-white bg-blue-600 flex items-center gap-1.5 shadow';
+                playerNode.style.maxWidth = '1040px';
+                playerNode.style.width = '100%';
+                playerNode.style.height = 'auto';
+                playerNode.style.aspectRatio = '19.5 / 9';
+                playerNode.style.borderRadius = '1.25rem';
+
+                skinDesktop.classList.remove('flex');
+                skinDesktop.classList.add('hidden');
+                skinMobile.classList.remove('hidden');
+                skinMobile.classList.add('flex');
+                showToast('已切换至手机横屏 19.5:9', '📱');
+            } else if (mode === 'mobile-port') {
+                tabMobilePort.className = 'px-3.5 py-1.5 rounded-lg transition text-white bg-blue-600 flex items-center gap-1.5 shadow';
+                playerNode.style.maxWidth = '380px';
+                playerNode.style.width = '100%';
+                playerNode.style.height = '675px';
+                playerNode.style.aspectRatio = '9 / 16';
+                playerNode.style.borderRadius = '1.5rem';
+
+                skinDesktop.classList.remove('flex');
+                skinDesktop.classList.add('hidden');
+                skinMobile.classList.remove('hidden');
+                skinMobile.classList.add('flex');
+                showToast('已切换至手机竖屏 9:16', '📱');
+            }
+        }
+
+        tabDesktop.addEventListener('click', () => switchViewport('desktop'));
+        tabMobileLand.addEventListener('click', () => switchViewport('mobile-land'));
+        tabMobilePort.addEventListener('click', () => switchViewport('mobile-port'));
+
+        // 图片处理与加载
+        function loadScreenshotFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                showToast('请选择有效的图片文件', '⚠️');
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                bgImage.src = e.target.result;
+                showToast('底图更换成功', '🖼️');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 上传按钮事件
+        document.getElementById('btn-top-upload').addEventListener('click', () => fileUploader.click());
+        document.getElementById('btn-quick-upload').addEventListener('click', () => fileUploader.click());
+        document.getElementById('btn-side-upload').addEventListener('click', () => fileUploader.click());
+        fileUploader.addEventListener('change', (e) => loadScreenshotFile(e.target.files[0]));
+
+        // 全屏支持 Ctrl+V 直接粘贴图片
+        window.addEventListener('paste', (e) => {
+            const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+            if (!items) return;
+            for (const item of items) {
+                if (item.type.indexOf('image') !== -1) {
+                    loadScreenshotFile(item.getAsFile());
+                    break;
+                }
+            }
         });
-    };
-    bindText('in-title', 'disp-title');
-    bindText('in-laya-label', 'disp-laya-label');
-    bindText('in-free-pill', 'disp-free-pill-text');
-    bindText('in-banner-body', 'disp-banner-body');
-    bindText('in-time', 'disp-time');
 
-    // 进度条调节
-    document.getElementById('in-progress').addEventListener('input', (e) => {
-        document.getElementById('disp-progress-bar').style.width = e.target.value + '%';
-        document.getElementById('txt-progress').textContent = e.target.value + '%';
-    });
-
-    // 横幅开关
-    document.getElementById('switch-banner').addEventListener('change', (e) => {
-        document.getElementById('wrap-banner').style.display = e.target.checked ? 'flex' : 'none';
-    });
-
-    // 导出截图 (2.5x 无损采样，防切字)
-    document.getElementById('btn-save-main').addEventListener('click', () => {
-        html2canvas(renderTarget, {
-            scale: 2.5,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#000'
-        }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `Laya_Pause_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png', 1.0);
-            link.click();
+        // 拖拽图片至播放器支持
+        playerNode.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            playerNode.classList.add('ring-2', 'ring-blue-500');
         });
-    });
-</script>
+        playerNode.addEventListener('dragleave', () => {
+            playerNode.classList.remove('ring-2', 'ring-blue-500');
+        });
+        playerNode.addEventListener('drop', (e) => {
+            e.preventDefault();
+            playerNode.classList.remove('ring-2', 'ring-blue-500');
+            if (e.dataTransfer.files.length > 0) {
+                loadScreenshotFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // ======================== 元素显隐开关矩阵绑定 ========================
+        const bindSwitch = (switchId, elementIds) => {
+            const elList = Array.isArray(elementIds) ? elementIds.map(id => document.getElementById(id)) : [document.getElementById(elementIds)];
+            document.getElementById(switchId).addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                elList.forEach(el => {
+                    if (!el) return;
+                    el.style.display = isChecked ? '' : 'none';
+                });
+            });
+        };
+
+        bindSwitch('sw-center-btn', ['dt-center-btn', 'mb-center-btn']);
+        bindSwitch('sw-center-pill', ['el-dt-center-pill', 'el-mb-center-pill']);
+        bindSwitch('sw-banner', ['el-dt-banner', 'el-mb-banner']);
+        bindSwitch('sw-free-badge', ['el-dt-free-badge', 'el-mb-free-badge']);
+        bindSwitch('sw-brand-badge', ['el-dt-brand-badge']);
+        bindSwitch('sw-vip-tag', ['el-dt-vip-tag']);
+        bindSwitch('sw-back', ['el-dt-back']);
+        bindSwitch('sw-top-sys', ['el-dt-top-sys', 'el-mb-sys-bar']);
+        bindSwitch('sw-bottombar', ['layer-dt-bottombar', 'layer-mb-bottombar']);
+        bindSwitch('sw-ctrl-tags', ['el-dt-danmaku', 'el-dt-speed', 'el-dt-quality']);
+
+        // ======================== 深度自定义文字双向绑定 ========================
+        const bindInputText = (inputId, targetIds) => {
+            const targets = Array.isArray(targetIds) ? targetIds.map(id => document.getElementById(id)) : [document.getElementById(targetIds)];
+            document.getElementById(inputId).addEventListener('input', (e) => {
+                targets.forEach(t => { if (t) t.textContent = e.target.value; });
+            });
+        };
+
+        bindInputText('in-video-title', ['dt-video-title', 'mb-video-title']);
+        bindInputText('in-brand-tag', ['dt-brand-tag']);
+        bindInputText('in-vip-tag', ['el-dt-vip-tag']);
+        bindInputText('in-free-pill', ['dt-free-tag-text', 'el-mb-free-badge']);
+        bindInputText('in-banner-body', ['dt-banner-body', 'mb-banner-body']);
+        bindInputText('in-banner-tag', ['dt-banner-status-tag']);
+        bindInputText('in-center-pill-text', ['dt-center-pill-text', 'mb-center-pill-text']);
+        bindInputText('in-time-code', ['dt-time-text', 'mb-time-text']);
+        bindInputText('in-quality-text', ['dt-quality-text']);
+        bindInputText('in-speed-text', ['dt-speed-text']);
+        bindInputText('in-danmaku-text', ['dt-danmaku-text']);
+        bindInputText('in-audio-text', ['dt-audio-track-text']);
+        bindInputText('in-sys-time', ['mb-sys-time']);
+
+        // 播放进度滑块与缓冲条
+        const inProgress = document.getElementById('in-progress');
+        const inBuffer = document.getElementById('in-buffer');
+
+        inProgress.addEventListener('input', (e) => {
+            const val = e.target.value + '%';
+            document.getElementById('dt-progress-bar').style.width = val;
+            document.getElementById('mb-progress-bar').style.width = val;
+            document.getElementById('txt-progress').textContent = val;
+            document.getElementById('txt-progress-val').textContent = val;
+        });
+
+        inBuffer.addEventListener('input', (e) => {
+            const val = e.target.value + '%';
+            document.getElementById('dt-buffer-bar').style.width = val;
+            document.getElementById('txt-buffer-val').textContent = val;
+        });
+
+        // 按钮尺寸
+        document.getElementById('in-btn-size').addEventListener('input', (e) => {
+            const size = e.target.value;
+            const dtBtn = document.getElementById('dt-center-btn');
+            const mbBtn = document.getElementById('mb-center-btn');
+            dtBtn.style.width = size + 'px';
+            dtBtn.style.height = size + 'px';
+            mbBtn.style.width = Math.round(size * 0.88) + 'px';
+            mbBtn.style.height = Math.round(size * 0.88) + 'px';
+            document.getElementById('txt-btn-size').textContent = size + 'px';
+        });
+
+        // 暗角调节
+        document.getElementById('in-vignette').addEventListener('input', (e) => {
+            const val = e.target.value;
+            vignetteMask.style.backgroundColor = `rgba(0, 0, 0, ${val / 100})`;
+            document.getElementById('txt-vignette').textContent = val + '%';
+        });
+
+        // 手机电池调节
+        document.getElementById('in-battery').addEventListener('input', (e) => {
+            document.getElementById('mb-battery-fill').style.width = e.target.value + '%';
+        });
+
+        // ======================== 超清 2.5X 高分辨率导出 ========================
+        function exportHighQualityScreenshot() {
+            showToast('正在生成超清截图 (2.5X)...', '⏳');
+
+            (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
+                html2canvas(playerNode, {
+                    scale: 2.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#000000',
+                    logging: false,
+                    imageTimeout: 0,
+                    scrollX: 0,
+                    scrollY: 0
+                }).then((canvas) => {
+                    const link = document.createElement('a');
+                    link.download = `Laya_Pause_${Date.now()}.png`;
+                    link.href = canvas.toDataURL('image/png', 1.0);
+                    link.click();
+                    showToast('超清截图已成功保存并下载！', '🎉');
+                }).catch((err) => {
+                    console.error(err);
+                    showToast('保存失败，请检查底图是否受跨域限制', '❌');
+                });
+            });
+        }
+
+        document.getElementById('btn-top-save').addEventListener('click', exportHighQualityScreenshot);
+        document.getElementById('btn-side-save').addEventListener('click', exportHighQualityScreenshot);
+        document.getElementById('btn-bottom-save').addEventListener('click', exportHighQualityScreenshot);
+    </script>
 </body>
 </html>
