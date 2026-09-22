@@ -91,10 +91,10 @@
             transition: object-position 0.1s ease, transform 0.1s ease;
         }
 
-        /* 弹幕图层 */
+        /* 弹幕图层 (默认隐藏) */
         .danmaku-layer {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 2; overflow: hidden;
+            pointer-events: none; z-index: 2; overflow: hidden; display: none;
         }
         .danmaku-item {
             position: absolute; white-space: nowrap; font-weight: 700;
@@ -195,15 +195,13 @@
             position: relative; width: 100%; height: var(--bar-height); background: rgba(255,255,255,0.2);
             border-radius: 3px; cursor: pointer;
         }
-        /* 预加载缓冲条 (灰色半透) */
         .progress-bar-buffer {
             position: absolute; left: 0; top: 0; height: 100%; background: rgba(255,255,255,0.4);
-            border-radius: 3px; width: 65%; pointer-events: none;
+            border-radius: 3px; width: 68%; pointer-events: none;
         }
-        /* 实际播放进度条 (亮蓝) */
         .progress-bar-fill {
             position: absolute; left: 0; top: 0; height: 100%; background: var(--primary);
-            border-radius: 3px; width: 34%; box-shadow: 0 0 8px var(--primary-glow);
+            border-radius: 3px; width: 42%; box-shadow: 0 0 8px var(--primary-glow);
         }
         .progress-scrubber {
             position: absolute; right: -5px; top: -3px; width: 10px; height: 10px;
@@ -224,13 +222,12 @@
 
         /* 🎨 右侧高级 Studio 控制面板 */
         .sidebar {
-            width: 360px; background: var(--panel-bg); border-left: 1px solid var(--card-border);
+            width: 365px; background: var(--panel-bg); border-left: 1px solid var(--card-border);
             padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; flex-shrink: 0;
         }
         .sidebar::-webkit-scrollbar { width: 6px; }
         .sidebar::-webkit-scrollbar-thumb { background: #262c3a; border-radius: 3px; }
 
-        /* 卡片容器 */
         .panel-card {
             background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px;
             padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.25);
@@ -242,7 +239,6 @@
         .card-header-icon { display: flex; align-items: center; gap: 6px; }
         .badge-tip { background: rgba(24, 119, 242, 0.2); color: #5dade2; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
 
-        /* iOS 微动开关网格 */
         .switch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .switch-tile {
             background: #11131a; border: 1px solid #232836; border-radius: 7px;
@@ -251,7 +247,6 @@
         }
         .switch-tile:hover { border-color: #3b4356; }
 
-        /* iOS 质感滑动开关 */
         .ios-toggle { position: relative; display: inline-block; width: 34px; height: 18px; flex-shrink: 0; }
         .ios-toggle input { opacity: 0; width: 0; height: 0; }
         .slider-round {
@@ -265,7 +260,6 @@
         input:checked + .slider-round { background-color: var(--primary); box-shadow: 0 0 6px var(--primary-glow); }
         input:checked + .slider-round:before { transform: translateX(16px); }
 
-        /* 输入控件与滑块 */
         .form-row { display: flex; flex-direction: column; gap: 5px; }
         .form-row label { font-size: 11.5px; color: var(--text-muted); font-weight: 600; }
         .form-row input[type="text"], .form-row select, .form-row textarea {
@@ -313,11 +307,11 @@
         </button>
         <button class="btn btn-save-img" id="btn-save-img">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            保存高清图片 (带弹幕)
+            保存高清图片
         </button>
         <button class="btn btn-save-vid" id="btn-save-vid">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            合成下载带框视频 (秒数动态走动+带声音)
+            合成下载带框视频 (起始秒数累加+原声)
         </button>
     </div>
 </header>
@@ -339,7 +333,7 @@
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 动态跑马灯弹幕图层 -->
+                <!-- 动态跑马灯弹幕图层 (默认隐藏) -->
                 <div class="danmaku-layer" id="danmaku-container"></div>
 
                 <!-- 顶部 HUD (纯正繁体中文) -->
@@ -414,10 +408,8 @@
                 <!-- 底部控制条 (纯正繁体中文 + 双层缓冲与进度条) -->
                 <div class="player-bottom" id="wrap-bottom-bar">
                     <div class="progress-bar-wrap" id="progress-click-bar">
-                        <!-- 缓冲条 -->
-                        <div class="progress-bar-buffer" id="disp-buffer-bar" style="width: 65%;"></div>
-                        <!-- 播放进度条 -->
-                        <div class="progress-bar-fill" id="disp-progress-bar" style="width: 34%;">
+                        <div class="progress-bar-buffer" id="disp-buffer-bar" style="width: 68%;"></div>
+                        <div class="progress-bar-fill" id="disp-progress-bar" style="width: 42%;">
                             <div class="progress-scrubber"></div>
                         </div>
                     </div>
@@ -426,7 +418,7 @@
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff" id="btn-play-pause-toggle" style="cursor: pointer;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="#fff" stroke-width="2"/></svg>
                             <!-- 动态走动的秒数与时间码 -->
-                            <span class="time-label" id="disp-time">00:03:33 / 01:28:45</span>
+                            <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
                         </div>
                         <div class="ctrl-right">
                             <span id="wrap-bot-danmaku-count"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
@@ -440,65 +432,72 @@
         </div>
     </div>
 
-    <!-- 🎨 右侧高级 Studio 控制面板 (全面美化升级) -->
+    <!-- 🎨 右侧高级 Studio 控制面板 -->
     <div class="sidebar" id="right-sidebar">
 
-        <!-- ⏱️ 卡片 1: 播放进度条与时间码 (长短随心调节) -->
+        <!-- ⏱️ 卡片 1: 播放进度与起始时间控制 -->
         <div class="panel-card">
             <div class="card-header">
-                <span class="card-header-icon">⏱️ 播放进度与时间控制</span>
-                <span class="badge-tip">长短自由设定</span>
+                <span class="card-header-icon">⏱️ 起始时间与进度控制</span>
+                <span class="badge-tip">真实秒数累加</span>
             </div>
 
             <div class="switch-tile" style="background: rgba(24, 119, 242, 0.12); border-color: rgba(24, 119, 242, 0.3);">
-                <span style="font-weight: 600; color: #fff;">跟随视频真实秒数走动</span>
+                <span style="font-weight: 600; color: #fff;">播放时起始秒数递增走动</span>
                 <label class="ios-toggle">
                     <input type="checkbox" id="sw-sync-video-time" checked>
                     <span class="slider-round"></span>
                 </label>
             </div>
 
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="form-row">
+                    <label>起始时间点 (当前秒数)</label>
+                    <input type="text" id="in-start-time" value="00:37:16">
+                </div>
+                <div class="form-row">
+                    <label>视频总片长 (伪装时长)</label>
+                    <input type="text" id="in-total-time" value="01:28:45">
+                </div>
+            </div>
+
             <div class="form-row">
                 <div class="range-box">
-                    <label>播放进度条长短 (已播占比)</label>
-                    <span class="range-value" id="txt-progress">34%</span>
+                    <label>进度条长短 (位置占比)</label>
+                    <span class="range-value" id="txt-progress">42%</span>
                 </div>
-                <input type="range" id="in-progress" min="0" max="100" value="34">
+                <input type="range" id="in-progress" min="0" max="100" value="42">
             </div>
 
             <div class="form-row">
                 <div class="range-box">
                     <label>预加载缓冲条长短 (Buffer)</label>
-                    <span class="range-value" id="txt-buffer">65%</span>
+                    <span class="range-value" id="txt-buffer">68%</span>
                 </div>
-                <input type="range" id="in-buffer" min="0" max="100" value="65">
+                <input type="range" id="in-buffer" min="0" max="100" value="68">
             </div>
 
             <div class="form-row">
                 <div class="range-box">
-                    <label>进度条粗细大小</label>
+                    <label>进度条粗细</label>
                     <span class="range-value" id="txt-bar-height">4px</span>
                 </div>
                 <input type="range" id="in-bar-height" min="2" max="8" value="4">
             </div>
-
-            <div class="form-row">
-                <label>时间码文本 (锁定模式时直接生效)</label>
-                <input type="text" id="in-time" value="00:03:33 / 01:28:45">
-            </div>
         </div>
 
-        <!-- 🎛️ 卡片 2: 界面开关矩阵 -->
+        <!-- 🎛️ 卡片 2: 界面开关矩阵 (弹幕默认关闭) -->
         <div class="panel-card">
             <div class="card-header">
                 <span class="card-header-icon">🎛️ 界面开关矩阵</span>
                 <span class="badge-tip">即开即显</span>
             </div>
             <div class="switch-grid">
-                <div class="switch-tile">
-                    <span>动态弹幕</span>
+                <!-- 弹幕默认关闭 -->
+                <div class="switch-tile" style="border-color: rgba(24, 119, 242, 0.4);">
+                    <span style="font-weight: 600;">动态弹幕</span>
                     <label class="ios-toggle">
-                        <input type="checkbox" id="sw-danmaku" checked>
+                        <input type="checkbox" id="sw-danmaku">
                         <span class="slider-round"></span>
                     </label>
                 </div>
@@ -593,7 +592,7 @@
         <div class="panel-card">
             <div class="card-header">
                 <span class="card-header-icon">📐 画面构图与露脸微调</span>
-                <span class="badge-tip">防切脸神器</span>
+                <span class="badge-tip">防切脸</span>
             </div>
             <div class="form-row">
                 <div class="range-box">
@@ -662,11 +661,11 @@
             </div>
         </div>
 
-        <!-- 💬 卡片 5: 动态弹幕工坊 -->
+        <!-- 💬 卡片 5: 动态弹幕工坊 (默认已关闭) -->
         <div class="panel-card">
             <div class="card-header">
                 <span class="card-header-icon">💬 动态弹幕工坊</span>
-                <span class="badge-tip">批量智能分段</span>
+                <span class="badge-tip">默认关闭</span>
             </div>
             <div class="form-row">
                 <div class="range-box">
@@ -676,7 +675,7 @@
                 <input type="range" id="in-danmaku-size" min="12" max="32" value="16">
             </div>
             <div class="form-row">
-                <label>粘贴大段文本批量导入 (按换行/逗号/分号智能切分)</label>
+                <label>粘贴大段文本批量导入 (按换行/逗号/分号切分)</label>
                 <textarea id="in-batch-danmaku" placeholder="例如：&#10;這清晰度太絕了！&#10;免費通道真的能看，太良心了&#10;無碼畫質吹爆，已解鎖未刪減版，感謝樓主！"></textarea>
                 <button class="btn" style="background: #27ae60; color: #fff; padding: 7px; margin-top: 4px;" id="btn-parse-batch">🚀 识别并导入弹幕</button>
             </div>
@@ -693,16 +692,24 @@
 </main>
 
 <script>
-    // 时间转换器
-    const formatTime = (sec) => {
-        if (isNaN(sec) || sec < 0) sec = 0;
-        const h = Math.floor(sec / 3600);
-        const m = Math.floor((sec % 3600) / 60);
-        const s = Math.floor(sec % 60);
-        const hh = h > 0 ? (h < 10 ? '0' + h : h) + ':' : '00:';
-        const mm = (m < 10 ? '0' + m : m) + ':';
-        const ss = s < 10 ? '0' + s : s;
-        return hh + mm + ss;
+    // 时间转换与格式化工具函数
+    const timeToSeconds = (timeStr) => {
+        if (!timeStr) return 0;
+        const parts = timeStr.trim().split(':').map(Number);
+        if (parts.length === 3) return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
+        if (parts.length === 2) return (parts[0] || 0) * 60 + (parts[1] || 0);
+        return parseInt(timeStr, 10) || 0;
+    };
+
+    const secondsToTime = (totalSec) => {
+        if (isNaN(totalSec) || totalSec < 0) totalSec = 0;
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = Math.floor(totalSec % 60);
+        const hh = String(h).padStart(2, '0');
+        const mm = String(m).padStart(2, '0');
+        const ss = String(s).padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
     };
 
     // 1. 视口切换
@@ -752,53 +759,91 @@
         updateMediaTransform();
     });
 
-    // 4. 进度条粗细高低调节
+    // 4. 进度条粗细
     document.getElementById('in-bar-height').addEventListener('input', (e) => {
         const h = e.target.value + 'px';
         document.documentElement.style.setProperty('--bar-height', h);
         document.getElementById('txt-bar-height').textContent = h;
     });
 
-    // 5. 进度条与缓冲条长短自由控制
+    // 5. 起始时间、总片长与进度条联动逻辑
+    const inStartTime = document.getElementById('in-start-time');
+    const inTotalTime = document.getElementById('in-total-time');
     const inProgress = document.getElementById('in-progress');
     const inBuffer = document.getElementById('in-buffer');
     const dispProgressBar = document.getElementById('disp-progress-bar');
     const dispBufferBar = document.getElementById('disp-buffer-bar');
-    const swSyncVideoTime = document.getElementById('sw-sync-video-time');
-    const inTime = document.getElementById('in-time');
     const dispTime = document.getElementById('disp-time');
+    const swSyncVideoTime = document.getElementById('sw-sync-video-time');
     const previewVideo = document.getElementById('preview-video');
     let isVideoMode = false;
 
-    // 手动调节播放进度长短
+    // 根据起始时间和总时长更新界面时间码与进度条
+    const refreshTimeDisplay = () => {
+        const startSec = timeToSeconds(inStartTime.value);
+        const totalSec = timeToSeconds(inTotalTime.value) || 1;
+        dispTime.textContent = `${secondsToTime(startSec)} / ${secondsToTime(totalSec)}`;
+    };
+
+    inStartTime.addEventListener('input', () => {
+        refreshTimeDisplay();
+        // 自动联动进度百分比
+        const s = timeToSeconds(inStartTime.value);
+        const t = timeToSeconds(inTotalTime.value);
+        if (t > 0) {
+            const pct = Math.min(100, Math.max(0, Math.round((s / t) * 100)));
+            inProgress.value = pct;
+            dispProgressBar.style.width = pct + '%';
+            document.getElementById('txt-progress').textContent = pct + '%';
+        }
+    });
+
+    inTotalTime.addEventListener('input', () => {
+        refreshTimeDisplay();
+        const s = timeToSeconds(inStartTime.value);
+        const t = timeToSeconds(inTotalTime.value);
+        if (t > 0) {
+            const pct = Math.min(100, Math.max(0, Math.round((s / t) * 100)));
+            inProgress.value = pct;
+            dispProgressBar.style.width = pct + '%';
+            document.getElementById('txt-progress').textContent = pct + '%';
+        }
+    });
+
+    // 手动独立调整进度条长短 (位置占比)
     inProgress.addEventListener('input', (e) => {
         const val = e.target.value;
         dispProgressBar.style.width = val + '%';
         document.getElementById('txt-progress').textContent = val + '%';
-        if (isVideoMode && previewVideo.duration && swSyncVideoTime.checked) {
-            previewVideo.currentTime = (val / 100) * previewVideo.duration;
-        }
+        // 同步反推起始时间
+        const totalSec = timeToSeconds(inTotalTime.value) || 5325;
+        const newStartSec = Math.round((val / 100) * totalSec);
+        inStartTime.value = secondsToTime(newStartSec);
+        refreshTimeDisplay();
     });
 
-    // 手动调节缓冲条长短
+    // 缓冲条长短
     inBuffer.addEventListener('input', (e) => {
-        const val = e.target.value;
-        dispBufferBar.style.width = val + '%';
-        document.getElementById('txt-buffer').textContent = val + '%';
+        dispBufferBar.style.width = e.target.value + '%';
+        document.getElementById('txt-buffer').textContent = e.target.value + '%';
     });
 
-    // 视频真实秒数走动
+    // 视频真实播放时：秒数在起始时间上递增走动！
     previewVideo.addEventListener('timeupdate', () => {
         if (!isVideoMode || !swSyncVideoTime.checked) return;
 
-        const cur = previewVideo.currentTime;
-        const dur = previewVideo.duration || 1;
-        const pct = (cur / dur) * 100;
+        const baseStartSec = timeToSeconds(inStartTime.value);
+        const totalSec = timeToSeconds(inTotalTime.value) || 5325;
+        const elapsedSec = Math.floor(previewVideo.currentTime);
+        const currentDisplaySec = baseStartSec + elapsedSec;
 
-        dispTime.textContent = `${formatTime(cur)} / ${formatTime(dur)}`;
-        dispProgressBar.style.width = pct + '%';
-        inProgress.value = Math.round(pct);
-        document.getElementById('txt-progress').textContent = Math.round(pct) + '%';
+        // 秒数累加
+        dispTime.textContent = `${secondsToTime(currentDisplaySec)} / ${secondsToTime(totalSec)}`;
+
+        // 进度条从起始长短平滑向前增加
+        const currentPct = Math.min(100, Math.max(0, (currentDisplaySec / totalSec) * 100));
+        dispProgressBar.style.width = currentPct.toFixed(2) + '%';
+        document.getElementById('txt-progress').textContent = Math.round(currentPct) + '%';
     });
 
     // 点击视频底部播放键播放/暂停
@@ -806,12 +851,6 @@
         if (!isVideoMode) return;
         if (previewVideo.paused) previewVideo.play();
         else previewVideo.pause();
-    });
-
-    inTime.addEventListener('input', (e) => {
-        if (!swSyncVideoTime.checked || !isVideoMode) {
-            dispTime.textContent = e.target.value;
-        }
     });
 
     // 6. 媒体上传处理
@@ -864,7 +903,7 @@
         }
     });
 
-    // 8. 开关矩阵绑定
+    // 8. 开关矩阵绑定 (弹幕默认关闭)
     const bindSwitch = (swId, targetId) => {
         document.getElementById(swId).addEventListener('change', (e) => {
             document.getElementById(targetId).style.display = e.target.checked ? '' : 'none';
@@ -884,7 +923,7 @@
     bindSwitch('sw-top-right', 'wrap-top-right');
     bindSwitch('sw-bottom-bar', 'wrap-bottom-bar');
 
-    // 9. 弹幕系统
+    // 9. 弹幕系统 (默认关闭)
     let danmakuList = [
         { text: '這清晰度太絕了！', top: '16%', color: '#ffffff', speed: 9 },
         { text: '免費通道真的能看！太良心了', top: '32%', color: '#f39c12', speed: 11 },
@@ -991,7 +1030,7 @@
         renderDanmaku();
     });
 
-    // 10. 保存高清图片 (PNG 导出：包含自定义进度长短、缓冲条长短与冻结弹幕)
+    // 10. 保存高清图片 (PNG 导出：包含设定进度长短与当前时间)
     document.getElementById('btn-save-img').addEventListener('click', () => {
         html2canvas(renderTarget, {
             scale: 2.5,
@@ -1023,7 +1062,7 @@
         });
     });
 
-    // 11. 实时合成带框短视频 (支持指定进度长短或自动走动 + 带声音)
+    // 11. 实时合成带框短视频 (从设定的起始时间开始累加递增秒数 + 带原声)
     document.getElementById('btn-save-vid').addEventListener('click', async () => {
         if (!isVideoMode) {
             alert('提示：请先点击【上传截图/视频】按钮上传一段带声音的 MP4/WebM 视频！');
@@ -1031,7 +1070,7 @@
         }
 
         const btn = document.getElementById('btn-save-vid');
-        btn.textContent = '⏳ 正在合成视频中(录制5秒)...';
+        btn.textContent = '⏳ 正在合成视频中(起始秒数累加录制5秒)...';
         btn.disabled = true;
 
         try {
@@ -1081,9 +1120,12 @@
                 a.download = `Laya_Player_Video_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
                 a.href = url;
                 a.click();
-                btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 合成下载带框视频 (秒数动态走动+带声音)`;
+                btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 合成下载带框视频 (起始秒数累加+原声)`;
                 btn.disabled = false;
             };
+
+            const baseStartSec = timeToSeconds(inStartTime.value);
+            const totalSec = timeToSeconds(inTotalTime.value) || 5325;
 
             previewVideo.currentTime = 0;
             previewVideo.play();
@@ -1118,7 +1160,7 @@
                 ctx.fillRect(0, 0, width, height);
                 ctx.drawImage(previewVideo, offX, offY, renderW, renderH);
 
-                // 2. 动态弹幕
+                // 2. 动态弹幕 (如果用户手动开启了开关)
                 if (document.getElementById('sw-danmaku').checked) {
                     const fontSize = parseInt(document.getElementById('in-danmaku-size').value) * (width / 900);
                     ctx.font = `bold ${fontSize}px sans-serif`;
@@ -1266,7 +1308,7 @@
                     ctx.fillText(document.getElementById('disp-banner-body').textContent, 34 + prefixW, topY + 40);
                 }
 
-                // 4. 底部控制栏：绘制缓冲条与自定义/实时进度条
+                // 4. 底部控制栏：根据起始时间精准累加秒数与计算进度
                 if (document.getElementById('sw-bottom-bar').checked) {
                     const botGrad = ctx.createLinearGradient(0, height - 90, 0, height);
                     botGrad.addColorStop(0, 'transparent');
@@ -1286,18 +1328,10 @@
                     ctx.fillStyle = 'rgba(255,255,255,0.4)';
                     ctx.fillRect(24, barY, (width - 48) * bufferPct, barH);
 
-                    // 播放进度长短 (自动走动或手动锁定)
-                    let progressPct;
-                    let timeDisplayStr;
-                    if (swSyncVideoTime.checked) {
-                        const curSec = previewVideo.currentTime;
-                        const durSec = previewVideo.duration || 1;
-                        progressPct = durSec ? (curSec / durSec) : 0.34;
-                        timeDisplayStr = `${formatTime(curSec)} / ${formatTime(durSec)}`;
-                    } else {
-                        progressPct = parseInt(inProgress.value) / 100;
-                        timeDisplayStr = document.getElementById('disp-time').textContent;
-                    }
+                    // 起始时间累加核心算法
+                    let curDisplaySec = baseStartSec + Math.floor(previewVideo.currentTime);
+                    let progressPct = totalSec ? Math.min(1, Math.max(0, curDisplaySec / totalSec)) : 0.42;
+                    let dynamicTimeStr = `${secondsToTime(curDisplaySec)} / ${secondsToTime(totalSec)}`;
 
                     ctx.fillStyle = '#1877F2';
                     ctx.fillRect(24, barY, (width - 48) * progressPct, barH);
@@ -1307,10 +1341,10 @@
                     ctx.arc(24 + (width - 48) * progressPct, barY + (barH / 2), 5, 0, Math.PI * 2);
                     ctx.fill();
 
-                    // 时间文字
+                    // 时间文字 (累加中)
                     ctx.font = '12px monospace';
                     ctx.fillStyle = '#d0d4dc';
-                    ctx.fillText(timeDisplayStr, 24, height - 16);
+                    ctx.fillText(dynamicTimeStr, 24, height - 16);
 
                     if (document.getElementById('sw-bot-danmaku-count').checked) {
                         const botDanmakuVal = document.getElementById('disp-bot-danmaku-count').textContent;
@@ -1354,7 +1388,7 @@
 
         } catch (err) {
             console.error(err);
-            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 合成下载带框视频 (秒数动态走动+带声音)`;
+            btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg> 合成下载带框视频 (起始秒数累加+原声)`;
             btn.disabled = false;
             alert('导出出现异常，请确认浏览器版本支持录制。');
         }
