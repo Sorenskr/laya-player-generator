@@ -230,7 +230,8 @@
 
 <header>
     <div class="brand">
-        <svg class="brand-logo" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#0D5BE1"/><circle cx="50" cy="50" r="32" fill="#2172F5"/><circle cx="50" cy="50" r="20" fill="#3D88FD"/><text x="50" y="58" font-size="24" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle" stroke="#000" stroke-width="2.5">Laya</text></svg>
+        <!-- 核心 Laya Logo SVG (作为默认头像引用) -->
+        <svg class="brand-logo" id="laya-svg-logo" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="#0D5BE1"/><circle cx="50" cy="50" r="32" fill="#2172F5"/><circle cx="50" cy="50" r="20" fill="#3D88FD"/><text x="50" y="58" font-size="24" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle" stroke="#000" stroke-width="2.5">Laya</text></svg>
         <span>Laya 播放器 · 双模视频生成器</span>
     </div>
     <div class="nav-actions">
@@ -357,7 +358,7 @@
                     <!-- 右侧互动区 -->
                     <div class="dy-right-bar" id="dy-right-bar">
                         <div class="dy-avatar-wrap">
-                            <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&q=80" class="dy-avatar" id="disp-dy-avatar">
+                            <img src="" class="dy-avatar" id="disp-dy-avatar">
                             <div class="dy-follow-btn">+</div>
                         </div>
                         <div class="dy-action-item">
@@ -392,7 +393,7 @@
                         </div>
                         <div class="dy-music-row" id="wrap-dy-music">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><path d="M9 18V5l12-2v13M9 9l12-2M5 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm12-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
-                            <span id="disp-dy-music">去汽水聽 > 原創原聲 - Laya音樂</span>
+                            <span id="disp-dy-music">來 Laya 語音廳，親自演給你看 ></span>
                         </div>
                     </div>
 
@@ -406,7 +407,7 @@
 
                     <!-- 底部 Tab -->
                     <div class="dy-bottom-tabs" id="dy-bot-tabs">
-                        <span class="dy-tab-bot active">首頁</span>
+                        <span class="dy-tab-bot active">發現</span>
                         <span class="dy-tab-bot">瞬間</span>
                         <div class="dy-add-btn"><svg width="18" height="18" viewBox="0 0 24 24" stroke="#000" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
                         <span class="dy-tab-bot">消息</span>
@@ -505,6 +506,7 @@
                         </select>
                         <input type="text" id="in-bot-res" value="原畫 1080P 60幀 ▾" style="margin-top:4px;">
                     </div>
+                    <div class="form-row"><label>继续播放胶囊文案</label><input type="text" id="in-center-pill" value="點擊繼續播放"></div>
                 </div>
             </div>
 
@@ -543,14 +545,13 @@
                         <label>作者专属声明</label>
                         <select id="sel-dy-author">
                             <option value="(心動匹配) 和劇情一起來做運動">(心動匹配) 和劇情一起來做運動</option>
-                            <option value="內容由 AI 生成">內容由 AI 生成</option>
                             <option value="專屬私密空間，點擊主頁查看">專屬私密空間，點擊主頁查看</option>
                         </select>
                         <input type="text" id="in-dy-author" value="(心動匹配) 和劇情一起來做運動" style="margin-top:4px;">
                     </div>
                     <div class="form-row">
                         <label>音乐信息</label>
-                        <input type="text" id="in-dy-music" value="去汽水聽 > 原創原聲 - Laya音樂">
+                        <input type="text" id="in-dy-music" value="來 Laya 語音廳，親自演給你看 >">
                     </div>
                 </div>
 
@@ -575,8 +576,8 @@
                         <input type="text" id="in-dy-banner-count" value="45.1萬人在看">
                     </div>
                     <div class="form-row">
-                        <label>底部 Tab (空格隔开)</label>
-                        <input type="text" id="in-dy-bot-tabs" value="發現 瞬間 娛樂 視頻 消息 我的">
+                        <label>底部 Tab (空格隔开，[+]代表加号)</label>
+                        <input type="text" id="in-dy-bot-tabs" value="發現 瞬間 [+] 消息 我的">
                     </div>
                 </div>
             </div>
@@ -586,19 +587,26 @@
 </main>
 
 <script>
-    // 繁简转换字典 (硬编码基础词汇)
+    // 提取 SVG 内容作为默认头像
+    const svgData = new XMLSerializer().serializeToString(document.getElementById('laya-svg-logo'));
+    const defaultAvatarUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+    document.getElementById('disp-dy-avatar').src = defaultAvatarUrl;
+
+    // 繁简转换字典 (扩展常用词汇)
     let isTraditional = true;
     const dict = {
         '精选': '精選', '热点': '熱點', '关注': '關注', '排行': '排行',
         '发现': '發現', '瞬间': '瞬間', '娱乐': '娛樂', '视频': '視頻', '消息': '消息', '我的': '我的',
-        '免费通道': '免費通道', '全屏观看': '全屏觀看', '点击任意处播放': '點擊任意處播放', '内容由 AI 生成': '內容由 AI 生成',
-        '和剧情一起来做运动': '和劇情一起來做運動', '原画': '原畫', '设置': '設置', '音轨': '音軌'
+        '免费通道': '免費通道', '全屏观看': '全屏觀看', '点击任意处播放': '點擊任意處播放',
+        '和剧情一起来做运动': '和劇情一起來做運動', '原画': '原畫', '设置': '設置', '音轨': '音軌',
+        '专属私密空间，点击主页查看': '專屬私密空間，點擊主頁查看',
+        '来 Laya 语音厅，亲自演给你看 >': '來 Laya 語音廳，親自演給你看 >'
     };
     
     document.getElementById('btn-toggle-lang').addEventListener('click', () => {
         isTraditional = !isTraditional;
         const inputsToTranslate = [
-            'in-dy-top-tabs', 'in-dy-bot-tabs', 'in-dy-author', 'in-dy-banner-title', 
+            'in-dy-top-tabs', 'in-dy-bot-tabs', 'in-dy-author', 'in-dy-music', 'in-dy-banner-title', 
             'in-dy-banner-count', 'in-title', 'in-laya-label', 'in-bot-res', 'in-center-pill'
         ];
         inputsToTranslate.forEach(id => {
@@ -610,6 +618,7 @@
             document.getElementById(id).value = val;
             document.getElementById(id).dispatchEvent(new Event('input')); // 触发更新
         });
+        alert(`已切换为：${isTraditional ? '繁体模式' : '简体模式'}`);
     });
 
     // 侧边栏 Tab 切换
@@ -830,9 +839,9 @@
 
     // 8. 弹幕系统
     let danmakuList = [
-        { text: '這清晰度太絕了！', top: '16%', color: '#ffffff', speed: 9 },
-        { text: '免費通道真的能看！太良心了', top: '26%', color: '#f39c12', speed: 11 },
-        { text: '愛了愛了，已解鎖未刪減版', top: '35%', color: '#2ecc71', speed: 8 }
+        { text: '前方高能預警！', top: '16%', color: '#ffffff', speed: 9 },
+        { text: '這身材太頂了吧', top: '26%', color: '#f39c12', speed: 11 },
+        { text: '已備好衛生紙...', top: '35%', color: '#2ecc71', speed: 8 }
     ];
     const danmakuContainer = document.getElementById('danmaku-container');
     const danmakuListUI = document.getElementById('danmaku-list');
@@ -852,6 +861,15 @@
     renderDanmaku();
     document.getElementById('btn-random-danmaku').addEventListener('click', () => {
         danmakuList = ['前方高能預警！', '已備好衛生紙...', '這身材太頂了吧'].map((text, i) => ({ text, top: `${15 + i * 10}%`, color: '#fff', speed: 8 + i }));
+        renderDanmaku();
+    });
+    document.getElementById('btn-parse-batch').addEventListener('click', () => {
+        const raw = document.getElementById('in-batch-danmaku').value.trim();
+        if (!raw) return;
+        const segments = raw.split(/[\n,，;；。]+/).map(s => s.trim()).filter(s => s.length > 0);
+        if (segments.length === 0) return;
+        const colors = ['#ffffff', '#f39c12', '#2ecc71', '#54a0ff'];
+        danmakuList = segments.map((text, i) => ({ text, top: `${12 + (i % 6) * 10}%`, color: colors[i % colors.length], speed: 7 + (i % 4) * 2 }));
         renderDanmaku();
     });
 
@@ -918,7 +936,6 @@
 
             // 预渲染 DOM 元素为图片 (解决 Canvas 直接绘制 DOM 太复杂的问题)
             const uiLayer = isMobilePort ? document.getElementById('wrap-dy-ui') : document.querySelector('.ui-web');
-            let uiImgData = null;
 
             const drawFrame = async () => {
                 if (!isRecording) return;
@@ -941,8 +958,6 @@
                 ctx.drawImage(previewVideo, offX, offY, renderW, renderH);
 
                 // 2. 将当前上层 UI (网页版 或 抖音版) 实时光栅化绘制到 Canvas
-                // 注意：由于 UI 是动态的(时间走动)，每一帧都调 html2canvas 会极度卡顿
-                // 优化方案：这里我们以极快的频率进行近似贴图，保证流畅度
                 if (uiLayer) {
                     try {
                         const tempCanvas = await html2canvas(uiLayer, { backgroundColor: null, scale: 1.5 });
