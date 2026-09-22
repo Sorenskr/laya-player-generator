@@ -1028,7 +1028,7 @@
                             </div>
                             <span>音軌</span>
                             <div style="display: flex; align-items: center; gap: 4px;">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
                                 <span>設置</span>
                             </div>
                         </div>
@@ -1097,7 +1097,7 @@
                                     <span>彈</span>
                                 </div>
                                 <div class="btn-danmaku-setting" title="彈幕設置">
-                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
                                 </div>
 
                                 <div class="danmaku-input-capsule" id="wrap-danmaku-input-capsule">
@@ -1144,7 +1144,9 @@
                     <option value="preset-end-climax">后半程高潮突进</option>
                     <option value="preset-dense">全片密集高热度</option>
                     <option value="preset-gentle">平缓微波起伏</option>
+                    <option value="custom">✏️ 完全自定义波峰连线</option>
                 </select>
+                <input type="text" id="in-custom-wave" value="10, 25, 85, 40, 95, 30, 15, 60, 98, 20" placeholder="0-100之间的数字用逗号隔开" style="margin-top: 4px; display: none;">
             </div>
 
             <div class="form-row">
@@ -1574,10 +1576,29 @@
 
     renderWaveformSVG();
 
-    document.getElementById('sel-wave-preset').addEventListener('change', (e) => {
-        currentWavePoints = wavePresets[e.target.value] || wavePresets['preset-double-peak'];
+    const selWavePreset = document.getElementById('sel-wave-preset');
+    const inCustomWave = document.getElementById('in-custom-wave');
+
+    const updateWaveform = () => {
+        if (selWavePreset.value === 'custom') {
+            inCustomWave.style.display = 'block';
+            let vals = inCustomWave.value.split(/[,，]/).map(v => parseInt(v.trim()));
+            vals = vals.filter(v => !isNaN(v)); // 过滤无效输入
+            if (vals.length < 2) vals = [0, 100]; // 最少2个点保证能连成线
+            
+            currentWavePoints = vals.map((y, i) => ({
+                x: (i / (vals.length - 1)) * 1000,
+                y: Math.min(100, Math.max(0, y))
+            }));
+        } else {
+            inCustomWave.style.display = 'none';
+            currentWavePoints = wavePresets[selWavePreset.value] || wavePresets['preset-double-peak'];
+        }
         renderWaveformSVG();
-    });
+    };
+
+    selWavePreset.addEventListener('change', updateWaveform);
+    inCustomWave.addEventListener('input', updateWaveform);
 
     document.getElementById('in-wave-height').addEventListener('input', (e) => {
         const h = e.target.value + 'px';
