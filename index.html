@@ -6,7 +6,7 @@
     <title>Laya 播放器 · 影视级暂停界面生成器</title>
     <!-- 引入 Tailwind CSS 样式库 -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 html2canvas 高清图像渲染导出引擎 -->
+    <!-- 引入 html2canvas 图像渲染引擎 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <script>
@@ -21,10 +21,10 @@
                             gold: '#f59e0b'
                         },
                         studio: {
-                            base: '#080a0f',
-                            card: '#11151f',
-                            border: '#1e2638',
-                            hover: '#242f46'
+                            base: '#07090e',
+                            card: '#10141d',
+                            border: '#1b2333',
+                            hover: '#222d42'
                         }
                     }
                 }
@@ -46,13 +46,21 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Noto Sans SC", sans-serif;
         }
 
-        /* 播放器内专用正统繁体字体栈，杜绝文字垂直错位 */
+        /* 解决 html2canvas 汉字基线偏移与文字被切除的关键样式栈 */
         .player-tc-font {
             font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", "Plus Jakarta Sans", sans-serif;
             text-rendering: geometricPrecision;
+            line-height: 1.35;
         }
 
-        /* 保证视频截图以 100% 原始超清画质渲染，避免模糊失真 */
+        /* 确保所有文字容器拥有充裕的行高，杜绝文字上下被截断 */
+        .tc-text-safe {
+            line-height: 1.35 !important;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        /* 保证视频底图以 100% 原始超清画质渲染 */
         .crisp-img {
             image-rendering: -webkit-optimize-contrast;
             image-rendering: crisp-edges;
@@ -86,30 +94,30 @@
             transform: scale(1.2);
         }
 
-        /* 真实流媒体顶部/底部氛围渐变遮罩 */
+        /* 电影级微渐变遮罩 (自然柔和无灰斑) */
         .cinema-vignette {
-            background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 25%, rgba(0,0,0,0) 75%, rgba(0,0,0,0.85) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 75%, rgba(0,0,0,0.85) 100%);
         }
 
         /* VIP 免費通道呼吸金光 */
         @keyframes vipPulse {
-            0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.3); }
-            50% { box-shadow: 0 0 16px rgba(245, 158, 11, 0.6); }
+            0%, 100% { box-shadow: 0 0 6px rgba(245, 158, 11, 0.35); }
+            50% { box-shadow: 0 0 14px rgba(245, 158, 11, 0.65); }
         }
         .vip-glow {
-            animation: vipPulse 2.4s infinite ease-in-out;
+            animation: vipPulse 2.5s infinite ease-in-out;
         }
     </style>
 </head>
 <body class="bg-studio-base text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
 
-    <!-- 隐藏的文件选择器 -->
+    <!-- 隐藏式文件选择输入框 -->
     <input type="file" id="global-uploader" accept="image/*" class="hidden">
 
-    <!-- 顶部操作导航栏 (标准简体中文控制界面) -->
-    <header class="h-14 border-b border-studio-border bg-[#0b0e15] px-4 sm:px-6 flex items-center justify-between z-30 sticky top-0 shadow-md flex-shrink-0">
+    <!-- 顶部操作导航栏 (标准简体中文控制面板) -->
+    <header class="h-14 border-b border-studio-border bg-[#0a0d14] px-4 sm:px-6 flex items-center justify-between z-30 sticky top-0 shadow-md flex-shrink-0">
         <div class="flex items-center space-x-3">
-            <!-- Laya 官方拟真立体 Logo (SVG 矢量无损) -->
+            <!-- Laya 官方拟真立体矢量 Logo -->
             <div class="w-8 h-8 rounded-xl overflow-hidden shadow-md shadow-blue-600/40 flex-shrink-0 ring-1 ring-blue-400/50">
                 <svg viewBox="0 0 100 100" class="w-full h-full">
                     <defs>
@@ -137,7 +145,7 @@
             </div>
         </div>
 
-        <!-- 顶部核心操作按钮 (简体中文) -->
+        <!-- 顶部核心快捷操作按钮 -->
         <div class="flex items-center gap-2.5">
             <button id="btn-top-upload" class="flex items-center space-x-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold rounded-lg shadow-sm transition transform active:scale-95 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -151,10 +159,9 @@
         </div>
     </header>
 
-    <!-- 主界面布局：大尺寸视口，无缝填充 -->
     <div class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
         
-        <!-- 左侧画布工作区 (紧凑顶部对齐，彻底消除多余空黑区) -->
+        <!-- 左侧画布工作区 -->
         <main class="flex-1 bg-[#05070c] px-3 sm:px-6 pt-3 pb-8 flex flex-col items-center justify-start relative overflow-y-auto no-scrollbar">
             
             <!-- 视口模式选择与快捷提示栏 (简体中文操作) -->
@@ -185,6 +192,7 @@
                     </div>
                 </div>
             </div>
+
             <!-- 播放器渲染导出目标：纯净高质感流媒体架构 (100% 繁体中文内容) -->
             <div id="player-export-node" class="relative overflow-hidden rounded-xl shadow-2xl transition-all duration-200 ring-1 ring-white/10 bg-black flex items-center justify-center aspect-video w-full max-w-[1040px] select-none player-tc-font">
                 
@@ -196,28 +204,28 @@
                      crossorigin="anonymous"
                 />
 
-                <!-- 电影级微渐变氛围层 (保证中间通透无灰雾) -->
+                <!-- 电影级微渐变氛围层 -->
                 <div class="absolute inset-0 cinema-vignette pointer-events-none z-[1]"></div>
                 <!-- 调节变暗遮罩 (默认 0%) -->
                 <div id="pause-vignette-mask" class="absolute inset-0 bg-black/0 pointer-events-none z-[2]"></div>
 
                 <!-- ===================================================================================== -->
-                <!-- A. 电脑端播放器 UI 皮肤 (100% 繁体中文，独立容器，绝不与手机端控件产生任何混叠重合) -->
+                <!-- A. 电脑端播放器 UI 皮肤 (100% 繁体中文，独立布局，去除 backdrop-filter，杜绝文字截断错位) -->
                 <!-- ===================================================================================== -->
                 <div id="skin-desktop" class="absolute inset-0 flex flex-col justify-between z-10 pointer-events-none">
                     
-                    <!-- 电脑端顶部栏 -->
-                    <div class="p-4 sm:p-5 bg-gradient-to-b from-black/85 via-black/35 to-transparent flex flex-col gap-2.5 text-white">
-                        <div class="flex items-center justify-between">
+                    <!-- 电脑端顶部栏 (上下充裕内边距，统一对齐) -->
+                    <div class="p-4 sm:p-5 bg-gradient-to-b from-black/90 via-black/40 to-transparent flex flex-col gap-3 text-white">
+                        <div class="flex items-center justify-between w-full">
                             <!-- 顶部左侧：返回键 + 品牌标 + 免费通道标 + 视频标题 -->
-                            <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                            <div class="flex items-center gap-3 flex-wrap">
                                 <!-- 返回箭头 -->
                                 <div class="hover:text-blue-400 transition pr-0.5 flex items-center justify-center cursor-pointer">
                                     <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
                                 </div>
 
-                                <!-- 精致小写 Laya 品牌图标 + 自定义品牌药丸标签 (繁体) -->
-                                <div class="h-[26px] inline-flex items-center gap-1.5 bg-[#0f172a]/90 pl-1 pr-3 rounded-full border border-blue-400/40 shadow-md">
+                                <!-- 小写 Laya 品牌标签 (自适应高，内边距充足，无文字截断) -->
+                                <div class="inline-flex items-center gap-2 bg-[#0e1422]/95 px-3 py-1.5 rounded-full border border-blue-400/50 shadow-md">
                                     <div class="w-5 h-5 rounded-full overflow-hidden flex-shrink-0 border border-white/30">
                                         <svg viewBox="0 0 100 100" class="w-full h-full">
                                             <defs>
@@ -236,63 +244,64 @@
                                         </svg>
                                     </div>
                                     <!-- 自定义品牌文案 (繁体) -->
-                                    <span id="dt-brand-tag" class="text-xs font-bold tracking-wide text-blue-100 leading-none">Laya 獨家私密視頻</span>
+                                    <span id="dt-brand-tag" class="text-xs font-bold tracking-wide text-blue-100 tc-text-safe">Laya 獨家私密視頻</span>
                                 </div>
 
                                 <!-- 【免費通道】精品质感微标 (繁体) -->
-                                <div id="dt-free-channel-badge" class="h-[24px] inline-flex items-center px-2.5 rounded-full text-xs font-bold tracking-wide bg-[#241a0b]/90 text-amber-300 border border-amber-400/50 shadow-sm vip-glow">
-                                    <span id="dt-free-tag-text" class="leading-none">🔥 免費通道</span>
+                                <div id="dt-free-channel-badge" class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold tracking-wide bg-[#241a0c]/95 text-amber-300 border border-amber-400/60 shadow-md vip-glow">
+                                    <span id="dt-free-tag-text" class="tc-text-safe">🔥 免費通道</span>
                                 </div>
 
                                 <!-- 视频主标题与清晰度标记 (繁体) -->
                                 <div class="flex items-center gap-2">
-                                    <span id="dt-video-title" class="text-sm font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] leading-none">XXXX · 4K 極限視界</span>
-                                    <span class="text-[10px] bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black px-1.5 py-0.5 rounded shadow leading-none">VIP 藍光</span>
+                                    <span id="dt-video-title" class="text-sm font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)] tc-text-safe">XXXX · 4K 極限視界</span>
+                                    <span class="text-[10px] bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black px-2 py-0.5 rounded shadow tc-text-safe">VIP 藍光</span>
                                 </div>
                             </div>
 
-                            <!-- 顶部右侧专属电脑端控制 (绝无手机电池/时钟叠加混淆！) -->
-                            <div class="flex items-center gap-4 text-slate-200 text-xs">
-                                <span class="hover:text-blue-400 cursor-pointer transition flex items-center gap-1">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <!-- 顶部右侧专属电脑端控制 (严格 items-center 居中，绝无文字偏离溢出) -->
+                            <div class="flex items-center gap-5 text-slate-200 text-xs font-medium">
+                                <span class="hover:text-blue-400 cursor-pointer transition inline-flex items-center gap-1.5 tc-text-safe">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
                                     <span>原畫質連線</span>
                                 </span>
-                                <span class="hover:text-blue-400 cursor-pointer transition">音軌</span>
-                                <span class="hover:text-blue-400 cursor-pointer transition flex items-center gap-1">
+                                <span class="hover:text-blue-400 cursor-pointer transition tc-text-safe">音軌</span>
+                                <span class="hover:text-blue-400 cursor-pointer transition inline-flex items-center gap-1.5 tc-text-safe">
                                     <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>
                                     <span>設置</span>
                                 </span>
                             </div>
                         </div>
 
-                        <!-- 纤薄精致流媒体原生【免費通道】通知横幅 (高半透深色背景，居中完美对齐，绝不拉伸变形) -->
-                        <div id="dt-free-channel-banner" class="w-full max-w-2xl bg-[#0c121e]/90 border border-amber-500/40 rounded-lg px-3.5 py-1.5 flex items-center justify-between text-xs text-amber-100 shadow-lg shadow-black/40 mt-1">
-                            <div class="flex items-center gap-2 overflow-hidden">
+                        <!-- 纤薄精致流媒体原生【免費通道】通知横幅 (去除 backdrop-filter，添加 padding-y，文字绝对不会切半或溢出) -->
+                        <div id="dt-free-channel-banner" class="w-full max-w-2xl bg-[#0b101b]/95 border border-amber-500/50 rounded-lg px-4 py-2 flex items-center justify-between text-xs text-amber-100 shadow-xl mt-1">
+                            <div class="flex items-center gap-2.5 overflow-hidden flex-1 mr-3">
                                 <span class="text-sm flex-shrink-0">🎁</span>
-                                <span id="dt-free-banner-text" class="font-medium tracking-wide text-white drop-shadow truncate">
+                                <span id="dt-free-banner-text" class="font-medium tracking-wide text-white drop-shadow tc-text-safe">
                                     【免費通道】限時特權：已解鎖完整無碼未刪減版，點擊任意處立即播放
                                 </span>
                             </div>
-                            <div class="flex items-center gap-2 flex-shrink-0 ml-3">
-                                <span class="bg-amber-500/20 text-amber-300 font-bold text-[10px] px-2 py-0.5 rounded border border-amber-400/40">
+                            <div class="flex items-center gap-2 flex-shrink-0">
+                                <span class="bg-amber-500/20 text-amber-300 font-bold text-[11px] px-2.5 py-1 rounded border border-amber-400/50 tc-text-safe">
                                     特權生效中
                                 </span>
-                                <span class="text-slate-400 hover:text-white text-xs cursor-pointer">×</span>
+                                <span class="text-slate-400 hover:text-white text-xs cursor-pointer ml-1">×</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- 电脑端居中暂停播放圆钮 (高质感微透毛玻璃光环) -->
-                    <div class="self-center flex flex-col items-center gap-2">
-                        <div id="dt-center-btn" class="w-16 h-16 rounded-full bg-black/45 border-2 border-white/40 flex items-center justify-center text-white shadow-2xl transition hover:scale-105 cursor-pointer backdrop-blur-[2px]">
+                    <!-- 电脑端居中暂停播放圆钮 (高质感半透无模糊，解决胶囊文字偏离边界) -->
+                    <div class="self-center flex flex-col items-center gap-2.5">
+                        <div id="dt-center-btn" class="w-16 h-16 rounded-full bg-black/55 border-2 border-white/50 flex items-center justify-center text-white shadow-2xl transition hover:scale-105 cursor-pointer">
                             <svg class="w-8 h-8 fill-current ml-1" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                         </div>
-                        <div class="px-3 py-1 rounded-full bg-black/60 border border-white/20 text-white text-xs font-semibold tracking-wider shadow">
-                            點擊繼續播放
+                        <!-- 文字胶囊设置充裕 padding 与正常行高 -->
+                        <div class="px-4 py-1.5 rounded-full bg-black/75 border border-white/30 text-white text-xs font-semibold tracking-wider shadow-lg flex items-center justify-center">
+                            <span class="tc-text-safe">點擊繼續播放</span>
                         </div>
                     </div>
 
-                    <!-- 电脑端底部专业控制栏 (单个流媒体交互式进度条，绝无双进度条重合错位！) -->
+                    <!-- 电脑端底部专业控制栏 (单一流媒体进度条，绝无双层叠加) -->
                     <div class="px-5 pb-4 pt-10 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col gap-2.5">
                         
                         <!-- 真实的单个流媒体交互式进度条 -->
@@ -321,19 +330,19 @@
                                     </div>
                                 </div>
                                 <!-- 标准唯一时间码 -->
-                                <span class="font-mono text-slate-200 text-xs tracking-wide leading-none" id="dt-time-text">00:03:33 / 01:28:45</span>
+                                <span class="font-mono text-slate-200 text-xs tracking-wide tc-text-safe" id="dt-time-text">00:03:33 / 01:28:45</span>
                             </div>
 
                             <!-- 右侧画质、倍速、弹幕与全屏 (纯正繁体) -->
                             <div class="flex items-center gap-3 font-medium">
-                                <div class="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/15 px-2 py-0.5 rounded text-[11px] text-slate-200 cursor-pointer">
+                                <div class="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/15 px-2.5 py-1 rounded text-[11px] text-slate-200 cursor-pointer">
                                     <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                                    <span>彈幕 1.8W</span>
+                                    <span class="tc-text-safe">彈幕 1.8W</span>
                                 </div>
-                                <span class="bg-white/10 hover:bg-white/15 px-2 py-0.5 rounded text-[11px] cursor-pointer">倍速 1.0X</span>
+                                <span class="bg-white/10 hover:bg-white/15 px-2.5 py-1 rounded text-[11px] cursor-pointer tc-text-safe">倍速 1.0X</span>
                                 <!-- 正规流媒体画质下拉 -->
-                                <span id="dt-quality-tag" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-2.5 py-0.5 rounded text-[11px] font-bold shadow-sm flex items-center gap-1 cursor-pointer">
-                                    <span>Laya 藍光 4K</span>
+                                <span id="dt-quality-tag" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-3 py-1 rounded text-[11px] font-bold shadow-sm flex items-center gap-1.5 cursor-pointer">
+                                    <span class="tc-text-safe">Laya 藍光 4K</span>
                                     <span class="text-[9px]">▾</span>
                                 </span>
                                 <button class="hover:text-blue-400 transition cursor-pointer flex items-center justify-center">
@@ -343,17 +352,18 @@
                         </div>
                     </div>
                 </div>
+
                 <!-- ===================================================================================== -->
-                <!-- B. 手机端播放器 UI 皮肤 (独立控制，当切换到手机模式时才显示，带有拟真手机状态栏) -->
+                <!-- B. 手机端播放器 UI 皮肤 (独立控制，当切换到手机模式时才显示，无元素冲突) -->
                 <!-- ===================================================================================== -->
                 <div id="skin-mobile" class="absolute inset-0 flex-col justify-between z-10 pointer-events-none hidden">
                     
                     <!-- 手机端顶部：仿真手机系统栏 + 视频控制栏 -->
-                    <div class="pt-2 px-4 pb-4 bg-gradient-to-b from-black/85 via-black/40 to-transparent flex flex-col gap-2 text-white">
-                        <!-- 拟真手机状态栏 (仅在手机模式出现，时钟、5G、电池) -->
+                    <div class="pt-2 px-4 pb-4 bg-gradient-to-b from-black/90 via-black/45 to-transparent flex flex-col gap-2.5 text-white">
+                        <!-- 拟真手机状态栏 (时钟、5G、电池) -->
                         <div class="flex items-center justify-between text-[11px] font-medium tracking-tight text-slate-200 px-1">
-                            <span id="mb-sys-time" class="font-semibold">18:55</span>
-                            <div class="flex items-center gap-1.5">
+                            <span id="mb-sys-time" class="font-semibold tc-text-safe">18:55</span>
+                            <div class="flex items-center gap-2">
                                 <span class="text-[10px] tracking-tighter">5G</span>
                                 <!-- 信号格 SVG -->
                                 <svg class="w-3.5 h-3 fill-current" viewBox="0 0 20 20">
@@ -373,39 +383,39 @@
                         </div>
 
                         <!-- 手机端播放器标题栏 -->
-                        <div class="flex items-center justify-between mt-1">
+                        <div class="flex items-center justify-between mt-0.5">
                             <div class="flex items-center gap-2">
                                 <div class="w-6 h-6 flex items-center justify-center">
                                     <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
                                 </div>
-                                <span id="mb-video-title" class="text-xs sm:text-sm font-bold text-white drop-shadow truncate max-w-[200px] sm:max-w-xs">XXXX · 4K 極限視界</span>
-                                <span id="mb-free-tag-badge" class="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-1.5 py-0.5 rounded border border-amber-400/40">
+                                <span id="mb-video-title" class="text-xs sm:text-sm font-bold text-white drop-shadow truncate max-w-[200px] sm:max-w-xs tc-text-safe">XXXX · 4K 極限視界</span>
+                                <span id="mb-free-tag-badge" class="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded border border-amber-400/40 tc-text-safe">
                                     🔥 免費通道
                                 </span>
                             </div>
                             <div class="flex items-center gap-3 text-xs">
-                                <span>投屏</span>
-                                <span>···</span>
+                                <span class="tc-text-safe">投屏</span>
+                                <span class="tc-text-safe">···</span>
                             </div>
                         </div>
 
                         <!-- 手机端纤细通知横幅 -->
-                        <div id="mb-free-banner" class="w-full bg-[#0c121e]/90 border border-amber-500/40 rounded-lg px-2.5 py-1.5 flex items-center justify-between text-[11px] text-amber-100 shadow mt-0.5">
+                        <div id="mb-free-banner" class="w-full bg-[#0b101b]/95 border border-amber-500/40 rounded-lg px-3 py-1.5 flex items-center justify-between text-[11px] text-amber-100 shadow mt-0.5">
                             <div class="flex items-center gap-1.5 overflow-hidden">
                                 <span>🎁</span>
-                                <span id="mb-free-banner-text" class="truncate font-medium text-white">【免費通道】限時解鎖無碼未刪減版</span>
+                                <span id="mb-free-banner-text" class="truncate font-medium text-white tc-text-safe">【免費通道】限時解鎖無碼未刪減版</span>
                             </div>
-                            <span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded flex-shrink-0 ml-1">特權生效</span>
+                            <span class="text-[9px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded flex-shrink-0 ml-1 tc-text-safe">特權生效</span>
                         </div>
                     </div>
 
                     <!-- 手机端居中暂停键 -->
-                    <div class="self-center flex flex-col items-center gap-1.5">
-                        <div id="mb-center-btn" class="w-14 h-14 rounded-full bg-black/50 border-2 border-white/40 flex items-center justify-center text-white shadow-2xl">
+                    <div class="self-center flex flex-col items-center gap-2">
+                        <div id="mb-center-btn" class="w-14 h-14 rounded-full bg-black/60 border-2 border-white/50 flex items-center justify-center text-white shadow-2xl">
                             <svg class="w-7 h-7 fill-current ml-1" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                         </div>
-                        <div class="px-2.5 py-0.5 rounded-full bg-black/60 border border-white/20 text-white text-[11px] font-medium">
-                            點擊繼續播放
+                        <div class="px-3 py-1 rounded-full bg-black/75 border border-white/30 text-white text-[11px] font-medium flex items-center justify-center">
+                            <span class="tc-text-safe">點擊繼續播放</span>
                         </div>
                     </div>
 
@@ -417,10 +427,10 @@
                             </div>
                         </div>
                         <div class="flex items-center justify-between text-white text-[11px]">
-                            <span id="mb-time-text" class="font-mono">00:03:33 / 01:28:45</span>
+                            <span id="mb-time-text" class="font-mono tc-text-safe">00:03:33 / 01:28:45</span>
                             <div class="flex items-center gap-3">
-                                <span>彈幕</span>
-                                <span class="bg-blue-600 px-1.5 py-0.5 rounded font-bold text-[10px]">Laya 超清 4K</span>
+                                <span class="tc-text-safe">彈幕</span>
+                                <span class="bg-blue-600 px-2 py-0.5 rounded font-bold text-[10px] tc-text-safe">Laya 超清 4K</span>
                                 <span>⛶</span>
                             </div>
                         </div>
@@ -429,6 +439,7 @@
 
             </div>
         </main>
+
         <!-- 右侧属性配置控制台 (100% 简体中文操作后台) -->
         <aside class="w-full lg:w-96 bg-studio-card border-t lg:border-t-0 lg:border-l border-studio-border p-4 sm:p-5 overflow-y-auto no-scrollbar flex flex-col gap-5 flex-shrink-0 z-20">
             
@@ -445,7 +456,7 @@
             </div>
 
             <!-- 分组 1：视频与品牌信息 -->
-            <div class="bg-[#0c1017] p-3.5 rounded-xl border border-studio-border/80 flex flex-col gap-3">
+            <div class="bg-[#0b0e15] p-3.5 rounded-xl border border-studio-border/80 flex flex-col gap-3">
                 <div class="flex items-center justify-between border-b border-studio-border/60 pb-2">
                     <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
@@ -468,7 +479,7 @@
             </div>
 
             <!-- 分组 2：免费通道特权设置 -->
-            <div class="bg-[#0c1017] p-3.5 rounded-xl border border-studio-border/80 flex flex-col gap-3">
+            <div class="bg-[#0b0e15] p-3.5 rounded-xl border border-studio-border/80 flex flex-col gap-3">
                 <div class="flex items-center justify-between border-b border-studio-border/60 pb-2">
                     <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
@@ -494,7 +505,7 @@
             </div>
 
             <!-- 分组 3：进度与时间码智能联动 -->
-            <div class="bg-[#0c1017] p-3.5 rounded-xl border border-studio-border/80 flex flex-col gap-3">
+            <div class="bg-[#0b0e15] p-3.5 rounded-xl border border-studio-border/80 flex flex-col gap-3">
                 <div class="flex items-center justify-between border-b border-studio-border/60 pb-2">
                     <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
@@ -526,7 +537,7 @@
             </div>
 
             <!-- 分组 4：视觉细节微调 -->
-            <div class="bg-[#0c1017] p-3.5 rounded-xl border border-studio-border/80 flex flex-col gap-3">
+            <div class="bg-[#0b0e15] p-3.5 rounded-xl border border-studio-border/80 flex flex-col gap-3">
                 <div class="flex items-center justify-between border-b border-studio-border/60 pb-2">
                     <span class="text-xs font-bold text-slate-200 flex items-center gap-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
@@ -536,7 +547,7 @@
 
                 <div class="space-y-1">
                     <div class="flex justify-between text-[11px] text-slate-300">
-                        <span>画面暗角/变暗深度</span>
+                        <span>画面变暗遮罩</span>
                         <span id="label-vignette" class="font-mono">0%</span>
                     </div>
                     <input type="range" id="input-vignette" min="0" max="80" value="0" class="w-full">
@@ -577,6 +588,7 @@
         <span id="toast-icon">✨</span>
         <span id="toast-text">提示信息</span>
     </div>
+
     <script>
         const playerNode = document.getElementById('player-export-node');
         const bgImage = document.getElementById('player-bg-image');
@@ -619,7 +631,6 @@
                 playerNode.style.aspectRatio = '16 / 9';
                 playerNode.style.borderRadius = '0.75rem';
 
-                // 严格显示电脑皮肤，隐藏手机皮肤，杜绝混叠
                 skinDesktop.classList.remove('hidden');
                 skinDesktop.classList.add('flex');
                 skinMobile.classList.remove('flex');
@@ -822,25 +833,29 @@
         });
 
         function exportHighQualityScreenshot() {
-            showToast('正在光栅化生成超清截图...', '⏳');
+            showToast('正在导出超清截图...', '⏳');
 
-            // 使用 html2canvas 执行 2.5X 超采样导出
-            html2canvas(playerNode, {
-                scale: 2.5,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: null,
-                logging: false,
-                imageTimeout: 0
-            }).then((canvas) => {
-                const link = document.createElement('a');
-                link.download = `Laya_Pause_${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png', 1.0);
-                link.click();
-                showToast('高清截图已保存并下载！', '🎉');
-            }).catch((err) => {
-                console.error(err);
-                showToast('保存失败，请检查图片跨域状态', '❌');
+            // 确保字体完全渲染后再进行光栅化截屏
+            (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
+                html2canvas(playerNode, {
+                    scale: 2.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null,
+                    logging: false,
+                    imageTimeout: 0,
+                    scrollX: 0,
+                    scrollY: 0
+                }).then((canvas) => {
+                    const link = document.createElement('a');
+                    link.download = `Laya_Pause_${Date.now()}.png`;
+                    link.href = canvas.toDataURL('image/png', 1.0);
+                    link.click();
+                    showToast('超清截图已保存并下载！', '🎉');
+                }).catch((err) => {
+                    console.error(err);
+                    showToast('保存失败，请检查图片跨域状态', '❌');
+                });
             });
         }
 
@@ -848,7 +863,7 @@
         document.getElementById('btn-side-save').addEventListener('click', exportHighQualityScreenshot);
         document.getElementById('btn-bottom-save').addEventListener('click', exportHighQualityScreenshot);
 
-        // 默认初始化执行一次时间对齐
+        // 初始化时间对齐
         updateTimecodeDisplay();
     </script>
 </body>
