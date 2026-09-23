@@ -567,31 +567,60 @@
         </div>
 
         <!-- ================= 选项卡 3: 高级弹幕工作台 ================= -->
+       <!-- ================= 选项卡 3: 高级弹幕工坊 (全能微调与预设库) ================= -->
         <div id="panel-dm-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
-                    <span>💬 彈幕軌道管理矩陣</span>
-                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增自定義軌道</button>
+                    <span>💬 彈幕模式與案例預設庫</span>
+                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增彈幕</button>
                 </div>
+
+                <!-- 模式切换：定格排布(截图) vs 动态滚动(视频) -->
                 <div class="form-row">
+                    <label>彈幕工作模式 (截圖建議切換為定格)</label>
+                    <select id="sel-dm-mode" style="background:#151821; font-weight:700; color:#5dade2;">
+                        <option value="scroll">🎬 動態滾動模式 (視頻錄製推薦)</option>
+                        <option value="fixed">📌 定格排布模式 (自由調X/Y位置，截圖推薦)</option>
+                    </select>
+                </div>
+
+                <!-- 预设案例快速装载按钮组 -->
+                <div class="form-row" style="margin-top: 4px;">
+                    <label>老司機專屬高能預設案例庫 (點擊一鍵裝載)：</label>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <button class="btn btn-secondary btn-preset-load" data-preset="driver" style="justify-content: flex-start; font-size:11px; padding: 6px 10px;">
+                            🔥 【老司機身材熱評組】(身材極品/無碼/香)
+                        </button>
+                        <button class="btn btn-secondary btn-preset-load" data-preset="climax" style="justify-content: flex-start; font-size:11px; padding: 6px 10px;">
+                            💥 【劇情高能爆點組】(前方高能/衛生紙/番號)
+                        </button>
+                        <button class="btn btn-secondary btn-preset-load" data-preset="traffic" style="justify-content: flex-start; font-size:11px; padding: 6px 10px;">
+                            👑 【Laya暗號特權引流組】(已解鎖未刪減/語音廳)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-row" style="margin-top: 6px;">
                     <div class="range-box">
-                        <label>全局彈幕字號大小</label>
+                        <label>全局彈幕字號調節</label>
                         <span class="range-value" id="txt-danmaku-size">16px</span>
                     </div>
                     <input type="range" id="in-danmaku-size" min="12" max="32" value="16">
                 </div>
+
                 <div class="form-row">
-                    <label>大段文本智能切分批量導入</label>
-                    <textarea id="in-batch-danmaku" placeholder="輸入多條文本，自動以換行或標點分段"></textarea>
+                    <label>大段文本智能批量導入 (自動分段)</label>
+                    <textarea id="in-batch-danmaku" placeholder="粘貼多行話術，以換行或逗號隔開..."></textarea>
                     <button class="btn btn-sm btn-upload" id="btn-parse-batch" style="margin-top: 4px;">🚀 識別導入</button>
                 </div>
+
                 <div class="form-row" style="margin-top: 6px;">
-                    <label>各軌道獨立參數控制列表：</label>
+                    <label>各條彈幕獨立參數微調列表 (修改即時生效)：</label>
                 </div>
+                <!-- 动态轨道控制卡片列表 -->
                 <div id="danmaku-track-list"></div>
             </div>
         </div>
-
         <!-- 通用画面防切脸构图卡片 -->
         <div class="panel-card">
             <div class="card-header">
