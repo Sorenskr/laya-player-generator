@@ -4,7 +4,7 @@
 :root {
     --primary: #1877F2;
     --primary-hover: #166fe5;
-    --primary-glow: rgba(24, 119, 242, 0.35);
+    --primary-glow: rgba(24, 119, 242, 0.4);
     --bg-dark: #090a0f;
     --panel-bg: #13161f;
     --card-bg: #1a1e29;
@@ -57,8 +57,8 @@ body {
     border-radius: 6px;
     font-size: 12.5px;
     font-weight: 600;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     opacity: 0;
     transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28);
     transform: translateY(-10px);
@@ -67,6 +67,18 @@ body {
 .toast.show {
     opacity: 1;
     transform: translateY(0);
+}
+
+/* 交互性控件视觉反馈 (触碰微动) */
+.interactive-elem {
+    cursor: pointer;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.interactive-elem:hover {
+    opacity: 0.88;
+}
+.interactive-elem:active {
+    transform: scale(0.96);
 }
 
 /* ==========================================================================
@@ -165,18 +177,9 @@ header {
     border: 1px solid #3d4556;
 }
 
-.btn-lang:hover {
-    background: #343b4d;
-    color: #fff;
-}
-
 .btn-upload {
     background: #27ae60;
     color: #fff;
-}
-
-.btn-upload:hover {
-    background: #219653;
 }
 
 .btn-save-img {
@@ -184,28 +187,15 @@ header {
     color: #fff;
 }
 
-.btn-save-img:hover {
-    background: var(--primary-hover);
-}
-
 .btn-save-vid {
     background: linear-gradient(135deg, #e67e22, #d35400);
     color: #fff;
-    box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
-}
-
-.btn-save-vid:hover {
-    opacity: 0.94;
+    box-shadow: 0 2px 8px rgba(230, 126, 34, 0.35);
 }
 
 .btn-secondary {
     background: #232733;
     color: #d1d5db;
-}
-
-.btn-secondary:hover {
-    background: #2f3444;
-    color: #fff;
 }
 
 .btn-sm {
@@ -214,7 +204,7 @@ header {
 }
 
 /* ==========================================================================
-   3. 主工作区与视口切换器 (Workspace)
+   3. 主工作区与画幅容器 (带高品质独立边框)
    ========================================================================== */
 main {
     display: flex;
@@ -254,11 +244,7 @@ main {
     font-size: 12px;
     font-weight: 600;
     margin: 0 2px;
-    transition: color 0.15s ease, background 0.15s ease;
-}
-
-.tab-btn:hover {
-    color: #fff;
+    transition: 0.15s ease;
 }
 
 .tab-btn.active {
@@ -266,9 +252,6 @@ main {
     color: #fff;
 }
 
-/* ==========================================================================
-   4. 播放器舞台与三档画幅适配
-   ========================================================================== */
 .player-stage {
     display: flex;
     align-items: center;
@@ -277,33 +260,35 @@ main {
     height: calc(100% - 50px);
 }
 
+/* 核心播放器盒子：带有精美外边框与投影 */
 .player-box {
     position: relative;
     overflow: hidden;
     background: #000;
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.88);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1), height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .mode-pc {
     width: min(1080px, 92%);
     aspect-ratio: 16 / 9;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 .mode-mobile-land {
     width: min(1120px, 94%);
     aspect-ratio: 19.5 / 9;
-    border-radius: 14px;
+    border-radius: 16px;
 }
 
 .mode-mobile-port {
     height: min(650px, calc(100vh - 110px));
     aspect-ratio: 9 / 16;
-    border-radius: 18px;
+    border-radius: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.18);
 }
 
-/* 媒体展示容器 (支持 X/Y 轴防切脸位移与缩放) */
 .media-container {
     position: absolute;
     top: 0;
@@ -324,7 +309,7 @@ main {
 }
 
 /* ==========================================================================
-   5. 动态跑马灯弹幕系统
+   4. 动态跑马灯弹幕系统 (默认开启)
    ========================================================================== */
 .danmaku-layer {
     position: absolute;
@@ -335,7 +320,6 @@ main {
     pointer-events: none;
     z-index: 3;
     overflow: hidden;
-    display: none;
 }
 
 .danmaku-item {
@@ -353,15 +337,13 @@ main {
     100% { transform: translateX(-120%); }
 }
 
-/* 抖音竖屏模式下弹幕强制锁定：纯白字体 + 粗黑描边 */
 .mode-mobile-port .danmaku-item {
     color: #ffffff !important;
     text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
 /* ==========================================================================
-   6. 模式 A: 电脑端 (16:9) & 手机横屏 (19.5:9) WEB HUD 样式
-   注：所有子元素强制采用 margin-right 代替 gap，确保 html2canvas 导出无缝兼容
+   5. 模式 A: 电脑端 & 手机横屏 WEB HUD 样式 (抗挤压)
    ========================================================================== */
 .player-top {
     position: absolute;
@@ -399,7 +381,7 @@ main {
 }
 
 .laya-brand-badge {
-    background: rgba(13, 91, 225, 0.5);
+    background: rgba(13, 91, 225, 0.55);
     border: 1px solid rgba(61, 136, 253, 0.7);
     padding: 2.5px 8px 2.5px 5px;
     border-radius: 20px;
@@ -424,7 +406,7 @@ main {
 
 .free-channel-pill {
     background: linear-gradient(90deg, rgba(230, 126, 34, 0.45), rgba(243, 156, 18, 0.3));
-    border: 1px solid rgba(243, 156, 18, 0.7);
+    border: 1px solid rgba(243, 156, 18, 0.75);
     padding: 2.5px 8px;
     border-radius: 14px;
     font-size: 11px;
@@ -505,7 +487,6 @@ main {
     margin-right: 4px;
 }
 
-/* 特权公告横幅 (锁定内联文字与对比度，防止文字黑化) */
 .banner-container {
     margin-top: 7px;
     display: flex;
@@ -549,7 +530,6 @@ main {
     border-radius: 4px;
 }
 
-/* 居中播放/暂停按钮 */
 .center-pause-wrap {
     position: absolute;
     top: 50%;
@@ -572,6 +552,12 @@ main {
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.play-circle:hover {
+    transform: scale(1.06);
+    background: rgba(15, 18, 24, 0.85);
 }
 
 .play-triangle {
@@ -607,7 +593,6 @@ main {
     color: #e5e9f0;
 }
 
-/* 高能波浪热度曲线图层 (位于进度条上方) */
 .waveform-layer {
     position: absolute;
     left: 16px;
@@ -624,7 +609,6 @@ main {
     height: 100%;
 }
 
-/* 底部播放进度条与控制器 */
 .player-bottom {
     position: absolute;
     bottom: 0;
@@ -711,17 +695,71 @@ main {
     align-items: center;
 }
 
-.badge-dm-btn {
-    font-weight: 900;
-    border: 1px solid #fff;
-    border-radius: 4px;
-    padding: 0 3px;
-    font-size: 10px;
+/* ==========================================================================
+   ★ 重点：高质感發光彈幕切換膠囊 (彻底告别丑框)
+   ========================================================================== */
+.dm-switch-capsule {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 14px;
+    padding: 2.5px 8px;
     margin-right: 8px;
     cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
 }
 
-/* 伪装弹幕输入框 (100% 免疫 html2canvas 原生 input 变形黑洞) */
+.dm-switch-capsule:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+.dm-switch-capsule.active {
+    background: rgba(24, 119, 242, 0.28);
+    border-color: rgba(24, 119, 242, 0.85);
+    box-shadow: 0 0 8px rgba(24, 119, 242, 0.4);
+}
+
+.dm-capsule-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    color: #8b93a4;
+    transition: color 0.2s;
+}
+
+.dm-switch-capsule.active .dm-capsule-icon {
+    color: #5dade2;
+}
+
+.dm-capsule-text {
+    font-size: 11px;
+    font-weight: 700;
+    color: #8b93a4;
+    margin-right: 5px;
+    line-height: 1;
+}
+
+.dm-switch-capsule.active .dm-capsule-text {
+    color: #ffffff;
+}
+
+.dm-status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #636e72;
+    transition: all 0.2s;
+}
+
+.dm-switch-capsule.active .dm-status-dot {
+    background: #2ecc71;
+    box-shadow: 0 0 6px #2ecc71;
+}
+
+/* 伪装输入栏 (点击即可直接输入弹幕) */
 .fake-dm-bar {
     background: rgba(255, 255, 255, 0.14);
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -729,6 +767,13 @@ main {
     display: inline-flex;
     align-items: center;
     padding: 2px 3px 2px 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.fake-dm-bar:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
 }
 
 .fake-dm-txt {
@@ -763,6 +808,16 @@ main {
     align-items: center;
 }
 
+.live-tag-btn {
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+}
+.live-tag-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
 .res-tag {
     background: #1877F2;
     color: #fff;
@@ -773,7 +828,7 @@ main {
 }
 
 /* ==========================================================================
-   7. 模式 B: 手机竖屏 (9:16) 抖音/短视频模式专属样式
+   6. 模式 B: 手机竖屏 (9:16 抖音模式)
    ========================================================================== */
 .douyin-hud {
     display: none;
@@ -786,7 +841,6 @@ main {
     pointer-events: none;
 }
 
-/* 竖屏模式显示抖音 HUD，隐藏 Web 播放器原 HUD */
 .mode-mobile-port .douyin-hud {
     display: block;
 }
@@ -798,7 +852,6 @@ main {
     display: none !important;
 }
 
-/* 顶部精选/热点导航 */
 .dy-top-nav {
     position: absolute;
     top: 12px;
@@ -812,6 +865,7 @@ main {
     font-weight: 700;
     color: rgba(255, 255, 255, 0.7);
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    pointer-events: auto;
 }
 
 .dy-nav-tabs {
@@ -841,7 +895,6 @@ main {
     border-radius: 2px;
 }
 
-/* 横屏视频自适应：全屏观看居中悬浮胶囊 */
 .dy-fullscreen-pill {
     position: absolute;
     top: 58%;
@@ -866,7 +919,6 @@ main {
     margin-right: 5px;
 }
 
-/* 右侧互动栏 (头像/点赞/评论/收藏/转发/黑胶唱片) */
 .dy-right-bar {
     position: absolute;
     right: 10px;
@@ -874,6 +926,7 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
+    pointer-events: auto;
 }
 
 .dy-avatar-wrap {
@@ -907,6 +960,12 @@ main {
     font-size: 13px;
     font-weight: 900;
     line-height: 1;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.dy-follow-plus.followed {
+    background: #2ecc71;
+    transform: translateX(-50%) rotate(360deg);
 }
 
 .dy-action-item {
@@ -935,7 +994,6 @@ main {
     color: #fff;
 }
 
-/* 旋转黑胶唱片 */
 .dy-vinyl-record {
     width: 36px;
     height: 36px;
@@ -960,7 +1018,6 @@ main {
     100% { transform: rotate(360deg); }
 }
 
-/* 左下角信息流 */
 .dy-left-info {
     position: absolute;
     left: 14px;
@@ -969,6 +1026,7 @@ main {
     display: flex;
     flex-direction: column;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    pointer-events: auto;
 }
 
 .dy-author-name {
@@ -992,7 +1050,6 @@ main {
     margin-bottom: 6px;
 }
 
-/* 活动声明胶囊 */
 .dy-campaign-pill {
     background: rgba(0, 0, 0, 0.45);
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -1016,7 +1073,6 @@ main {
     margin-right: 5px;
 }
 
-/* 金色引流榜单 */
 .dy-gold-banner {
     background: linear-gradient(90deg, rgba(230, 126, 34, 0.88), rgba(243, 156, 18, 0.82));
     border-radius: 6px;
@@ -1040,7 +1096,6 @@ main {
     margin-right: 4px;
 }
 
-/* 底部梦幻紫黑渐变蒙版与 Tab 栏 */
 .dy-bottom-wrap {
     position: absolute;
     bottom: 0;
@@ -1053,6 +1108,7 @@ main {
     flex-direction: column;
     justify-content: flex-end;
     padding: 0 16px 8px 16px;
+    pointer-events: auto;
 }
 
 .dy-bottom-tabs {
@@ -1075,7 +1131,6 @@ main {
     color: #fff;
 }
 
-/* 发光笑脸星标瞬间 */
 .dy-star-moment {
     width: 32px;
     height: 32px;
@@ -1108,7 +1163,7 @@ main {
 }
 
 /* ==========================================================================
-   8. 右侧高级 Studio 控制面板样式
+   7. 右侧 Studio 控制后台
    ========================================================================== */
 .sidebar {
     width: 370px;
@@ -1222,7 +1277,6 @@ main {
     color: #fff;
 }
 
-/* iOS 风格平滑滑动开关 */
 .ios-toggle {
     position: relative;
     display: inline-block;
@@ -1270,7 +1324,6 @@ input:checked + .slider-round:before {
     transform: translateX(15px);
 }
 
-/* 表单行与输入控件 */
 .form-grid-2 {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1347,7 +1400,7 @@ input[type="range"] {
     padding: 5px;
 }
 
-/* 弹幕轨道编辑器卡片列表 */
+/* 弹幕轨道列表 */
 #danmaku-track-list {
     display: flex;
     flex-direction: column;
