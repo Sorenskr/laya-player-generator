@@ -4,7 +4,6 @@
  * ==========================================================================
  */
 
-// 1. 全局 Toast 提示通知
 window.showToast = function (msg) {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -21,7 +20,6 @@ window.showToast = function (msg) {
     }, 2800);
 };
 
-// 2. 右侧面板选项卡切换
 window.switchRightTab = function (mode) {
     const tabWeb = document.getElementById('tab-btn-web');
     const tabDy = document.getElementById('tab-btn-dy');
@@ -46,9 +44,6 @@ window.switchRightTab = function (mode) {
 };
 
 (function () {
-    /* ==========================================================================
-       A. 选项卡点击
-       ========================================================================== */
     const tabWeb = document.getElementById('tab-btn-web');
     const tabDy = document.getElementById('tab-btn-dy');
     const tabDm = document.getElementById('tab-btn-dm');
@@ -58,7 +53,7 @@ window.switchRightTab = function (mode) {
     if (tabDm) tabDm.addEventListener('click', () => window.switchRightTab('dm'));
 
     /* ==========================================================================
-       B. 高能热度波浪曲线 (Canvas 贝塞尔平滑绘制)
+       A. 高能热度波浪曲线 (Canvas 贝塞尔平滑绘制)
        ========================================================================== */
     const waveCanvas = document.getElementById('waveform-canvas');
     const wrapWaveform = document.getElementById('wrap-waveform');
@@ -143,9 +138,8 @@ window.switchRightTab = function (mode) {
     setTimeout(window.drawWaveform, 200);
 
     /* ==========================================================================
-       C. 播放器内部控件原生交互 (倍速、画质、抖音点赞收藏全实装)
+       B. 播放器内部控件原生交互
        ========================================================================== */
-    // 1. 倍速点击循环切换
     const btnCycleSpeed = document.getElementById('btn-cycle-speed');
     const dispSpeedVal = document.getElementById('disp-speed-val');
     const speeds = ['1.0X', '1.25X', '1.5X', '2.0X', '0.75X'];
@@ -156,11 +150,10 @@ window.switchRightTab = function (mode) {
             dispSpeedVal.textContent = speeds[speedIdx];
             const previewVideo = document.getElementById('preview-video');
             if (previewVideo) previewVideo.playbackRate = parseFloat(speeds[speedIdx]);
-            window.showToast(`已切換倍速為：${speeds[speedIdx]}`);
+            window.showToast(`已切换倍速为：${speeds[speedIdx]}`);
         });
     }
 
-    // 2. 画质点击切换
     const dispBotRes = document.getElementById('disp-bot-res');
     const resOptions = ['原畫 1080P 60幀 ▾', 'Laya 藍光 4K ▾', '4K 120P 極致 ▾', '超清 720P ▾'];
     let resIdx = 0;
@@ -168,11 +161,10 @@ window.switchRightTab = function (mode) {
         dispBotRes.addEventListener('click', () => {
             resIdx = (resIdx + 1) % resOptions.length;
             dispBotRes.textContent = resOptions[resIdx];
-            window.showToast(`已切換清晰度：${resOptions[resIdx].replace(' ▾', '')}`);
+            window.showToast(`已切换清晰度：${resOptions[resIdx].replace(' ▾', '')}`);
         });
     }
 
-    // 3. 抖音模式点赞交互
     const dyBtnLike = document.getElementById('dy-btn-like');
     const dySvgLike = document.getElementById('dy-svg-like');
     let isLiked = false;
@@ -182,11 +174,10 @@ window.switchRightTab = function (mode) {
             dySvgLike.setAttribute('fill', isLiked ? '#fe2c55' : '#ffffff');
             dyBtnLike.style.transform = 'scale(1.2)';
             setTimeout(() => { dyBtnLike.style.transform = 'scale(1)'; }, 150);
-            window.showToast(isLiked ? '❤️ 點贊成功！' : '已取消點贊');
+            window.showToast(isLiked ? '❤️ 点赞成功！' : '已取消点赞');
         });
     }
 
-    // 4. 抖音模式收藏交互
     const dyBtnStar = document.getElementById('dy-btn-star');
     const dySvgStar = document.getElementById('dy-svg-star');
     let isStarred = false;
@@ -200,7 +191,6 @@ window.switchRightTab = function (mode) {
         });
     }
 
-    // 5. 抖音关注按钮交互 (+ 变 ✓)
     const dyBtnFollow = document.getElementById('dy-btn-follow');
     if (dyBtnFollow) {
         dyBtnFollow.addEventListener('click', (e) => {
@@ -208,17 +198,17 @@ window.switchRightTab = function (mode) {
             if (dyBtnFollow.textContent === '+') {
                 dyBtnFollow.textContent = '✓';
                 dyBtnFollow.classList.add('followed');
-                window.showToast('已成功關注作者！');
+                window.showToast('已成功关注作者！');
             } else {
                 dyBtnFollow.textContent = '+';
                 dyBtnFollow.classList.remove('followed');
-                window.showToast('已取消關注');
+                window.showToast('已取消关注');
             }
         });
     }
 
     /* ==========================================================================
-       D. 全站显隐开关与文案绑定
+       C. 全站显隐开关与文案绑定 (包含中央圆钮与文字开关)
        ========================================================================== */
     const bindToggle = (switchId, targetId) => {
         const sw = document.getElementById(switchId);
@@ -230,7 +220,11 @@ window.switchRightTab = function (mode) {
             });
         }
     };
+
     bindToggle('sw-danmaku', 'danmaku-container');
+    // 关键更新：绑定中央圆钮与文字开关
+    bindToggle('sw-center-btn', 'btn-toggle-playback');
+    bindToggle('sw-center-pill', 'disp-center-pill');
     bindToggle('sw-bot-dm-group', 'wrap-bot-dm-group');
     bindToggle('sw-viewer', 'wrap-viewer-pill');
     bindToggle('sw-banner', 'wrap-banner');
@@ -292,13 +286,12 @@ window.switchRightTab = function (mode) {
             const reader = new FileReader();
             reader.onload = (evt) => {
                 dyAvatarImg.src = evt.target.result;
-                window.showToast('頭像已成功更新！');
+                window.showToast('头像已成功更新！');
             };
             reader.readAsDataURL(file);
         });
     }
 
-    // 录制时长自定义选项联动
     const selRecordSec = document.getElementById('sel-record-sec');
     const inCustomSec = document.getElementById('in-custom-sec');
     if (selRecordSec && inCustomSec) {
@@ -313,7 +306,7 @@ window.switchRightTab = function (mode) {
     }
 
     /* ==========================================================================
-       E. 全局繁简一键智能互转
+       D. 全局繁简一键智能互转 (严格只作用于左侧播放器画面内，绝不影响右侧控制台)
        ========================================================================== */
     let isTraditional = true;
     const s2tDict = {
@@ -321,7 +314,7 @@ window.switchRightTab = function (mode) {
         '通道': '通道', '正在观看': '正在觀看', '原画': '原畫', '原画质连线': '原畫質連線',
         '音轨': '音軌', '设置': '設置', '限时特权': '限時特權',
         '已解锁完整无码未删减版，点击任意处播放': '已解鎖完整無碼未刪減版，點擊任意處播放',
-        '特权生效中': '特權生效中', '点击继续播放': '點擊繼續播放', '弹幕': '彈幕',
+        '特权生效中': '特權生效中', '点击继续播放': '點擊繼續播放', '点击暂停播放': '點擊暫停播放', '弹幕': '彈幕',
         '倍速': '倍速', '精选': '精選', '热点': '熱點', '关注': '關注', '全屏观看': '全屏觀看',
         '心动匹配': '心動匹配', '来Laya 语音厅，亲自演给你看 >': '來Laya 語音廳，親自演給你看 >',
         '视频榜单：最让你心动的女优评选大赛': '視頻榜單：最讓你心動的女優評選大賽',
@@ -337,6 +330,7 @@ window.switchRightTab = function (mode) {
             const renderTarget = document.getElementById('render-target');
             if (!renderTarget) return;
 
+            // 仅对 #render-target 内部遍历，严格保护右侧控制面板永远保持简体
             const walker = document.createTreeWalker(renderTarget, NodeFilter.SHOW_TEXT, null, false);
             let node;
             while ((node = walker.nextNode())) {
@@ -347,12 +341,12 @@ window.switchRightTab = function (mode) {
                 }
                 node.nodeValue = txt;
             }
-            window.showToast(isTraditional ? '已切換為：繁體中文' : '已切换为：简体中文');
+            window.showToast(isTraditional ? '画面已切换为：繁体中文' : '画面已切换为：简体中文');
         });
     }
 
     /* ==========================================================================
-       F. 超高清截图导出 (PNG 导出，冻结坐标)
+       E. 超高清截图导出
        ========================================================================== */
     const btnSaveImg = document.getElementById('btn-save-img');
     if (btnSaveImg) {
@@ -360,7 +354,7 @@ window.switchRightTab = function (mode) {
             const renderTarget = document.getElementById('render-target');
             if (!renderTarget) return;
 
-            window.showToast('📸 正在渲染超高清圖片 (包含全套邊框與UI)...');
+            window.showToast('📸 正在渲染超高清图片 (包含全套边框与UI)...');
 
             html2canvas(renderTarget, {
                 scale: 2.5,
@@ -388,15 +382,15 @@ window.switchRightTab = function (mode) {
                 link.download = `Laya_${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png', 1.0);
                 link.click();
-                window.showToast('✅ 高清圖片已成功保存！');
+                window.showToast('✅ 高清图片已成功保存！');
             }).catch(err => {
-                window.showToast(`❌ 導出失敗: ${err.message}`);
+                window.showToast(`❌ 导出失败: ${err.message}`);
             });
         });
     }
 
     /* ==========================================================================
-       ★ 核心：全图层视频合成引擎 (彻底解决边框与控制栏缺失)
+       F. 全图层视频合成引擎
        ========================================================================== */
     const btnSaveVid = document.getElementById('btn-save-vid');
     if (btnSaveVid) {
@@ -407,7 +401,7 @@ window.switchRightTab = function (mode) {
             const inPosY = document.getElementById('in-pos-y');
 
             if (!window.PlayerEngine || !window.PlayerEngine.isVideoMode || !previewVideo) {
-                window.showToast('提示：請先上傳一段 MP4/WebM 視頻素材！');
+                window.showToast('提示：请先上传一段 MP4/WebM 视频素材！');
                 return;
             }
 
@@ -416,7 +410,7 @@ window.switchRightTab = function (mode) {
                 recordSeconds = Math.max(1, parseInt(inCustomSec.value) || 8);
             }
 
-            btnSaveVid.textContent = `⏳ 正在預處理 UI 邊框圖層...`;
+            btnSaveVid.textContent = `⏳ 正在预处理 UI 边框图层...`;
             btnSaveVid.disabled = true;
 
             try {
@@ -424,31 +418,26 @@ window.switchRightTab = function (mode) {
                 const outW = isDouyin ? 720 : 1280;
                 const outH = isDouyin ? 1280 : 720;
 
-                // 1. 生成 1:1 纯透明 UI 覆盖层快照 (提取边框、圆角、HUD、所有按钮和榜单)
                 const uiSnapshotCanvas = await html2canvas(renderTarget, {
-                    backgroundColor: null, // 透明背景！
+                    backgroundColor: null,
                     scale: outW / renderTarget.offsetWidth,
                     useCORS: true,
                     allowTaint: true,
                     onclone: (clonedDoc) => {
-                        // 隐藏视频底图，保留全部边框与UI
                         const media = clonedDoc.getElementById('player-media-wrap');
                         if (media) media.style.visibility = 'hidden';
-                        // 隐藏 DOM 弹幕 (弹幕在录制循环中动态独立重绘，防止卡死)
                         const dm = clonedDoc.getElementById('danmaku-container');
                         if (dm) dm.style.visibility = 'hidden';
                     }
                 });
 
-                btnSaveVid.textContent = `⏳ 錄製合成中 (${recordSeconds}s)...`;
+                btnSaveVid.textContent = `⏳ 录制合成中 (${recordSeconds}s)...`;
 
-                // 2. 准备录制离屏画布
                 const offCanvas = document.createElement('canvas');
                 offCanvas.width = outW;
                 offCanvas.height = outH;
                 const ctx = offCanvas.getContext('2d');
 
-                // 3. Web Audio 音频捕获管线
                 let audioTracks = [];
                 try {
                     if (!window._audioCtx) {
@@ -463,7 +452,6 @@ window.switchRightTab = function (mode) {
                     console.warn('Web Audio capture:', audioErr);
                 }
 
-                // 4. 合并音视频流
                 const canvasStream = offCanvas.captureStream(30);
                 const combinedStream = new MediaStream([
                     ...canvasStream.getVideoTracks(),
@@ -485,12 +473,11 @@ window.switchRightTab = function (mode) {
                     a.href = URL.createObjectURL(blob);
                     a.click();
 
-                    btnSaveVid.textContent = '合成下載視頻 (帶邊框與原聲)';
+                    btnSaveVid.textContent = '合成下载视频 (带边框与原声)';
                     btnSaveVid.disabled = false;
-                    window.showToast('🎉 帶邊框、控制欄與原聲的視頻已導出完成！');
+                    window.showToast('🎉 带边框、控制栏与原声的视频已导出完成！');
                 };
 
-                // 5. 提取动态弹幕粒子
                 const danmakuParticles = (window.DanmakuEngine ? window.DanmakuEngine.getActiveList() : []).map((dm, idx) => ({
                     text: dm.text,
                     color: isDouyin ? '#ffffff' : dm.color,
@@ -499,7 +486,6 @@ window.switchRightTab = function (mode) {
                     speed: (dm.speed ? (22 - dm.speed) : 9) * 0.95
                 }));
 
-                // 启动录制并驱动视频重头播放
                 previewVideo.currentTime = 0;
                 previewVideo.play();
                 if (window.PlayerEngine && window.PlayerEngine.updatePlayStateUI) {
@@ -511,11 +497,9 @@ window.switchRightTab = function (mode) {
                 const drawVideoFrame = () => {
                     if (!isRecording) return;
 
-                    // 1. 底色
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(0, 0, outW, outH);
 
-                    // 2. 视频帧精准防切脸缩放与位移
                     const vw = previewVideo.videoWidth || 1280;
                     const vh = previewVideo.videoHeight || 720;
                     const mAspect = vw / vh;
@@ -536,11 +520,8 @@ window.switchRightTab = function (mode) {
                     const offX = (outW - rw) * 0.5;
 
                     ctx.drawImage(previewVideo, offX, offY, rw, rh);
-
-                    // 3. 叠印 1:1 的完整 UI 图层快照 (包含外边框、所有徽章、特权横幅、控制栏、榜单、紫黑蒙版)
                     ctx.drawImage(uiSnapshotCanvas, 0, 0, outW, outH);
 
-                    // 4. 在 UI 图层上渲染平滑滚动的动态弹幕
                     const swDm = document.getElementById('sw-danmaku');
                     if (swDm && swDm.checked) {
                         const fontSize = (parseInt(document.getElementById('in-danmaku-size').value) || 16) * (outW / 960);
@@ -571,9 +552,9 @@ window.switchRightTab = function (mode) {
 
             } catch (err) {
                 console.error(err);
-                btnSaveVid.textContent = '合成下載視頻 (帶邊框與原聲)';
+                btnSaveVid.textContent = '合成下载视频 (带边框与原声)';
                 btnSaveVid.disabled = false;
-                window.showToast(`導出異常: ${err.message}`);
+                window.showToast(`导出异常: ${err.message}`);
             }
         });
     }
