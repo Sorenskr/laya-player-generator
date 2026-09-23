@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * app.js - 全局中枢控制、全图层视频合成引擎与原生互动中心
+ * app.js - 全局中枢控制、全图层视频合成引擎与原生互动中心 (强化防空文件与音频复用)
  * ==========================================================================
  */
 
@@ -208,7 +208,7 @@ window.switchRightTab = function (mode) {
     }
 
     /* ==========================================================================
-       C. 全站显隐开关与文案绑定 (包含中央圆钮与文字开关)
+       C. 全站显隐开关与文案绑定
        ========================================================================== */
     const bindToggle = (switchId, targetId) => {
         const sw = document.getElementById(switchId);
@@ -222,7 +222,6 @@ window.switchRightTab = function (mode) {
     };
 
     bindToggle('sw-danmaku', 'danmaku-container');
-    // 关键更新：绑定中央圆钮与文字开关
     bindToggle('sw-center-btn', 'btn-toggle-playback');
     bindToggle('sw-center-pill', 'disp-center-pill');
     bindToggle('sw-bot-dm-group', 'wrap-bot-dm-group');
@@ -306,7 +305,7 @@ window.switchRightTab = function (mode) {
     }
 
     /* ==========================================================================
-       D. 全局繁简一键智能互转 (严格只作用于左侧播放器画面内，绝不影响右侧控制台)
+       D. 全局繁简一键智能互转 (仅作用于左侧播放器)
        ========================================================================== */
     let isTraditional = true;
     const s2tDict = {
@@ -330,7 +329,6 @@ window.switchRightTab = function (mode) {
             const renderTarget = document.getElementById('render-target');
             if (!renderTarget) return;
 
-            // 仅对 #render-target 内部遍历，严格保护右侧控制面板永远保持简体
             const walker = document.createTreeWalker(renderTarget, NodeFilter.SHOW_TEXT, null, false);
             let node;
             while ((node = walker.nextNode())) {
@@ -381,7 +379,9 @@ window.switchRightTab = function (mode) {
                 const link = document.createElement('a');
                 link.download = `Laya_${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png', 1.0);
+                document.body.appendChild(link);
                 link.click();
+                document.body.removeChild(link);
                 window.showToast('✅ 高清图片已成功保存！');
             }).catch(err => {
                 window.showToast(`❌ 导出失败: ${err.message}`);
@@ -390,7 +390,7 @@ window.switchRightTab = function (mode) {
     }
 
     /* ==========================================================================
-       F. 全图层视频合成引擎
+       F. 核心：加固版全图层视频合成引擎 (彻底杜绝 0 字节与空文件)
        ========================================================================== */
     const btnSaveVid = document.getElementById('btn-save-vid');
     if (btnSaveVid) {
@@ -410,7 +410,7 @@ window.switchRightTab = function (mode) {
                 recordSeconds = Math.max(1, parseInt(inCustomSec.value) || 8);
             }
 
-            btnSaveVid.textContent = `⏳ 正在预处理 UI 边框图层...`;
+            btnSaveVid.textContent = `⏳ 预处理 UI 图层...`;
             btnSaveVid.disabled = true;
 
             try {
@@ -418,6 +418,7 @@ window.switchRightTab = function (mode) {
                 const outW = isDouyin ? 720 : 1280;
                 const outH = isDouyin ? 1280 : 720;
 
+                // 1. 抓取透明 UI 边框快照
                 const uiSnapshotCanvas = await html2canvas(renderTarget, {
                     backgroundColor: null,
                     scale: outW / renderTarget.offsetWidth,
@@ -433,23 +434,30 @@ window.switchRightTab = function (mode) {
 
                 btnSaveVid.textContent = `⏳ 录制合成中 (${recordSeconds}s)...`;
 
+                // 2. 准备离屏画布与媒体流
                 const offCanvas = document.createElement('canvas');
                 offCanvas.width = outW;
                 offCanvas.height = outH;
                 const ctx = offCanvas.getContext('2d');
 
+                // 3. 安全音频捕获 (单例保护 + 强制唤醒 AudioContext)
                 let audioTracks = [];
                 try {
                     if (!window._audioCtx) {
                         window._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        window._audioSrc = window._audioCtx.createMediaElementSource(previewVideo);
-                        window._audioDst = window._audioCtx.createMediaStreamDestination();
-                        window._audioSrc.connect(window._audioDst);
-                        window._audioSrc.connect(window._audioCtx.destination);
                     }
-                    audioTracks = window._audioDst.stream.getAudioTracks();
+                    if (window._audioCtx.state === 'suspended') {
+                        await window._audioCtx.resume();
+                    }
+                    if (!window._audioSrcNode) {
+                        window._audioSrcNode = window._audioCtx.createMediaElementSource(previewVideo);
+                        window._audioDstNode = window._audioCtx.createMediaStreamDestination();
+                        window._audioSrcNode.connect(window._audioDstNode);
+                        window._audioSrcNode.connect(window._audioCtx.destination);
+                    }
+                    audioTracks = window._audioDstNode.stream.getAudioTracks();
                 } catch (audioErr) {
-                    console.warn('Web Audio capture:', audioErr);
+                    console.warn('Audio Context capture fallback:', audioErr);
                 }
 
                 const canvasStream = offCanvas.captureStream(30);
@@ -458,20 +466,48 @@ window.switchRightTab = function (mode) {
                     ...audioTracks
                 ]);
 
-                const mime = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1') ? 'video/mp4' : 'video/webm';
-                const recorder = new MediaRecorder(combinedStream, { mimeType: mime });
-                const chunks = [];
+                // 4. 嗅探支持的编码类型
+                let mime = 'video/webm';
+                if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
+                    mime = 'video/mp4;codecs=avc1';
+                } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+                    mime = 'video/mp4';
+                } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                    mime = 'video/webm;codecs=vp9';
+                }
 
+                const recorder = new MediaRecorder(combinedStream, {
+                    mimeType: mime,
+                    videoBitsPerSecond: 6000000 // 保证导出码率与清晰度
+                });
+
+                const chunks = [];
                 recorder.ondataavailable = (e) => {
-                    if (e.data && e.data.size > 0) chunks.push(e.data);
+                    if (e.data && e.data.size > 0) {
+                        chunks.push(e.data);
+                    }
                 };
 
                 recorder.onstop = () => {
+                    if (chunks.length === 0) {
+                        window.showToast('❌ 导出异常：录制数据块为空，请重试');
+                        btnSaveVid.textContent = '合成下载视频 (带边框与原声)';
+                        btnSaveVid.disabled = false;
+                        return;
+                    }
+
                     const blob = new Blob(chunks, { type: mime });
-                    const a = document.createElement('a');
-                    a.download = `Laya_${isDouyin ? 'TikTok' : 'WebPlayer'}_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
-                    a.href = URL.createObjectURL(blob);
-                    a.click();
+                    const downloadUrl = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.style.display = 'none';
+                    link.download = `Laya_${isDouyin ? 'TikTok' : 'WebPlayer'}_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
+                    link.href = downloadUrl;
+                    document.body.appendChild(link);
+                    link.click();
+                    setTimeout(() => {
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(downloadUrl);
+                    }, 500);
 
                     btnSaveVid.textContent = '合成下载视频 (带边框与原声)';
                     btnSaveVid.disabled = false;
@@ -486,12 +522,25 @@ window.switchRightTab = function (mode) {
                     speed: (dm.speed ? (22 - dm.speed) : 9) * 0.95
                 }));
 
+                // 5. 准确定位并等待对齐后再开启录制器
                 previewVideo.currentTime = 0;
-                previewVideo.play();
+                await new Promise(resolve => {
+                    const onSeeked = () => {
+                        previewVideo.removeEventListener('seeked', onSeeked);
+                        resolve();
+                    };
+                    previewVideo.addEventListener('seeked', onSeeked);
+                    // 超时兜底防卡死
+                    setTimeout(resolve, 300);
+                });
+
+                await previewVideo.play();
                 if (window.PlayerEngine && window.PlayerEngine.updatePlayStateUI) {
                     window.PlayerEngine.updatePlayStateUI(true);
                 }
-                recorder.start();
+
+                // 250ms 产出一次数据切片，保证数据完整不丢包
+                recorder.start(250);
 
                 let isRecording = true;
                 const drawVideoFrame = () => {
@@ -547,7 +596,9 @@ window.switchRightTab = function (mode) {
 
                 setTimeout(() => {
                     isRecording = false;
-                    recorder.stop();
+                    if (recorder.state !== 'inactive') {
+                        recorder.stop();
+                    }
                 }, recordSeconds * 1000);
 
             } catch (err) {
