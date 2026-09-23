@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laya 播放器 · 雙模截圖/視頻生成器</title>
+    <title>Laya 播放器 · 双模截图/视频生成器</title>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -11,7 +11,7 @@
 
 <div id="toast-container"></div>
 
-<!-- 頂部工具導航欄 -->
+<!-- 顶部工具导航栏 (全简体中文操作按键) -->
 <header>
     <div class="brand">
         <svg class="brand-logo" viewBox="0 0 100 100">
@@ -20,48 +20,48 @@
             <circle cx="50" cy="50" r="20" fill="#3D88FD"/>
             <text x="50" y="58" font-size="24" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle" stroke="#000" stroke-width="2.5">Laya</text>
         </svg>
-        <span id="txt-app-title">Laya 播放器 · 雙模生成引擎</span>
+        <span id="txt-app-title">Laya 播放器 · 双模生成引擎</span>
     </div>
     <div class="nav-actions">
-        <button class="btn btn-lang" id="btn-toggle-lang">繁 / 簡 轉換</button>
+        <button class="btn btn-lang" id="btn-toggle-lang">繁 / 简 转换</button>
         <input type="file" id="media-uploader" accept="image/*,video/mp4,video/webm" style="display: none;">
-        <button class="btn btn-upload" onclick="document.getElementById('media-uploader').click()">上傳截圖/視頻</button>
-        <button class="btn btn-save-img" id="btn-save-img">保存高清圖片</button>
+        <button class="btn btn-upload" onclick="document.getElementById('media-uploader').click()">上传截图/视频</button>
+        <button class="btn btn-save-img" id="btn-save-img">保存高清图片</button>
         
         <div class="record-group">
             <select id="sel-record-sec">
-                <option value="5">錄製 5 秒</option>
-                <option value="10">錄製 10 秒</option>
-                <option value="15">錄製 15 秒</option>
-                <option value="custom">自定義秒數...</option>
+                <option value="5">录制 5 秒</option>
+                <option value="10">录制 10 秒</option>
+                <option value="15">录制 15 秒</option>
+                <option value="custom">自定义秒数...</option>
             </select>
-            <input type="number" id="in-custom-sec" value="8" min="1" max="120" style="display: none;" title="輸入自定義秒數">
+            <input type="number" id="in-custom-sec" value="8" min="1" max="120" style="display: none;" title="输入自定义秒数">
         </div>
-        <button class="btn btn-save-vid" id="btn-save-vid">合成下載視頻 (帶邊框與原聲)</button>
+        <button class="btn btn-save-vid" id="btn-save-vid">合成下载视频 (带边框与原声)</button>
     </div>
 </header>
 
 <main>
-    <!-- 中間預覽工作區 -->
+    <!-- 中间预览工作区 -->
     <div class="workspace" id="left-workspace">
         <div class="viewport-tabs">
-            <button class="tab-btn active" data-mode="mode-pc">電腦網頁端 (16:9)</button>
-            <button class="tab-btn" data-mode="mode-mobile-land">手機橫屏 (19.5:9)</button>
-            <button class="tab-btn" data-mode="mode-mobile-port">手機豎屏 (9:16 抖音模式)</button>
+            <button class="tab-btn active" data-mode="mode-pc">电脑网页端 (16:9)</button>
+            <button class="tab-btn" data-mode="mode-mobile-land">手机横屏 (19.5:9)</button>
+            <button class="tab-btn" data-mode="mode-mobile-port">手机竖屏 (9:16 抖音模式)</button>
         </div>
 
         <div class="player-stage">
             <div class="player-box mode-pc" id="render-target">
-                <!-- 媒體底層容器 -->
+                <!-- 媒体底层容器 -->
                 <div class="media-container" id="player-media-wrap">
                     <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg-media" id="preview-img">
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 動態跑馬燈彈幕層 (默認關閉隱藏) -->
+                <!-- 动态跑马灯弹幕层 (默认关闭隐藏) -->
                 <div class="danmaku-layer" id="danmaku-container" style="display: none;"></div>
 
-                <!-- ================= 模式 1: 電腦網頁端 & 手機橫屏 UI ================= -->
+                <!-- ================= 模式 1: 电脑网页端 & 手机横屏 UI (纯正繁体中文呈现) ================= -->
                 <div class="player-top" id="web-player-top">
                     <div class="top-first-row">
                         <div class="top-left-group">
@@ -109,7 +109,7 @@
                     </div>
                 </div>
 
-                <!-- 居中播放/暫停按鈕 -->
+                <!-- 居中播放/暂停按钮与胶囊文字 (支持分别独立开关) -->
                 <div class="center-pause-wrap" id="wrap-center-all">
                     <div class="play-circle" id="btn-toggle-playback">
                         <div class="play-triangle" id="icon-center-play"></div>
@@ -118,12 +118,12 @@
                     <div class="pause-pill" id="disp-center-pill">點擊繼續播放</div>
                 </div>
 
-                <!-- 高能波浪熱度曲線層 -->
+                <!-- 高能波浪热度曲线层 -->
                 <div class="waveform-layer" id="wrap-waveform">
                     <canvas class="waveform-canvas" id="waveform-canvas"></canvas>
                 </div>
 
-                <!-- 底部控制欄 (已移除多余的滚动按钮) -->
+                <!-- 底部控制栏 -->
                 <div class="player-bottom" id="wrap-bottom-bar">
                     <div class="progress-bar-wrap" id="progress-click-bar" title="點擊跳轉進度">
                         <div class="progress-bar-buffer" id="disp-buffer-bar"></div>
@@ -142,7 +142,7 @@
                             </div>
                             <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
                             
-                            <!-- 底部發光彈幕膠囊 (默認未激活) 與發射輸入框 -->
+                            <!-- 底部发光弹幕胶囊 (默认关闭) 与发射输入框 -->
                             <div id="wrap-bot-dm-group">
                                 <div class="dm-switch-capsule" id="btn-quick-dm-toggle" title="開關彈幕">
                                     <svg class="dm-capsule-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -168,7 +168,7 @@
                     </div>
                 </div>
 
-                <!-- ================= 模式 2: 手機豎屏 (9:16) 抖音/短視頻模式 HUD ================= -->
+                <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音/短视频模式 HUD (纯正繁体中文) ================= -->
                 <div class="douyin-hud" id="douyin-hud">
                     <div class="dy-top-nav" id="dy-wrap-top-nav">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -228,7 +228,6 @@
                         </div>
                     </div>
 
-                    <!-- 左下角信息流 -->
                     <div class="dy-left-info">
                         <div class="dy-author-name interactive-elem" id="dy-disp-author">@Laya 暗號 1896</div>
                         <div class="dy-video-desc interactive-elem" id="dy-disp-desc">Laya 丨 1896 已解鎖完整無碼未刪減版，點擊任意處觀看</div>
@@ -248,7 +247,6 @@
                         </div>
                     </div>
 
-                    <!-- 底部紫黑漸變蒙版与 Tab 栏 -->
                     <div class="dy-bottom-wrap" id="dy-wrap-bottom-bar">
                         <div class="dy-bottom-tabs">
                             <div class="dy-tab-item active interactive-elem">首頁</div>
@@ -272,23 +270,23 @@
         </div>
     </div>
 
-    <!-- 右側高級控制面板 -->
+    <!-- 右侧高级控制面板 (严格全简体中文界面) -->
     <div class="sidebar" id="right-sidebar">
         <div class="control-tabs">
             <button class="c-tab-btn active" id="tab-btn-web">💻 Web 播放器配置</button>
-            <button class="c-tab-btn" id="tab-btn-dy">📱 抖音短視頻配置</button>
-            <button class="c-tab-btn" id="tab-btn-dm">💬 高級彈幕軌道</button>
+            <button class="c-tab-btn" id="tab-btn-dy">📱 抖音短视频配置</button>
+            <button class="c-tab-btn" id="tab-btn-dm">💬 高级弹幕轨道</button>
         </div>
 
-        <!-- ================= 選項卡 1: Web 版配置 ================= -->
+        <!-- ================= 选项卡 1: Web 版配置 ================= -->
         <div id="panel-web-settings" class="tab-panel active">
             <div class="panel-card">
                 <div class="card-header">
-                    <span>⏱️ 起始時間與進度控制</span>
-                    <span class="badge-tip">真實累加</span>
+                    <span>⏱️ 起始时间与进度控制</span>
+                    <span class="badge-tip">真实累加</span>
                 </div>
                 <div class="switch-tile highlight-tile">
-                    <span>播放時起始秒數遞增走動</span>
+                    <span>播放时起始秒数递增走动</span>
                     <label class="ios-toggle">
                         <input type="checkbox" id="sw-sync-video-time" checked>
                         <span class="slider-round"></span>
@@ -296,24 +294,24 @@
                 </div>
                 <div class="form-grid-2">
                     <div class="form-row">
-                        <label>起始時間點</label>
+                        <label>起始时间点</label>
                         <input type="text" id="in-start-time" value="00:37:16">
                     </div>
                     <div class="form-row">
-                        <label>視頻總片長</label>
+                        <label>视频总片长</label>
                         <input type="text" id="in-total-time" value="01:28:45">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="range-box">
-                        <label>進度條長短 (佔比)</label>
+                        <label>进度条长短 (占比)</label>
                         <span class="range-value" id="txt-progress">42%</span>
                     </div>
                     <input type="range" id="in-progress" min="0" max="100" value="42">
                 </div>
                 <div class="form-row">
                     <div class="range-box">
-                        <label>預加載緩衝條長短</label>
+                        <label>预加载缓冲条长短</label>
                         <span class="range-value" id="txt-buffer">68%</span>
                     </div>
                     <input type="range" id="in-buffer" min="0" max="100" value="68">
@@ -322,23 +320,23 @@
 
             <div class="panel-card">
                 <div class="card-header">
-                    <span>🌊 高能熱度波浪曲線</span>
+                    <span>🌊 高能热度波浪曲线</span>
                     <label class="ios-toggle">
                         <input type="checkbox" id="sw-waveform" checked>
                         <span class="slider-round"></span>
                     </label>
                 </div>
                 <div class="form-row">
-                    <label>波形預設模式</label>
+                    <label>波形预设模式</label>
                     <select id="sel-waveform-preset">
-                        <option value="dual-peaks">🌊 雙高峰爆發 (中後段高能)</option>
-                        <option value="climax">🔥 結局大高潮 (持續攀升)</option>
+                        <option value="dual-peaks">🌊 双高峰爆发 (中后段高能)</option>
+                        <option value="climax">🔥 结局大高潮 (持续攀升)</option>
                         <option value="dense">⚡ 全片高能 (密集起伏)</option>
-                        <option value="custom">✏️ 完全自定義波峰連線...</option>
+                        <option value="custom">✏️ 完全自定义波峰连线...</option>
                     </select>
                 </div>
                 <div class="form-row" id="wrap-custom-wave" style="display: none;">
-                    <label>自定義波峰高度 (0~100，用逗號隔開)</label>
+                    <label>自定义波峰高度 (0~100，用逗号隔开)</label>
                     <input type="text" id="in-custom-wave" value="10, 30, 85, 40, 95, 60, 20">
                 </div>
                 <div class="form-row">
@@ -352,76 +350,91 @@
 
             <div class="panel-card">
                 <div class="card-header">
-                    <span>🎛️ Web 控件顯隱矩陣</span>
-                    <span class="badge-tip">即開即顯</span>
+                    <span>🎛️ Web 控件显隐矩阵</span>
+                    <span class="badge-tip">即开即显</span>
                 </div>
                 <div class="switch-grid">
-                    <!-- 关键修复：动态弹幕默认不勾选 -->
+                    <!-- 动态弹幕默认关闭 -->
                     <div class="switch-tile">
-                        <span>動態彈幕</span>
+                        <span>动态弹幕</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-danmaku">
                             <span class="slider-round"></span>
                         </label>
                     </div>
+                    <!-- 加回中央播放圆钮与文字开关 -->
                     <div class="switch-tile">
-                        <span>底部輸入框</span>
+                        <span>中央播放圆钮</span>
+                        <label class="ios-toggle">
+                            <input type="checkbox" id="sw-center-btn" checked>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    <div class="switch-tile">
+                        <span>“点击播放”文字</span>
+                        <label class="ios-toggle">
+                            <input type="checkbox" id="sw-center-pill" checked>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    <div class="switch-tile">
+                        <span>底部输入框</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-bot-dm-group" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>在看人數</span>
+                        <span>在看人数</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-viewer" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>特權橫幅</span>
+                        <span>特权横幅</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-banner" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>免費通道標</span>
+                        <span>免费通道标</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-free-pill" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>Laya 品牌標</span>
+                        <span>Laya 品牌标</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-laya-badge" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>VIP 標</span>
+                        <span>VIP 标</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-vip-tag" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>返回箭頭</span>
+                        <span>返回箭头</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-back-btn" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>右上系統項</span>
+                        <span>右上系统项</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-top-right" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>底部控制欄</span>
+                        <span>底部控制栏</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-bottom-bar" checked>
                             <span class="slider-round"></span>
@@ -432,70 +445,70 @@
 
             <div class="panel-card">
                 <div class="card-header">
-                    <span>📝 視頻文案與騷話預設</span>
-                    <span class="badge-tip">支持自定義</span>
+                    <span>📝 视频文案与骚话预设</span>
+                    <span class="badge-tip">支持自定义</span>
                 </div>
                 <div class="form-row">
-                    <label>主標題文案 (Laya暗號...)</label>
+                    <label>主标题文案 (Laya暗号...)</label>
                     <input type="text" id="in-title" value="Laya暗號：1896">
                 </div>
                 <div class="form-row">
-                    <label>特權橫幅文字</label>
+                    <label>特权横幅文字</label>
                     <input type="text" id="in-banner-body" value="已解鎖完整無碼未刪減版，點擊任意處播放">
                 </div>
                 <div class="form-row">
-                    <label>底部輸入框騷話預設</label>
+                    <label>底部输入框骚话预设</label>
                     <select id="sel-dm-preset">
                         <option value="這身材太頂了吧...">這身材太頂了吧...</option>
                         <option value="已備好衛生紙，感謝樓主！">已備好衛生紙，感謝樓主！</option>
                         <option value="前方高能，血脈噴張！">前方高能，血脈噴張！</option>
                         <option value="這無碼原畫簡直絕了！">這無碼原畫簡直絕了！</option>
                         <option value="女神親自下海，這誰頂得住">女神親自下海，這誰頂得住</option>
-                        <option value="custom">✏️ 手動輸入自定義...</option>
+                        <option value="custom">✏️ 手动输入自定义...</option>
                     </select>
                     <input type="text" id="in-dm-placeholder" value="這身材太頂了吧..." style="margin-top: 4px;">
                 </div>
             </div>
         </div>
 
-        <!-- ================= 選項卡 2: 抖音版配置 ================= -->
+        <!-- ================= 选项卡 2: 抖音版配置 ================= -->
         <div id="panel-dy-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
-                    <span>🎛️ 短視頻組件開關</span>
-                    <span class="badge-tip">抖音專屬</span>
+                    <span>🎛️ 短视频组件开关</span>
+                    <span class="badge-tip">抖音专属</span>
                 </div>
                 <div class="switch-grid">
                     <div class="switch-tile">
-                        <span>金色引流榜單</span>
+                        <span>金色引流榜单</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-gold" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>活動聲明膠囊</span>
+                        <span>活动声明胶囊</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-campaign" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>右側互動操作欄</span>
+                        <span>右侧互动操作栏</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-right-bar" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>頂部導航欄</span>
+                        <span>顶部导航栏</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-top-nav" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile" style="grid-column: span 2;">
-                        <span>底部夢幻紫黑漸變蒙版</span>
+                        <span>底部梦幻紫黑渐变蒙版</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-purple-mask" checked>
                             <span class="slider-round"></span>
@@ -506,152 +519,152 @@
 
             <div class="panel-card">
                 <div class="card-header">
-                    <span>📊 互動數據與作者資料</span>
+                    <span>📊 互动数据与作者资料</span>
                 </div>
                 <div class="form-row">
-                    <label>自定義頭像上傳 (支持女性/自定義圖)</label>
+                    <label>自定义头像上传 (支持女性/自定义图)</label>
                     <input type="file" id="dy-avatar-uploader" accept="image/*">
                 </div>
                 <div class="form-grid-2">
                     <div class="form-row">
-                        <label>點贊數</label>
+                        <label>点赞数</label>
                         <input type="text" id="in-dy-likes" value="3.3萬">
                     </div>
                     <div class="form-row">
-                        <label>評論數</label>
+                        <label>评论数</label>
                         <input type="text" id="in-dy-comments" value="1098">
                     </div>
                     <div class="form-row">
-                        <label>收藏數</label>
+                        <label>收藏数</label>
                         <input type="text" id="in-dy-stars" value="1.1萬">
                     </div>
                     <div class="form-row">
-                        <label>分享數</label>
+                        <label>分享数</label>
                         <input type="text" id="in-dy-shares" value="2766">
                     </div>
                 </div>
                 <div class="form-row">
-                    <label>作者賬號名</label>
+                    <label>作者账号名</label>
                     <input type="text" id="in-dy-author" value="@Laya 暗號 1896">
                 </div>
                 <div class="form-row">
-                    <label>作品文案說明</label>
+                    <label>作品文案说明</label>
                     <textarea id="in-dy-desc">Laya 丨 1896 已解鎖完整無碼未刪減版，點擊任意處觀看</textarea>
                 </div>
                 <div class="form-row">
-                    <label>熱門標籤 (Tags)</label>
+                    <label>热门标签 (Tags)</label>
                     <input type="text" id="in-dy-tags" value="#心動熱舞 #私密精選 #完整版">
                 </div>
             </div>
 
             <div class="panel-card">
                 <div class="card-header">
-                    <span>🔥 引流聲明與金色榜單</span>
+                    <span>🔥 引流声明与金色榜单</span>
                 </div>
                 <div class="form-row">
-                    <label>活動膠囊引流文案</label>
+                    <label>活动胶囊引流文案</label>
                     <input type="text" id="in-dy-campaign" value="來Laya 語音廳，親自演給你看 &gt;">
                 </div>
                 <div class="form-row">
-                    <label>金色榜單名稱</label>
+                    <label>金色榜单名称</label>
                     <input type="text" id="in-dy-gold-title" value="視頻榜單：最讓你心動的女優評選大賽">
                 </div>
                 <div class="form-row">
-                    <label>金色榜單熱度人數</label>
+                    <label>金色榜单热度人数</label>
                     <input type="text" id="in-dy-gold-views" value="45.1萬人在看 &gt;">
                 </div>
             </div>
         </div>
 
-        <!-- ================= 選項卡 3: 高級彈幕工坊 ================= -->
+        <!-- ================= 选项卡 3: 高级弹幕工坊 ================= -->
         <div id="panel-dm-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
-                    <span>💬 彈幕運動與定格控制</span>
-                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增自定義軌道</button>
+                    <span>💬 弹幕运动与定格控制</span>
+                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增自定义轨道</button>
                 </div>
 
                 <div class="form-row">
                     <button class="btn-dm-pause-toggle" id="btn-toggle-dm-motion">
                         <span id="icon-dm-motion">⏸️</span>
-                        <span id="txt-dm-motion">原地定格彈幕 (方便預覽/截圖)</span>
+                        <span id="txt-dm-motion">原地定格弹幕 (方便预览/截图)</span>
                     </button>
                 </div>
 
                 <div class="form-row" style="margin-top: 4px;">
                     <div class="range-box">
-                        <label>全局飄動速度 (倍率)</label>
+                        <label>全局飘动速度 (倍率)</label>
                         <span class="range-value" id="txt-dm-global-speed">1.0X</span>
                     </div>
                     <input type="range" id="in-dm-global-speed" min="2" max="25" value="10" title="向左更慢，向右更快">
                 </div>
 
                 <div class="form-row" style="margin-top: 4px;">
-                    <label>彈幕排布模式</label>
+                    <label>弹幕排布模式</label>
                     <select id="sel-dm-mode" style="background:#151821; font-weight:700; color:#5dade2;">
-                        <option value="scroll">🎬 動態滾動模式 (視頻/飄動推薦)</option>
-                        <option value="fixed">📌 靜態固定排布 (手動微調X/Y位置)</option>
+                        <option value="scroll">🎬 动态滚动模式 (视频/飘动推荐)</option>
+                        <option value="fixed">📌 静态固定排布 (手动微调X/Y位置)</option>
                     </select>
                 </div>
 
                 <div class="form-row" style="margin-top: 4px;">
-                    <label>老司機專屬高能預設案例庫 (點擊一鍵裝載)：</label>
+                    <label>老司机专属高能预设案例库 (点击一键装载)：</label>
                     <div style="display: flex; flex-direction: column; gap: 5px;">
                         <button class="btn btn-secondary btn-preset-load" data-preset="driver" style="justify-content: flex-start; font-size:11px; padding: 6px 10px;">
-                            🔥 【老司機身材熱評組】(身材極品/無碼/香)
+                            🔥 【老司机身材热评组】(身材极品/无码/香)
                         </button>
                         <button class="btn btn-secondary btn-preset-load" data-preset="climax" style="justify-content: flex-start; font-size:11px; padding: 6px 10px;">
-                            💥 【劇情高能爆點組】(前方高能/衛生紙/番號)
+                            💥 【剧情高能爆点组】(前方高能/卫生纸/番号)
                         </button>
                         <button class="btn btn-secondary btn-preset-load" data-preset="traffic" style="justify-content: flex-start; font-size:11px; padding: 6px 10px;">
-                            👑 【Laya暗號特權引流組】(已解鎖未刪減/語音廳)
+                            👑 【Laya暗号特权引流组】(已解锁未删减/语音厅)
                         </button>
                     </div>
                 </div>
 
                 <div class="form-row" style="margin-top: 6px;">
                     <div class="range-box">
-                        <label>全局彈幕字號大小</label>
+                        <label>全局弹幕字号大小</label>
                         <span class="range-value" id="txt-danmaku-size">16px</span>
                     </div>
                     <input type="range" id="in-danmaku-size" min="12" max="32" value="16">
                 </div>
 
                 <div class="form-row">
-                    <label>大段文本智能批量導入 (自動分段)</label>
-                    <textarea id="in-batch-danmaku" placeholder="粘貼多行話術，以換行或逗號隔開..."></textarea>
-                    <button class="btn btn-sm btn-upload" id="btn-parse-batch" style="margin-top: 4px;">🚀 識別導入</button>
+                    <label>大段文本智能批量导入 (自动分段)</label>
+                    <textarea id="in-batch-danmaku" placeholder="粘贴多行话术，以换行或逗号隔开..."></textarea>
+                    <button class="btn btn-sm btn-upload" id="btn-parse-batch" style="margin-top: 4px;">🚀 识别导入</button>
                 </div>
 
                 <div class="form-row" style="margin-top: 6px;">
-                    <label>各條彈幕獨立參數微調列表 (修改即時生效)：</label>
+                    <label>各条弹幕独立参数微调列表 (修改即时生效)：</label>
                 </div>
                 <div id="danmaku-track-list"></div>
             </div>
         </div>
 
-        <!-- 通用畫面防切臉構圖卡片 -->
+        <!-- 通用画面防切脸构图卡片 -->
         <div class="panel-card">
             <div class="card-header">
-                <span>📐 畫面構圖 (上下位移防切臉)</span>
+                <span>📐 画面构图 (上下位移防切脸)</span>
             </div>
             <div class="form-row">
                 <div class="range-box">
-                    <label>垂直 Y 軸位移 (露臉微調)</label>
+                    <label>垂直 Y 轴位移 (露脸微调)</label>
                     <span class="range-value" id="txt-pos-y">50%</span>
                 </div>
                 <input type="range" id="in-pos-y" min="0" max="100" value="50">
             </div>
             <div class="form-row">
                 <div class="range-box">
-                    <label>畫面縮放倍率 (Zoom)</label>
+                    <label>画面缩放倍率 (Zoom)</label>
                     <span class="range-value" id="txt-media-scale">100%</span>
                 </div>
                 <input type="range" id="in-media-scale" min="80" max="220" value="100">
             </div>
             <div class="preset-btn-group">
-                <button class="btn btn-secondary" id="btn-reset-pos">↺ 居中默認</button>
-                <button class="btn btn-secondary" id="btn-face-preset">👤 快速露臉預設</button>
+                <button class="btn btn-secondary" id="btn-reset-pos">↺ 居中默认</button>
+                <button class="btn btn-secondary" id="btn-face-preset">👤 快速露脸预设</button>
             </div>
         </div>
     </div>
