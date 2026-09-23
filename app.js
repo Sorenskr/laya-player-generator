@@ -1,10 +1,10 @@
 /**
  * ==========================================================================
- * app.js - 全局中枢控制、动效绘制与音视频导出引擎
+ * app.js - 全局中枢控制、全图层视频合成引擎与原生互动中心
  * ==========================================================================
  */
 
-// 1. 全局 Toast 浮动提示通知函数 (挂载到 window 供所有模块调用)
+// 1. 全局 Toast 提示通知
 window.showToast = function (msg) {
     const container = document.getElementById('toast-container');
     if (!container) return;
@@ -21,7 +21,7 @@ window.showToast = function (msg) {
     }, 2800);
 };
 
-// 2. 右侧面板选项卡切换函数 (挂载到 window 供 player.js 模式切换调用)
+// 2. 右侧面板选项卡切换
 window.switchRightTab = function (mode) {
     const tabWeb = document.getElementById('tab-btn-web');
     const tabDy = document.getElementById('tab-btn-dy');
@@ -47,7 +47,7 @@ window.switchRightTab = function (mode) {
 
 (function () {
     /* ==========================================================================
-       A. 选项卡点击事件绑定
+       A. 选项卡点击
        ========================================================================== */
     const tabWeb = document.getElementById('tab-btn-web');
     const tabDy = document.getElementById('tab-btn-dy');
@@ -58,7 +58,7 @@ window.switchRightTab = function (mode) {
     if (tabDm) tabDm.addEventListener('click', () => window.switchRightTab('dm'));
 
     /* ==========================================================================
-       B. 高能热度波浪曲线 (Canvas 贝塞尔平滑绘制引擎)
+       B. 高能热度波浪曲线 (Canvas 贝塞尔平滑绘制)
        ========================================================================== */
     const waveCanvas = document.getElementById('waveform-canvas');
     const wrapWaveform = document.getElementById('wrap-waveform');
@@ -83,8 +83,7 @@ window.switchRightTab = function (mode) {
 
         ctx.clearRect(0, 0, w, h);
 
-        // 获取波形控制点数据
-        let points = [15, 25, 60, 40, 85, 95, 45, 75, 30, 10]; // 默认双高峰
+        let points = [15, 25, 60, 40, 85, 95, 45, 75, 30, 10];
         if (selWavePreset.value === 'climax') {
             points = [10, 15, 20, 25, 40, 50, 70, 85, 100, 90];
         } else if (selWavePreset.value === 'dense') {
@@ -94,7 +93,6 @@ window.switchRightTab = function (mode) {
             if (points.length < 2) points = [10, 80, 20];
         }
 
-        // 绘制三阶贝塞尔平滑曲面
         ctx.beginPath();
         ctx.moveTo(0, h);
         const step = w / (points.length - 1);
@@ -113,7 +111,6 @@ window.switchRightTab = function (mode) {
         ctx.lineTo(w, h);
         ctx.closePath();
 
-        // 渐变填充与描边
         const grad = ctx.createLinearGradient(0, 0, 0, h);
         grad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
         grad.addColorStop(0.7, 'rgba(255, 255, 255, 0.15)');
@@ -128,9 +125,7 @@ window.switchRightTab = function (mode) {
 
     if (selWavePreset) {
         selWavePreset.addEventListener('change', () => {
-            if (wrapCustomWave) {
-                wrapCustomWave.style.display = selWavePreset.value === 'custom' ? 'flex' : 'none';
-            }
+            if (wrapCustomWave) wrapCustomWave.style.display = selWavePreset.value === 'custom' ? 'flex' : 'none';
             window.drawWaveform();
         });
     }
@@ -148,9 +143,84 @@ window.switchRightTab = function (mode) {
     setTimeout(window.drawWaveform, 200);
 
     /* ==========================================================================
-       C. 全站控件显隐开关矩阵绑定
+       C. 播放器内部控件原生交互 (倍速、画质、抖音点赞收藏全实装)
        ========================================================================== */
-    const bindToggleSwitch = (switchId, targetId) => {
+    // 1. 倍速点击循环切换
+    const btnCycleSpeed = document.getElementById('btn-cycle-speed');
+    const dispSpeedVal = document.getElementById('disp-speed-val');
+    const speeds = ['1.0X', '1.25X', '1.5X', '2.0X', '0.75X'];
+    let speedIdx = 0;
+    if (btnCycleSpeed && dispSpeedVal) {
+        btnCycleSpeed.addEventListener('click', () => {
+            speedIdx = (speedIdx + 1) % speeds.length;
+            dispSpeedVal.textContent = speeds[speedIdx];
+            const previewVideo = document.getElementById('preview-video');
+            if (previewVideo) previewVideo.playbackRate = parseFloat(speeds[speedIdx]);
+            window.showToast(`已切換倍速為：${speeds[speedIdx]}`);
+        });
+    }
+
+    // 2. 画质点击切换
+    const dispBotRes = document.getElementById('disp-bot-res');
+    const resOptions = ['原畫 1080P 60幀 ▾', 'Laya 藍光 4K ▾', '4K 120P 極致 ▾', '超清 720P ▾'];
+    let resIdx = 0;
+    if (dispBotRes) {
+        dispBotRes.addEventListener('click', () => {
+            resIdx = (resIdx + 1) % resOptions.length;
+            dispBotRes.textContent = resOptions[resIdx];
+            window.showToast(`已切換清晰度：${resOptions[resIdx].replace(' ▾', '')}`);
+        });
+    }
+
+    // 3. 抖音模式点赞交互
+    const dyBtnLike = document.getElementById('dy-btn-like');
+    const dySvgLike = document.getElementById('dy-svg-like');
+    let isLiked = false;
+    if (dyBtnLike && dySvgLike) {
+        dyBtnLike.addEventListener('click', () => {
+            isLiked = !isLiked;
+            dySvgLike.setAttribute('fill', isLiked ? '#fe2c55' : '#ffffff');
+            dyBtnLike.style.transform = 'scale(1.2)';
+            setTimeout(() => { dyBtnLike.style.transform = 'scale(1)'; }, 150);
+            window.showToast(isLiked ? '❤️ 點贊成功！' : '已取消點贊');
+        });
+    }
+
+    // 4. 抖音模式收藏交互
+    const dyBtnStar = document.getElementById('dy-btn-star');
+    const dySvgStar = document.getElementById('dy-svg-star');
+    let isStarred = false;
+    if (dyBtnStar && dySvgStar) {
+        dyBtnStar.addEventListener('click', () => {
+            isStarred = !isStarred;
+            dySvgStar.setAttribute('fill', isStarred ? '#f1c40f' : '#ffffff');
+            dyBtnStar.style.transform = 'scale(1.2)';
+            setTimeout(() => { dyBtnStar.style.transform = 'scale(1)'; }, 150);
+            window.showToast(isStarred ? '⭐ 已加入收藏！' : '已取消收藏');
+        });
+    }
+
+    // 5. 抖音关注按钮交互 (+ 变 ✓)
+    const dyBtnFollow = document.getElementById('dy-btn-follow');
+    if (dyBtnFollow) {
+        dyBtnFollow.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (dyBtnFollow.textContent === '+') {
+                dyBtnFollow.textContent = '✓';
+                dyBtnFollow.classList.add('followed');
+                window.showToast('已成功關注作者！');
+            } else {
+                dyBtnFollow.textContent = '+';
+                dyBtnFollow.classList.remove('followed');
+                window.showToast('已取消關注');
+            }
+        });
+    }
+
+    /* ==========================================================================
+       D. 全站显隐开关与文案绑定
+       ========================================================================== */
+    const bindToggle = (switchId, targetId) => {
         const sw = document.getElementById(switchId);
         const target = document.getElementById(targetId);
         if (sw && target) {
@@ -160,58 +230,44 @@ window.switchRightTab = function (mode) {
             });
         }
     };
+    bindToggle('sw-danmaku', 'danmaku-container');
+    bindToggle('sw-bot-dm-group', 'wrap-bot-dm-group');
+    bindToggle('sw-viewer', 'wrap-viewer-pill');
+    bindToggle('sw-banner', 'wrap-banner');
+    bindToggle('sw-free-pill', 'wrap-free-pill');
+    bindToggle('sw-laya-badge', 'wrap-laya-badge');
+    bindToggle('sw-vip-tag', 'wrap-vip-tag');
+    bindToggle('sw-back-btn', 'wrap-back-btn');
+    bindToggle('sw-top-right', 'wrap-top-right');
+    bindToggle('sw-bottom-bar', 'wrap-bottom-bar');
+    bindToggle('sw-waveform', 'wrap-waveform');
+    bindToggle('sw-dy-gold', 'dy-wrap-gold');
+    bindToggle('sw-dy-campaign', 'dy-wrap-campaign');
+    bindToggle('sw-dy-right-bar', 'dy-wrap-right-bar');
+    bindToggle('sw-dy-top-nav', 'dy-wrap-top-nav');
+    bindToggle('sw-dy-purple-mask', 'dy-wrap-bottom-bar');
 
-    // Web 控件开关
-    bindToggleSwitch('sw-danmaku', 'danmaku-container');
-    bindToggleSwitch('sw-bot-dm-group', 'wrap-bot-dm-group');
-    bindToggleSwitch('sw-viewer', 'wrap-viewer-pill');
-    bindToggleSwitch('sw-banner', 'wrap-banner');
-    bindToggleSwitch('sw-free-pill', 'wrap-free-pill');
-    bindToggleSwitch('sw-laya-badge', 'wrap-laya-badge');
-    bindToggleSwitch('sw-vip-tag', 'wrap-vip-tag');
-    bindToggleSwitch('sw-back-btn', 'wrap-back-btn');
-    bindToggleSwitch('sw-top-right', 'wrap-top-right');
-    bindToggleSwitch('sw-bottom-bar', 'wrap-bottom-bar');
-    bindToggleSwitch('sw-waveform', 'wrap-waveform');
-
-    // 抖音短视频控件开关
-    bindToggleSwitch('sw-dy-gold', 'dy-wrap-gold');
-    bindToggleSwitch('sw-dy-campaign', 'dy-wrap-campaign');
-    bindToggleSwitch('sw-dy-right-bar', 'dy-wrap-right-bar');
-    bindToggleSwitch('sw-dy-top-nav', 'dy-wrap-top-nav');
-    bindToggleSwitch('sw-dy-purple-mask', 'dy-wrap-bottom-bar');
-
-    /* ==========================================================================
-       D. 文案与骚话双向实时数据绑定
-       ========================================================================== */
-    const bindTextSync = (inputId, outputId) => {
+    const bindText = (inputId, outputId) => {
         const inp = document.getElementById(inputId);
         const out = document.getElementById(outputId);
         if (inp && out) {
-            inp.addEventListener('input', (e) => {
-                out.textContent = e.target.value;
-            });
+            inp.addEventListener('input', (e) => { out.textContent = e.target.value; });
         }
     };
+    bindText('in-title', 'disp-title');
+    bindText('in-banner-body', 'disp-banner-body');
+    bindText('in-dm-placeholder', 'disp-dm-placeholder');
+    bindText('in-dy-likes', 'dy-val-likes');
+    bindText('in-dy-comments', 'dy-val-comments');
+    bindText('in-dy-stars', 'dy-val-stars');
+    bindText('in-dy-shares', 'dy-val-shares');
+    bindText('in-dy-author', 'dy-disp-author');
+    bindText('in-dy-desc', 'dy-disp-desc');
+    bindText('in-dy-tags', 'dy-disp-tags');
+    bindText('in-dy-campaign', 'dy-disp-campaign');
+    bindText('in-dy-gold-title', 'dy-disp-gold-title');
+    bindText('in-dy-gold-views', 'dy-disp-gold-views');
 
-    // Web 文案绑定
-    bindTextSync('in-title', 'disp-title');
-    bindTextSync('in-banner-body', 'disp-banner-body');
-    bindTextSync('in-dm-placeholder', 'disp-dm-placeholder');
-
-    // 抖音互动数据与文案绑定
-    bindTextSync('in-dy-likes', 'dy-val-likes');
-    bindTextSync('in-dy-comments', 'dy-val-comments');
-    bindTextSync('in-dy-stars', 'dy-val-stars');
-    bindTextSync('in-dy-shares', 'dy-val-shares');
-    bindTextSync('in-dy-author', 'dy-disp-author');
-    bindTextSync('in-dy-desc', 'dy-disp-desc');
-    bindTextSync('in-dy-tags', 'dy-disp-tags');
-    bindTextSync('in-dy-campaign', 'dy-disp-campaign');
-    bindTextSync('in-dy-gold-title', 'dy-disp-gold-title');
-    bindTextSync('in-dy-gold-views', 'dy-disp-gold-views');
-
-    // 底部弹幕骚话预设下拉框选择联动
     const selDmPreset = document.getElementById('sel-dm-preset');
     const inDmPlaceholder = document.getElementById('in-dm-placeholder');
     const dispDmPlaceholder = document.getElementById('disp-dm-placeholder');
@@ -227,7 +283,6 @@ window.switchRightTab = function (mode) {
         });
     }
 
-    // 抖音头像自定义上传
     const dyAvatarUploader = document.getElementById('dy-avatar-uploader');
     const dyAvatarImg = document.getElementById('dy-avatar-img');
     if (dyAvatarUploader && dyAvatarImg) {
@@ -243,9 +298,7 @@ window.switchRightTab = function (mode) {
         });
     }
 
-    /* ==========================================================================
-       E. 录制时长控制联动 (5s / 10s / 15s / 自定义)
-       ========================================================================== */
+    // 录制时长自定义选项联动
     const selRecordSec = document.getElementById('sel-record-sec');
     const inCustomSec = document.getElementById('in-custom-sec');
     if (selRecordSec && inCustomSec) {
@@ -260,7 +313,7 @@ window.switchRightTab = function (mode) {
     }
 
     /* ==========================================================================
-       F. 全局繁简一键智能互转总引擎
+       E. 全局繁简一键智能互转
        ========================================================================== */
     let isTraditional = true;
     const s2tDict = {
@@ -281,28 +334,25 @@ window.switchRightTab = function (mode) {
         btnToggleLang.addEventListener('click', () => {
             isTraditional = !isTraditional;
             const dict = isTraditional ? s2tDict : t2sDict;
-
             const renderTarget = document.getElementById('render-target');
             if (!renderTarget) return;
 
-            // 递归替换纯文本叶子节点
             const walker = document.createTreeWalker(renderTarget, NodeFilter.SHOW_TEXT, null, false);
             let node;
             while ((node = walker.nextNode())) {
                 let txt = node.nodeValue;
                 if (!txt || !txt.trim()) continue;
-                for (const [sourceWord, targetWord] of Object.entries(dict)) {
-                    txt = txt.replaceAll(sourceWord, targetWord);
+                for (const [s, t] of Object.entries(dict)) {
+                    txt = txt.replaceAll(s, t);
                 }
                 node.nodeValue = txt;
             }
-
             window.showToast(isTraditional ? '已切換為：繁體中文' : '已切换为：简体中文');
         });
     }
 
     /* ==========================================================================
-       G. 高清截图导出引擎 (html2canvas 修复错位与颜色黑化)
+       F. 超高清截图导出 (PNG 导出，冻结坐标)
        ========================================================================== */
     const btnSaveImg = document.getElementById('btn-save-img');
     if (btnSaveImg) {
@@ -310,7 +360,7 @@ window.switchRightTab = function (mode) {
             const renderTarget = document.getElementById('render-target');
             if (!renderTarget) return;
 
-            window.showToast('📸 正在渲染超高清圖片...');
+            window.showToast('📸 正在渲染超高清圖片 (包含全套邊框與UI)...');
 
             html2canvas(renderTarget, {
                 scale: 2.5,
@@ -318,7 +368,6 @@ window.switchRightTab = function (mode) {
                 allowTaint: true,
                 backgroundColor: '#000000',
                 onclone: (clonedDoc) => {
-                    // 深度冻结弹幕实时坐标，防止截图中弹幕闪烁或消失
                     const origBox = renderTarget.getBoundingClientRect();
                     const origItems = renderTarget.querySelectorAll('.danmaku-item');
                     const clonedContainer = clonedDoc.getElementById('danmaku-container');
@@ -342,13 +391,12 @@ window.switchRightTab = function (mode) {
                 window.showToast('✅ 高清圖片已成功保存！');
             }).catch(err => {
                 window.showToast(`❌ 導出失敗: ${err.message}`);
-                console.error(err);
             });
         });
     }
 
     /* ==========================================================================
-       H. 实时合成带框短视频 (保留原声 + 自定义录制时长 + 真实时间码走动)
+       ★ 核心：全图层视频合成引擎 (彻底解决边框与控制栏缺失)
        ========================================================================== */
     const btnSaveVid = document.getElementById('btn-save-vid');
     if (btnSaveVid) {
@@ -363,13 +411,12 @@ window.switchRightTab = function (mode) {
                 return;
             }
 
-            // 计算录制时长
             let recordSeconds = parseInt(selRecordSec.value);
             if (selRecordSec.value === 'custom') {
                 recordSeconds = Math.max(1, parseInt(inCustomSec.value) || 8);
             }
 
-            btnSaveVid.textContent = `⏳ 錄製合成中 (${recordSeconds}s)...`;
+            btnSaveVid.textContent = `⏳ 正在預處理 UI 邊框圖層...`;
             btnSaveVid.disabled = true;
 
             try {
@@ -377,12 +424,31 @@ window.switchRightTab = function (mode) {
                 const outW = isDouyin ? 720 : 1280;
                 const outH = isDouyin ? 1280 : 720;
 
+                // 1. 生成 1:1 纯透明 UI 覆盖层快照 (提取边框、圆角、HUD、所有按钮和榜单)
+                const uiSnapshotCanvas = await html2canvas(renderTarget, {
+                    backgroundColor: null, // 透明背景！
+                    scale: outW / renderTarget.offsetWidth,
+                    useCORS: true,
+                    allowTaint: true,
+                    onclone: (clonedDoc) => {
+                        // 隐藏视频底图，保留全部边框与UI
+                        const media = clonedDoc.getElementById('player-media-wrap');
+                        if (media) media.style.visibility = 'hidden';
+                        // 隐藏 DOM 弹幕 (弹幕在录制循环中动态独立重绘，防止卡死)
+                        const dm = clonedDoc.getElementById('danmaku-container');
+                        if (dm) dm.style.visibility = 'hidden';
+                    }
+                });
+
+                btnSaveVid.textContent = `⏳ 錄製合成中 (${recordSeconds}s)...`;
+
+                // 2. 准备录制离屏画布
                 const offCanvas = document.createElement('canvas');
                 offCanvas.width = outW;
                 offCanvas.height = outH;
                 const ctx = offCanvas.getContext('2d');
 
-                // 1. Web Audio 原声捕获管线
+                // 3. Web Audio 音频捕获管线
                 let audioTracks = [];
                 try {
                     if (!window._audioCtx) {
@@ -394,17 +460,16 @@ window.switchRightTab = function (mode) {
                     }
                     audioTracks = window._audioDst.stream.getAudioTracks();
                 } catch (audioErr) {
-                    console.warn('Web Audio capture pipeline:', audioErr);
+                    console.warn('Web Audio capture:', audioErr);
                 }
 
-                // 2. 画布流与音轨合并
+                // 4. 合并音视频流
                 const canvasStream = offCanvas.captureStream(30);
                 const combinedStream = new MediaStream([
                     ...canvasStream.getVideoTracks(),
                     ...audioTracks
                 ]);
 
-                // 智能容器与编码嗅探
                 const mime = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1') ? 'video/mp4' : 'video/webm';
                 const recorder = new MediaRecorder(combinedStream, { mimeType: mime });
                 const chunks = [];
@@ -416,38 +481,41 @@ window.switchRightTab = function (mode) {
                 recorder.onstop = () => {
                     const blob = new Blob(chunks, { type: mime });
                     const a = document.createElement('a');
-                    a.download = `Laya_${isDouyin ? 'ShortVideo' : 'Player'}_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
+                    a.download = `Laya_${isDouyin ? 'TikTok' : 'WebPlayer'}_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
                     a.href = URL.createObjectURL(blob);
                     a.click();
 
-                    btnSaveVid.textContent = '合成下載視頻 (帶原聲)';
+                    btnSaveVid.textContent = '合成下載視頻 (帶邊框與原聲)';
                     btnSaveVid.disabled = false;
-                    window.showToast('🎉 帶框視頻已成功導出！');
+                    window.showToast('🎉 帶邊框、控制欄與原聲的視頻已導出完成！');
                 };
 
-                // 3. 准备弹幕粒子
+                // 5. 提取动态弹幕粒子
                 const danmakuParticles = (window.DanmakuEngine ? window.DanmakuEngine.getActiveList() : []).map((dm, idx) => ({
                     text: dm.text,
                     color: isDouyin ? '#ffffff' : dm.color,
-                    y: (outH * (isDouyin ? (10 + (idx % 4) * 8) : dm.top)) / 100,
-                    x: outW + (idx * 180),
+                    y: (outH * (isDouyin ? (12 + (idx % 5) * 8) : dm.top)) / 100,
+                    x: outW + (idx * 190),
                     speed: (dm.speed ? (22 - dm.speed) : 9) * 0.95
                 }));
 
-                // 重置播放位置并启动录制
+                // 启动录制并驱动视频重头播放
                 previewVideo.currentTime = 0;
                 previewVideo.play();
-                if (window.PlayerEngine.updatePlayStateUI) window.PlayerEngine.updatePlayStateUI(true);
+                if (window.PlayerEngine && window.PlayerEngine.updatePlayStateUI) {
+                    window.PlayerEngine.updatePlayStateUI(true);
+                }
                 recorder.start();
 
                 let isRecording = true;
                 const drawVideoFrame = () => {
                     if (!isRecording) return;
 
+                    // 1. 底色
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(0, 0, outW, outH);
 
-                    // A. 视频帧位移与缩放精准绘制
+                    // 2. 视频帧精准防切脸缩放与位移
                     const vw = previewVideo.videoWidth || 1280;
                     const vh = previewVideo.videoHeight || 720;
                     const mAspect = vw / vh;
@@ -469,12 +537,15 @@ window.switchRightTab = function (mode) {
 
                     ctx.drawImage(previewVideo, offX, offY, rw, rh);
 
-                    // B. 动态弹幕图层
+                    // 3. 叠印 1:1 的完整 UI 图层快照 (包含外边框、所有徽章、特权横幅、控制栏、榜单、紫黑蒙版)
+                    ctx.drawImage(uiSnapshotCanvas, 0, 0, outW, outH);
+
+                    // 4. 在 UI 图层上渲染平滑滚动的动态弹幕
                     const swDm = document.getElementById('sw-danmaku');
                     if (swDm && swDm.checked) {
                         const fontSize = (parseInt(document.getElementById('in-danmaku-size').value) || 16) * (outW / 960);
                         ctx.font = `bold ${fontSize}px sans-serif`;
-                        ctx.lineWidth = 3;
+                        ctx.lineWidth = 3.5;
                         ctx.strokeStyle = '#000000';
 
                         danmakuParticles.forEach(p => {
@@ -488,58 +559,11 @@ window.switchRightTab = function (mode) {
                         });
                     }
 
-                    // C. Web 模式控件叠层渲染 (带秒数实时递增走动)
-                    if (!isDouyin) {
-                        // 顶部遮罩渐变
-                        const topGrad = ctx.createLinearGradient(0, 0, 0, 110);
-                        topGrad.addColorStop(0, 'rgba(0,0,0,0.88)');
-                        topGrad.addColorStop(0.7, 'rgba(0,0,0,0.4)');
-                        topGrad.addColorStop(1, 'transparent');
-                        ctx.fillStyle = topGrad;
-                        ctx.fillRect(0, 0, outW, 110);
-
-                        // 底部遮罩渐变
-                        const botGrad = ctx.createLinearGradient(0, outH - 90, 0, outH);
-                        botGrad.addColorStop(0, 'transparent');
-                        botGrad.addColorStop(1, 'rgba(0,0,0,0.92)');
-                        ctx.fillStyle = botGrad;
-                        ctx.fillRect(0, outH - 90, outW, 90);
-
-                        // 绘制进度条与实时累加时间码
-                        const baseStart = window.PlayerEngine.timeToSec(document.getElementById('in-start-time').value);
-                        const totalSec = window.PlayerEngine.timeToSec(document.getElementById('in-total-time').value) || 5325;
-                        const curSec = baseStart + Math.floor(previewVideo.currentTime);
-                        const progressPct = Math.min(1, curSec / totalSec);
-
-                        const barY = outH - 42;
-                        const barW = outW - 48;
-
-                        // 底轨
-                        ctx.fillStyle = 'rgba(255,255,255,0.2)';
-                        ctx.fillRect(24, barY, barW, 4);
-
-                        // 播放进度
-                        ctx.fillStyle = '#1877F2';
-                        ctx.fillRect(24, barY, barW * progressPct, 4);
-
-                        // 发光圆钮
-                        ctx.fillStyle = '#ffffff';
-                        ctx.beginPath();
-                        ctx.arc(24 + barW * progressPct, barY + 2, 5, 0, Math.PI * 2);
-                        ctx.fill();
-
-                        // 动态递增时间文字
-                        ctx.font = '12px monospace';
-                        ctx.fillStyle = '#d0d4dc';
-                        ctx.fillText(`${window.PlayerEngine.secToTime(curSec)} / ${window.PlayerEngine.secToTime(totalSec)}`, 24, outH - 16);
-                    }
-
                     requestAnimationFrame(drawVideoFrame);
                 };
 
                 drawVideoFrame();
 
-                // 录制到期停止
                 setTimeout(() => {
                     isRecording = false;
                     recorder.stop();
@@ -547,7 +571,7 @@ window.switchRightTab = function (mode) {
 
             } catch (err) {
                 console.error(err);
-                btnSaveVid.textContent = '合成下載視頻 (帶原聲)';
+                btnSaveVid.textContent = '合成下載視頻 (帶邊框與原聲)';
                 btnSaveVid.disabled = false;
                 window.showToast(`導出異常: ${err.message}`);
             }
