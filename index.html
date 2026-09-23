@@ -6,12 +6,10 @@
     <title>Laya 播放器 · 双模截图/视频生成器</title>
     <!-- 引入截图库依赖 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <!-- 引入独立样式表 -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- 浮动通知容器 -->
 <div id="toast-container"></div>
 
 <!-- 顶部导航栏 -->
@@ -40,15 +38,13 @@
             </select>
             <input type="number" id="in-custom-sec" value="8" min="1" max="120" style="display: none;" title="輸入自定義秒數">
         </div>
-        <button class="btn btn-save-vid" id="btn-save-vid">合成下載視頻 (帶原聲)</button>
+        <button class="btn btn-save-vid" id="btn-save-vid">合成下載視頻 (帶邊框與原聲)</button>
     </div>
 </header>
 
-<!-- 主工作台结构 -->
 <main>
     <!-- 中间预览工作区 -->
     <div class="workspace" id="left-workspace">
-        <!-- 画幅切换 Tab -->
         <div class="viewport-tabs">
             <button class="tab-btn active" data-mode="mode-pc">電腦網頁端 (16:9)</button>
             <button class="tab-btn" data-mode="mode-mobile-land">手機橫屏 (19.5:9)</button>
@@ -58,22 +54,22 @@
         <div class="player-stage">
             <div class="player-box mode-pc" id="render-target">
                 <!-- 媒体背景层 -->
-                <div class="media-container">
+                <div class="media-container" id="player-media-wrap">
                     <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg-media" id="preview-img">
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 动态跑马灯弹幕层 -->
-                <div class="danmaku-layer" id="danmaku-container"></div>
+                <!-- 动态跑马灯弹幕层 (默认激活显示) -->
+                <div class="danmaku-layer" id="danmaku-container" style="display: block;"></div>
 
                 <!-- ================= 模式 1: 电脑网页端 & 手机横屏 UI ================= -->
                 <div class="player-top" id="web-player-top">
                     <div class="top-first-row">
                         <div class="top-left-group">
-                            <div class="back-icon" id="wrap-back-btn">
+                            <div class="back-icon" id="wrap-back-btn" title="返回">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
                             </div>
-                            <div class="laya-brand-badge" id="wrap-laya-badge">
+                            <div class="laya-brand-badge interactive-elem" id="wrap-laya-badge">
                                 <svg class="mini-laya-logo" viewBox="0 0 100 100">
                                     <rect width="100" height="100" rx="20" fill="#0D5BE1"/>
                                     <circle cx="50" cy="50" r="28" fill="#3D88FD"/>
@@ -81,22 +77,22 @@
                                 </svg>
                                 <span class="laya-badge-text" id="disp-laya-label">Laya 獨家私密視頻</span>
                             </div>
-                            <div class="free-channel-pill" id="wrap-free-pill">
+                            <div class="free-channel-pill interactive-elem" id="wrap-free-pill">
                                 <span>🔥</span><span id="disp-free-pill-text">免費通道</span>
                             </div>
-                            <div class="viewer-pill" id="wrap-viewer-pill">
+                            <div class="viewer-pill interactive-elem" id="wrap-viewer-pill">
                                 <span class="pulse-dot"></span><span id="disp-viewer-text">1.0 萬人正在觀看</span>
                             </div>
                             <span class="video-title" id="disp-title">Laya暗號：1896</span>
-                            <span class="vip-tag" id="wrap-vip-tag">VIP 原畫</span>
+                            <span class="vip-tag interactive-elem" id="wrap-vip-tag">VIP 原畫</span>
                         </div>
 
                         <div class="top-right-group" id="wrap-top-right">
-                            <div class="status-dot-item">
+                            <div class="status-dot-item interactive-elem">
                                 <span class="pulse-dot"></span><span>原畫質連線</span>
                             </div>
-                            <span>音軌</span>
-                            <div class="settings-entry">
+                            <span class="interactive-elem">音軌</span>
+                            <div class="settings-entry interactive-elem">
                                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
                                 <span>設置</span>
                             </div>
@@ -104,7 +100,7 @@
                     </div>
 
                     <div class="banner-container" id="wrap-banner">
-                        <div class="notice-banner">
+                        <div class="notice-banner interactive-elem">
                             <span class="banner-gift-icon">🎁</span>
                             <div class="banner-text">
                                 <strong>【免費通道】限時特權：</strong><span id="disp-banner-body">已解鎖完整無碼未刪減版，點擊任意處播放</span>
@@ -114,7 +110,7 @@
                     </div>
                 </div>
 
-                <!-- 居中播放/暂停操作钮 -->
+                <!-- 居中播放/暂停操作钮 (点击播放/暂停) -->
                 <div class="center-pause-wrap" id="wrap-center-all">
                     <div class="play-circle" id="btn-toggle-playback">
                         <div class="play-triangle" id="icon-center-play"></div>
@@ -130,7 +126,7 @@
 
                 <!-- 底部控制栏 -->
                 <div class="player-bottom" id="wrap-bottom-bar">
-                    <div class="progress-bar-wrap" id="progress-click-bar">
+                    <div class="progress-bar-wrap" id="progress-click-bar" title="點擊跳轉進度">
                         <div class="progress-bar-buffer" id="disp-buffer-bar"></div>
                         <div class="progress-bar-fill" id="disp-progress-bar">
                             <div class="progress-scrubber"></div>
@@ -138,90 +134,98 @@
                     </div>
                     <div class="bottom-ctrl-row">
                         <div class="ctrl-left">
-                            <div id="btn-bot-play-state">
+                            <div id="btn-bot-play-state" class="interactive-elem" title="播放/暫停">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" id="icon-bot-play"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" id="icon-bot-pause" style="display: none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
                             </div>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="#fff" stroke-width="2"/></svg>
+                            <div class="interactive-elem" id="btn-bot-next" title="下一部">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="#fff" stroke-width="2"/></svg>
+                            </div>
                             <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
                             
-                            <!-- 底部弹幕快捷开关与伪装输入框 -->
+                            <!-- 底部高质感發光彈幕切換膠囊 (彻底重构) 与直接发送输入框 -->
                             <div id="wrap-bot-dm-group">
-                                <span class="badge-dm-btn" id="btn-quick-dm-toggle">[ 彈 ]</span>
-                                <div class="fake-dm-bar">
+                                <div class="dm-switch-capsule active" id="btn-quick-dm-toggle" title="開關彈幕">
+                                    <svg class="dm-capsule-icon" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                                    </svg>
+                                    <span class="dm-capsule-text">彈</span>
+                                    <span class="dm-status-dot"></span>
+                                </div>
+                                <div class="fake-dm-bar" id="btn-open-dm-input" title="點擊發射實時彈幕">
                                     <span class="fake-dm-txt" id="disp-dm-placeholder">這身材太頂了吧...</span>
                                     <span class="fake-dm-btn">發送</span>
                                 </div>
                             </div>
                         </div>
                         <div class="ctrl-right">
-                            <span id="wrap-bot-danmaku-count"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
-                            <span>倍速 1.0X</span>
-                            <span id="wrap-bot-res"><span class="res-tag" id="disp-bot-res">原畫 1080P 60幀 ▾</span></span>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d0d4dc" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                            <span id="wrap-bot-danmaku-count" class="interactive-elem"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
+                            <!-- 可点击循环切换倍速 -->
+                            <span class="interactive-elem live-tag-btn" id="btn-cycle-speed" title="點擊切換倍速">倍速 <span id="disp-speed-val">1.0X</span></span>
+                            <!-- 可点击循环切换清晰度 -->
+                            <span id="wrap-bot-res" class="interactive-elem"><span class="res-tag" id="disp-bot-res" title="點擊切換畫質">原畫 1080P 60幀 ▾</span></span>
+                            <div class="interactive-elem" id="btn-toggle-fs" title="全屏">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d0d4dc" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音/短视频模式 HUD ================= -->
                 <div class="douyin-hud" id="douyin-hud">
-                    <!-- 顶部精选/热点栏 -->
                     <div class="dy-top-nav" id="dy-wrap-top-nav">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                         <div class="dy-nav-tabs">
-                            <span id="dy-nav-1">精選</span>
-                            <span id="dy-nav-2" class="active">熱點</span>
-                            <span id="dy-nav-3">排行</span>
-                            <span id="dy-nav-4">直播</span>
-                            <span id="dy-nav-5">關注</span>
+                            <span id="dy-nav-1" class="interactive-elem">精選</span>
+                            <span id="dy-nav-2" class="active interactive-elem">熱點</span>
+                            <span id="dy-nav-3" class="interactive-elem">排行</span>
+                            <span id="dy-nav-4" class="interactive-elem">直播</span>
+                            <span id="dy-nav-5" class="interactive-elem">關注</span>
                         </div>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </div>
 
-                    <!-- 横屏素材居中全屏观看按钮 -->
-                    <div class="dy-fullscreen-pill" id="dy-fullscreen-pill">
+                    <div class="dy-fullscreen-pill interactive-elem" id="dy-fullscreen-pill">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                         <span>全屏觀看</span>
                     </div>
 
-                    <!-- 右侧互动操作栏 -->
+                    <!-- 右侧互动操作栏 (点赞、收藏、关注支持直接点击) -->
                     <div class="dy-right-bar" id="dy-wrap-right-bar">
-                        <!-- 头像 (默认立体 Logo，支持更换) -->
-                        <div class="dy-avatar-wrap">
+                        <div class="dy-avatar-wrap interactive-elem" id="dy-avatar-click">
                             <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%230D5BE1'/><circle cx='50' cy='50' r='36' fill='%232172F5'/><circle cx='50' cy='50' r='22' fill='%233D88FD'/><text x='50' y='60' font-size='28' font-weight='900' font-style='italic' fill='%23fff' text-anchor='middle'>Laya</text></svg>" class="dy-avatar-img" id="dy-avatar-img">
                             <div class="dy-follow-plus" id="dy-btn-follow">+</div>
                         </div>
 
-                        <div class="dy-action-item">
-                            <div class="dy-action-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#fe2c55"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <div class="dy-action-item interactive-elem" id="dy-btn-like">
+                            <div class="dy-action-icon" id="dy-like-icon-wrap">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" id="dy-svg-like"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                             </div>
                             <span class="dy-action-txt" id="dy-val-likes">3.3萬</span>
                         </div>
 
-                        <div class="dy-action-item">
+                        <div class="dy-action-item interactive-elem" id="dy-btn-comment">
                             <div class="dy-action-icon">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
                             </div>
                             <span class="dy-action-txt" id="dy-val-comments">1098</span>
                         </div>
 
-                        <div class="dy-action-item">
-                            <div class="dy-action-icon">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#f1c40f"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        <div class="dy-action-item interactive-elem" id="dy-btn-star">
+                            <div class="dy-action-icon" id="dy-star-icon-wrap">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" id="dy-svg-star"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                             </div>
                             <span class="dy-action-txt" id="dy-val-stars">1.1萬</span>
                         </div>
 
-                        <div class="dy-action-item">
+                        <div class="dy-action-item interactive-elem" id="dy-btn-share">
                             <div class="dy-action-icon">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
                             </div>
                             <span class="dy-action-txt" id="dy-val-shares">2766</span>
                         </div>
 
-                        <!-- 旋转黑胶唱片 -->
-                        <div class="dy-action-item" style="margin-bottom: 0;">
+                        <div class="dy-action-item interactive-elem" style="margin-bottom: 0;">
                             <div class="dy-vinyl-record">
                                 <div class="dy-vinyl-center"></div>
                             </div>
@@ -230,18 +234,16 @@
 
                     <!-- 左下角信息流 -->
                     <div class="dy-left-info">
-                        <div class="dy-author-name" id="dy-disp-author">@Laya 暗號 1896</div>
-                        <div class="dy-video-desc" id="dy-disp-desc">Laya 丨 1896 已解鎖完整無碼未刪減版，點擊任意處觀看</div>
-                        <div class="dy-tags-row" id="dy-disp-tags">#心動熱舞 #私密精選 #完整版</div>
+                        <div class="dy-author-name interactive-elem" id="dy-disp-author">@Laya 暗號 1896</div>
+                        <div class="dy-video-desc interactive-elem" id="dy-disp-desc">Laya 丨 1896 已解鎖完整無碼未刪減版，點擊任意處觀看</div>
+                        <div class="dy-tags-row interactive-elem" id="dy-disp-tags">#心動熱舞 #私密精選 #完整版</div>
 
-                        <!-- 活动声明胶囊 -->
-                        <div class="dy-campaign-pill" id="dy-wrap-campaign">
+                        <div class="dy-campaign-pill interactive-elem" id="dy-wrap-campaign">
                             <span class="dy-campaign-badge">心動匹配</span>
                             <span id="dy-disp-campaign">來Laya 語音廳，親自演給你看 &gt;</span>
                         </div>
 
-                        <!-- 金色引流榜单 -->
-                        <div class="dy-gold-banner" id="dy-wrap-gold">
+                        <div class="dy-gold-banner interactive-elem" id="dy-wrap-gold">
                             <div class="dy-gold-left">
                                 <span class="dy-fire-icon">🔥</span>
                                 <span id="dy-disp-gold-title">視頻榜單：最讓你心動的女優評選大賽</span>
@@ -253,19 +255,19 @@
                     <!-- 底部紫黑渐变蒙版与 Tab 栏 -->
                     <div class="dy-bottom-wrap" id="dy-wrap-bottom-bar">
                         <div class="dy-bottom-tabs">
-                            <div class="dy-tab-item active">首頁</div>
-                            <div class="dy-tab-item">
+                            <div class="dy-tab-item active interactive-elem">首頁</div>
+                            <div class="dy-tab-item interactive-elem">
                                 <div class="dy-star-moment">
                                     <span style="font-size: 16px; line-height: 1;">😊</span>
                                 </div>
                                 <span style="color: #ffeaa7;">瞬間</span>
                             </div>
-                            <div class="dy-tab-item">派對</div>
-                            <div class="dy-tab-item" style="position: relative;">
+                            <div class="dy-tab-item interactive-elem">派對</div>
+                            <div class="dy-tab-item interactive-elem" style="position: relative;">
                                 <span>消息</span>
                                 <span class="dy-msg-badge"></span>
                             </div>
-                            <div class="dy-tab-item">我的</div>
+                            <div class="dy-tab-item interactive-elem">我的</div>
                         </div>
                         <div class="dy-home-bar"></div>
                     </div>
@@ -276,7 +278,6 @@
 
     <!-- 右侧高级控制面板 -->
     <div class="sidebar" id="right-sidebar">
-        <!-- 面板顶层选项卡 -->
         <div class="control-tabs">
             <button class="c-tab-btn active" id="tab-btn-web">💻 Web 播放器配置</button>
             <button class="c-tab-btn" id="tab-btn-dy">📱 抖音短視頻配置</button>
@@ -285,7 +286,6 @@
 
         <!-- ================= 选项卡 1: Web 版配置 ================= -->
         <div id="panel-web-settings" class="tab-panel active">
-            <!-- 播放进度与时间 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>⏱️ 起始時間與進度控制</span>
@@ -324,7 +324,6 @@
                 </div>
             </div>
 
-            <!-- 高能波浪热度线 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>🌊 高能熱度波浪曲線</span>
@@ -355,7 +354,6 @@
                 </div>
             </div>
 
-            <!-- 开关矩阵 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>🎛️ Web 控件顯隱矩陣</span>
@@ -365,7 +363,7 @@
                     <div class="switch-tile">
                         <span>動態彈幕</span>
                         <label class="ios-toggle">
-                            <input type="checkbox" id="sw-danmaku">
+                            <input type="checkbox" id="sw-danmaku" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
@@ -435,7 +433,6 @@
                 </div>
             </div>
 
-            <!-- 核心文案与骚话修改 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>📝 視頻文案與騷話預設</span>
@@ -574,21 +571,23 @@
             <div class="panel-card">
                 <div class="card-header">
                     <span>💬 彈幕軌道管理矩陣</span>
-                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增軌道</button>
+                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增自定義軌道</button>
                 </div>
                 <div class="form-row">
                     <div class="range-box">
-                        <label>全局彈幕字號</label>
+                        <label>全局彈幕字號大小</label>
                         <span class="range-value" id="txt-danmaku-size">16px</span>
                     </div>
                     <input type="range" id="in-danmaku-size" min="12" max="32" value="16">
                 </div>
                 <div class="form-row">
-                    <label>批量文本識別導入 (自動分行切分)</label>
+                    <label>大段文本智能切分批量導入</label>
                     <textarea id="in-batch-danmaku" placeholder="輸入多條文本，自動以換行或標點分段"></textarea>
                     <button class="btn btn-sm btn-upload" id="btn-parse-batch" style="margin-top: 4px;">🚀 識別導入</button>
                 </div>
-                <!-- 动态弹幕轨道列表 -->
+                <div class="form-row" style="margin-top: 6px;">
+                    <label>各軌道獨立參數控制列表：</label>
+                </div>
                 <div id="danmaku-track-list"></div>
             </div>
         </div>
@@ -620,7 +619,6 @@
     </div>
 </main>
 
-<!-- 模块化外部 JS 脚本引入 -->
 <script src="player.js"></script>
 <script src="danmaku.js"></script>
 <script src="app.js"></script>
