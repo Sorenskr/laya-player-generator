@@ -1,5 +1,5 @@
 /* ==========================================================================
-   0. 全局设计系统变量与重置层
+   0. 全局设计系统变量与重置层 (强化现代无衬线字体栈与抗锯齿)
    ========================================================================== */
 :root {
     --primary: #1877F2;
@@ -22,7 +22,10 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft JhengHei", sans-serif;
+    /* 优先使用纯正现代无衬线字体，杜绝繁体字回退到宋体 */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Microsoft JhengHei", "PingFang TC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 body {
@@ -69,7 +72,6 @@ body {
     transform: translateY(0);
 }
 
-/* 交互性控件视觉反馈 */
 .interactive-elem {
     cursor: pointer;
     transition: transform 0.15s ease, opacity 0.15s ease;
@@ -338,12 +340,10 @@ main {
     100% { transform: translateX(-120%); }
 }
 
-/* 原地物理定格 */
 .danmaku-layer.is-paused .danmaku-item {
     animation-play-state: paused !important;
 }
 
-/* 定格排布模式 (自由调X/Y坐标) */
 .danmaku-item.is-fixed {
     animation: none !important;
     transform: none !important;
@@ -352,14 +352,13 @@ main {
     transition: left 0.1s ease, top 0.1s ease, font-size 0.1s ease;
 }
 
-/* 抖音竖屏模式下弹幕强制锁定：纯白字体 + 粗黑描边 */
 .mode-mobile-port .danmaku-item {
     color: #ffffff !important;
     text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.9) !important;
 }
 
 /* ==========================================================================
-   5. 模式 A: 电脑端 & 手机横屏 WEB HUD 样式 (像素级绝对对齐)
+   5. 模式 A: 电脑端 & 手机横屏 WEB HUD 样式 (精细水平对齐)
    ========================================================================== */
 .player-top {
     position: absolute;
@@ -709,7 +708,9 @@ main {
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
 }
 
-/* 统一底栏水平基准线 */
+/* ==========================================================================
+   ★ 核心修正：时间码与底栏文字等宽无衬线对齐
+   ========================================================================== */
 .bottom-ctrl-row {
     display: flex;
     justify-content: space-between;
@@ -735,13 +736,17 @@ main {
     line-height: 1;
 }
 
+/* 彻底告别 Courier New 衬线与奇葩冒号，采用现代等宽数字 */
 .time-label {
-    font-family: monospace;
-    font-size: 11px;
-    letter-spacing: 0.5px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+    font-variant-numeric: tabular-nums !important;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.2px;
     line-height: 1;
     display: inline-flex;
     align-items: center;
+    color: #d0d4dc;
 }
 
 #wrap-bot-dm-group {
