@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laya 播放器 · 双模截图/视频生成器</title>
-    <!-- 引入截图库依赖 -->
+    <title>Laya 播放器 · 雙模截圖/視頻生成器</title>
+    <!-- 引入截圖庫依賴 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
@@ -12,7 +12,7 @@
 
 <div id="toast-container"></div>
 
-<!-- 顶部导航栏 -->
+<!-- 頂部工具導航欄 -->
 <header>
     <div class="brand">
         <svg class="brand-logo" viewBox="0 0 100 100">
@@ -43,7 +43,7 @@
 </header>
 
 <main>
-    <!-- 中间预览工作区 -->
+    <!-- 中間預覽工作區 -->
     <div class="workspace" id="left-workspace">
         <div class="viewport-tabs">
             <button class="tab-btn active" data-mode="mode-pc">電腦網頁端 (16:9)</button>
@@ -53,16 +53,16 @@
 
         <div class="player-stage">
             <div class="player-box mode-pc" id="render-target">
-                <!-- 媒体背景层 -->
+                <!-- 媒體底層容器 -->
                 <div class="media-container" id="player-media-wrap">
                     <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg-media" id="preview-img">
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 动态跑马灯弹幕层 (默认激活显示) -->
+                <!-- 動態跑馬燈彈幕層 (支持原地物理定格) -->
                 <div class="danmaku-layer" id="danmaku-container" style="display: block;"></div>
 
-                <!-- ================= 模式 1: 电脑网页端 & 手机横屏 UI ================= -->
+                <!-- ================= 模式 1: 電腦網頁端 & 手機橫屏 UI ================= -->
                 <div class="player-top" id="web-player-top">
                     <div class="top-first-row">
                         <div class="top-left-group">
@@ -110,7 +110,7 @@
                     </div>
                 </div>
 
-                <!-- 居中播放/暂停操作钮 (点击播放/暂停) -->
+                <!-- 居中播放/暫停按鈕 (可點擊切換) -->
                 <div class="center-pause-wrap" id="wrap-center-all">
                     <div class="play-circle" id="btn-toggle-playback">
                         <div class="play-triangle" id="icon-center-play"></div>
@@ -119,12 +119,12 @@
                     <div class="pause-pill" id="disp-center-pill">點擊繼續播放</div>
                 </div>
 
-                <!-- 高能波浪热度曲线层 -->
+                <!-- 高能波浪熱度曲線層 -->
                 <div class="waveform-layer" id="wrap-waveform">
                     <canvas class="waveform-canvas" id="waveform-canvas"></canvas>
                 </div>
 
-                <!-- 底部控制栏 -->
+                <!-- 底部控制欄 -->
                 <div class="player-bottom" id="wrap-bottom-bar">
                     <div class="progress-bar-wrap" id="progress-click-bar" title="點擊跳轉進度">
                         <div class="progress-bar-buffer" id="disp-buffer-bar"></div>
@@ -143,7 +143,7 @@
                             </div>
                             <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
                             
-                            <!-- 底部高质感發光彈幕切換膠囊 (彻底重构) 与直接发送输入框 -->
+                            <!-- 底部高質感發光彈幕膠囊、定格按鈕與發射輸入框 -->
                             <div id="wrap-bot-dm-group">
                                 <div class="dm-switch-capsule active" id="btn-quick-dm-toggle" title="開關彈幕">
                                     <svg class="dm-capsule-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -151,6 +151,9 @@
                                     </svg>
                                     <span class="dm-capsule-text">彈</span>
                                     <span class="dm-status-dot"></span>
+                                </div>
+                                <div class="dm-mini-pause-btn" id="btn-mini-dm-pause" title="定格/恢復當前彈幕運動">
+                                    <span id="txt-mini-dm-pause">⏸️ 定格</span>
                                 </div>
                                 <div class="fake-dm-bar" id="btn-open-dm-input" title="點擊發射實時彈幕">
                                     <span class="fake-dm-txt" id="disp-dm-placeholder">這身材太頂了吧...</span>
@@ -160,9 +163,7 @@
                         </div>
                         <div class="ctrl-right">
                             <span id="wrap-bot-danmaku-count" class="interactive-elem"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
-                            <!-- 可点击循环切换倍速 -->
                             <span class="interactive-elem live-tag-btn" id="btn-cycle-speed" title="點擊切換倍速">倍速 <span id="disp-speed-val">1.0X</span></span>
-                            <!-- 可点击循环切换清晰度 -->
                             <span id="wrap-bot-res" class="interactive-elem"><span class="res-tag" id="disp-bot-res" title="點擊切換畫質">原畫 1080P 60幀 ▾</span></span>
                             <div class="interactive-elem" id="btn-toggle-fs" title="全屏">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d0d4dc" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
@@ -171,7 +172,7 @@
                     </div>
                 </div>
 
-                <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音/短视频模式 HUD ================= -->
+                <!-- ================= 模式 2: 手機豎屏 (9:16) 抖音/短視頻模式 HUD ================= -->
                 <div class="douyin-hud" id="douyin-hud">
                     <div class="dy-top-nav" id="dy-wrap-top-nav">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -190,7 +191,7 @@
                         <span>全屏觀看</span>
                     </div>
 
-                    <!-- 右侧互动操作栏 (点赞、收藏、关注支持直接点击) -->
+                    <!-- 右側互動操作欄 -->
                     <div class="dy-right-bar" id="dy-wrap-right-bar">
                         <div class="dy-avatar-wrap interactive-elem" id="dy-avatar-click">
                             <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%230D5BE1'/><circle cx='50' cy='50' r='36' fill='%232172F5'/><circle cx='50' cy='50' r='22' fill='%233D88FD'/><text x='50' y='60' font-size='28' font-weight='900' font-style='italic' fill='%23fff' text-anchor='middle'>Laya</text></svg>" class="dy-avatar-img" id="dy-avatar-img">
@@ -252,7 +253,7 @@
                         </div>
                     </div>
 
-                    <!-- 底部紫黑渐变蒙版与 Tab 栏 -->
+                    <!-- 底部紫黑漸變蒙版與 Tab 欄 -->
                     <div class="dy-bottom-wrap" id="dy-wrap-bottom-bar">
                         <div class="dy-bottom-tabs">
                             <div class="dy-tab-item active interactive-elem">首頁</div>
@@ -276,7 +277,7 @@
         </div>
     </div>
 
-    <!-- 右侧高级控制面板 -->
+    <!-- 右側高級控制面板 -->
     <div class="sidebar" id="right-sidebar">
         <div class="control-tabs">
             <button class="c-tab-btn active" id="tab-btn-web">💻 Web 播放器配置</button>
@@ -284,7 +285,7 @@
             <button class="c-tab-btn" id="tab-btn-dm">💬 高級彈幕軌道</button>
         </div>
 
-        <!-- ================= 选项卡 1: Web 版配置 ================= -->
+        <!-- ================= 選項卡 1: Web 版配置 ================= -->
         <div id="panel-web-settings" class="tab-panel active">
             <div class="panel-card">
                 <div class="card-header">
@@ -461,7 +462,7 @@
             </div>
         </div>
 
-        <!-- ================= 选项卡 2: 抖音版配置 ================= -->
+        <!-- ================= 選項卡 2: 抖音版配置 ================= -->
         <div id="panel-dy-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
@@ -566,25 +567,41 @@
             </div>
         </div>
 
-        <!-- ================= 选项卡 3: 高级弹幕工作台 ================= -->
-       <!-- ================= 选项卡 3: 高级弹幕工坊 (全能微调与预设库) ================= -->
+        <!-- ================= 選項卡 3: 高級彈幕工坊 (全能微調與原地定格控制) ================= -->
         <div id="panel-dm-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
-                    <span>💬 彈幕模式與案例預設庫</span>
-                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增彈幕</button>
+                    <span>💬 彈幕運動與定格控制</span>
+                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增自定義軌道</button>
                 </div>
 
-                <!-- 模式切换：定格排布(截图) vs 动态滚动(视频) -->
+                <!-- 核心：一鍵原地定格按鈕 -->
                 <div class="form-row">
-                    <label>彈幕工作模式 (截圖建議切換為定格)</label>
+                    <button class="btn-dm-pause-toggle" id="btn-toggle-dm-motion">
+                        <span id="icon-dm-motion">⏸️</span>
+                        <span id="txt-dm-motion">原地定格彈幕 (方便預覽/截圖)</span>
+                    </button>
+                </div>
+
+                <!-- 全局速度縮放滑動條 -->
+                <div class="form-row" style="margin-top: 4px;">
+                    <div class="range-box">
+                        <label>全局飄動速度 (倍率)</label>
+                        <span class="range-value" id="txt-dm-global-speed">1.0X</span>
+                    </div>
+                    <input type="range" id="in-dm-global-speed" min="2" max="25" value="10" title="向左更慢，向右更快">
+                </div>
+
+                <!-- 模式切換：定格排布(截圖) vs 動態滾動(視頻) -->
+                <div class="form-row" style="margin-top: 4px;">
+                    <label>彈幕排布模式</label>
                     <select id="sel-dm-mode" style="background:#151821; font-weight:700; color:#5dade2;">
-                        <option value="scroll">🎬 動態滾動模式 (視頻錄製推薦)</option>
-                        <option value="fixed">📌 定格排布模式 (自由調X/Y位置，截圖推薦)</option>
+                        <option value="scroll">🎬 動態滾動模式 (視頻/飄動推薦)</option>
+                        <option value="fixed">📌 靜態固定排布 (手動微調X/Y位置)</option>
                     </select>
                 </div>
 
-                <!-- 预设案例快速装载按钮组 -->
+                <!-- 預設案例快速裝載按鈕組 -->
                 <div class="form-row" style="margin-top: 4px;">
                     <label>老司機專屬高能預設案例庫 (點擊一鍵裝載)：</label>
                     <div style="display: flex; flex-direction: column; gap: 5px;">
@@ -602,7 +619,7 @@
 
                 <div class="form-row" style="margin-top: 6px;">
                     <div class="range-box">
-                        <label>全局彈幕字號調節</label>
+                        <label>全局彈幕字號大小</label>
                         <span class="range-value" id="txt-danmaku-size">16px</span>
                     </div>
                     <input type="range" id="in-danmaku-size" min="12" max="32" value="16">
@@ -617,11 +634,12 @@
                 <div class="form-row" style="margin-top: 6px;">
                     <label>各條彈幕獨立參數微調列表 (修改即時生效)：</label>
                 </div>
-                <!-- 动态轨道控制卡片列表 -->
+                <!-- 各條軌道獨立微調列表 -->
                 <div id="danmaku-track-list"></div>
             </div>
         </div>
-        <!-- 通用画面防切脸构图卡片 -->
+
+        <!-- 通用畫面防切臉構圖卡片 -->
         <div class="panel-card">
             <div class="card-header">
                 <span>📐 畫面構圖 (上下位移防切臉)</span>
