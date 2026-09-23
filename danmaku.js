@@ -1,29 +1,41 @@
 /**
  * ==========================================================================
- * danmaku.js - 高级动态弹幕多轨道管理与渲染引擎
+ * danmaku.js - 高级动态弹幕多轨道管理与实时双向交互引擎
  * ==========================================================================
  */
 
-// 全局弹幕引擎命名空间 (挂载到 window 供 player.js 与 app.js 导出模块调用)
 window.DanmakuEngine = {
     list: [],
     container: null,
     trackListUI: null,
 
-    // 获取当前可见且激活的弹幕数据列表 (用于 Canvas 视频导出与快照)
     getActiveList() {
         return this.list.filter(item => item.visible !== false);
     },
 
-    // 刷新弹幕轨道层与右侧编辑器视图
     refresh() {
         renderDanmakuStage();
         renderDanmakuTracksUI();
+    },
+
+    // 发射一条即时弹幕 (飘过画面)
+    fireLive(text, color = '#ffffff') {
+        if (!text || !text.trim()) return;
+        const newTrack = {
+            id: 'dm_live_' + Date.now(),
+            text: text.trim(),
+            top: Math.floor(Math.random() * 55) + 12,
+            color: color,
+            speed: 8,
+            opacity: 1.0,
+            visible: true
+        };
+        this.list.unshift(newTrack);
+        this.refresh();
     }
 };
 
 (function () {
-    // 基础 DOM 缓存
     const danmakuContainer = document.getElementById('danmaku-container');
     const danmakuTrackList = document.getElementById('danmaku-track-list');
     const inDanmakuSize = document.getElementById('in-danmaku-size');
@@ -33,62 +45,59 @@ window.DanmakuEngine = {
     const btnParseBatch = document.getElementById('btn-parse-batch');
     const swDanmaku = document.getElementById('sw-danmaku');
     const btnQuickDmToggle = document.getElementById('btn-quick-dm-toggle');
+    const btnOpenDmInput = document.getElementById('btn-open-dm-input');
 
-    // 挂载全局容器引用
     window.DanmakuEngine.container = danmakuContainer;
     window.DanmakuEngine.trackListUI = danmakuTrackList;
 
-    // Toast 辅助调用
     const toast = (msg) => {
-        if (typeof window.showToast === 'function') {
-            window.showToast(msg);
-        }
+        if (typeof window.showToast === 'function') window.showToast(msg);
     };
 
     /* ==========================================================================
-       1. 初始预设弹幕轨道数据集 (符合平台调性，默认开关关闭)
+       1. 初始弹幕数据集 (预设高能福利弹幕，默认可见)
        ========================================================================== */
     window.DanmakuEngine.list = [
         {
-            id: 'dm_' + Date.now() + '_1',
+            id: 'dm_init_1',
             text: '這身材太頂了吧！',
-            top: 15,
+            top: 14,
             color: '#ffffff',
             speed: 9,
             opacity: 1.0,
             visible: true
         },
         {
-            id: 'dm_' + Date.now() + '_2',
+            id: 'dm_init_2',
             text: '免費通道真的良心，太讚了',
-            top: 30,
+            top: 26,
             color: '#f39c12',
             speed: 11,
             opacity: 1.0,
             visible: true
         },
         {
-            id: 'dm_' + Date.now() + '_3',
+            id: 'dm_init_3',
             text: '前方高能，衛生紙已備好！',
-            top: 48,
+            top: 42,
             color: '#fe2c55',
             speed: 8,
             opacity: 1.0,
             visible: true
         },
         {
-            id: 'dm_' + Date.now() + '_4',
+            id: 'dm_init_4',
             text: '已截圖收藏，感謝樓主分享',
-            top: 65,
+            top: 60,
             color: '#2ecc71',
             speed: 10,
             opacity: 0.95,
             visible: true
         },
         {
-            id: 'dm_' + Date.now() + '_5',
+            id: 'dm_init_5',
             text: 'Laya 播放器牛逼！原畫質吹爆',
-            top: 78,
+            top: 74,
             color: '#00d2d3',
             speed: 12,
             opacity: 1.0,
@@ -97,7 +106,7 @@ window.DanmakuEngine = {
     ];
 
     /* ==========================================================================
-       2. 播放器画面舞台渲染函数 (DOM 跑马灯粒子)
+       2. 播放器画面舞台渲染函数
        ========================================================================== */
     function renderDanmakuStage() {
         if (!danmakuContainer) return;
@@ -120,7 +129,7 @@ window.DanmakuEngine = {
     }
 
     /* ==========================================================================
-       3. 右侧面板轨道列表可视化渲染与实时数据双向绑定
+       3. 右侧轨道编辑器可视化渲染与实时双向绑定
        ========================================================================== */
     function renderDanmakuTracksUI() {
         if (!danmakuTrackList) return;
@@ -137,7 +146,7 @@ window.DanmakuEngine = {
                     <button class="dm-track-del" title="刪除此軌道">✕</button>
                 </div>
                 <div class="dm-track-row2">
-                    <label>軌道高度: <input type="number" class="dm-input-top" value="${dm.top}" min="5" max="90" style="width: 42px; background:#181b24; color:#fff; border:1px solid #2d3344; border-radius:3px; padding:2px 4px; font-size:10px;">%</label>
+                    <label>高度: <input type="number" class="dm-input-top" value="${dm.top}" min="5" max="90" style="width: 42px; background:#181b24; color:#fff; border:1px solid #2d3344; border-radius:3px; padding:2px 4px; font-size:10px;">%</label>
                     <label>速度: <input type="number" class="dm-input-speed" value="${dm.speed}" min="4" max="25" style="width: 38px; background:#181b24; color:#fff; border:1px solid #2d3344; border-radius:3px; padding:2px 4px; font-size:10px;">s</label>
                     <label>顏色: <input type="color" class="dm-input-color" value="${dm.color}"></label>
                     <label style="display:flex; align-items:center; gap:2px; cursor:pointer;">
@@ -146,7 +155,7 @@ window.DanmakuEngine = {
                 </div>
             `;
 
-            // A. 文本输入绑定
+            // 文本即时改写
             const inputText = card.querySelector('.dm-input-text');
             inputText.addEventListener('input', (e) => {
                 dm.text = e.target.value;
@@ -154,7 +163,7 @@ window.DanmakuEngine = {
                 if (stageEl) stageEl.textContent = e.target.value;
             });
 
-            // B. 垂直高度 (Top %) 绑定
+            // 纵向轨道高度即时调节
             const inputTop = card.querySelector('.dm-input-top');
             inputTop.addEventListener('input', (e) => {
                 const val = Math.min(95, Math.max(5, parseInt(e.target.value) || 20));
@@ -163,7 +172,7 @@ window.DanmakuEngine = {
                 if (stageEl) stageEl.style.top = val + '%';
             });
 
-            // C. 速度 (秒) 绑定
+            // 速度调节
             const inputSpeed = card.querySelector('.dm-input-speed');
             inputSpeed.addEventListener('input', (e) => {
                 const val = Math.min(30, Math.max(3, parseInt(e.target.value) || 8));
@@ -172,7 +181,7 @@ window.DanmakuEngine = {
                 if (stageEl) stageEl.style.animationDuration = val + 's';
             });
 
-            // D. 颜色绑定
+            // 颜色即时变换
             const inputColor = card.querySelector('.dm-input-color');
             inputColor.addEventListener('input', (e) => {
                 dm.color = e.target.value;
@@ -180,14 +189,14 @@ window.DanmakuEngine = {
                 if (stageEl) stageEl.style.color = e.target.value;
             });
 
-            // E. 显隐独立开关绑定
+            // 显隐独立开关
             const inputVis = card.querySelector('.dm-input-vis');
             inputVis.addEventListener('change', (e) => {
                 dm.visible = e.target.checked;
                 renderDanmakuStage();
             });
 
-            // F. 轨道删除
+            // 删除单条轨道
             const btnDel = card.querySelector('.dm-track-del');
             btnDel.addEventListener('click', () => {
                 window.DanmakuEngine.list.splice(index, 1);
@@ -200,7 +209,7 @@ window.DanmakuEngine = {
     }
 
     /* ==========================================================================
-       4. 全局字号滑动条与轨道新增操作
+       4. 全局字号滑动条与独立轨道新增
        ========================================================================== */
     if (inDanmakuSize && txtDanmakuSize) {
         inDanmakuSize.addEventListener('input', (e) => {
@@ -210,7 +219,6 @@ window.DanmakuEngine = {
         });
     }
 
-    // 新增一条独立弹幕轨道
     if (btnAddDanmaku) {
         btnAddDanmaku.addEventListener('click', () => {
             const randomTops = [18, 28, 42, 56, 70, 82];
@@ -219,7 +227,7 @@ window.DanmakuEngine = {
 
             const newTrack = {
                 id: 'dm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-                text: '新增自定義彈幕軌道 ' + newIndex,
+                text: '自定義彈幕軌道 ' + newIndex,
                 top: randomTops[newIndex % randomTops.length],
                 color: randomColors[newIndex % randomColors.length],
                 speed: 8 + (newIndex % 4) * 2,
@@ -233,18 +241,15 @@ window.DanmakuEngine = {
         });
     }
 
-    /* ==========================================================================
-       5. 批量文本识别导入 (支持换行/逗号/分号切分，多轨道平均排布)
-       ========================================================================== */
+    // 批量导入
     if (btnParseBatch && inBatchDanmaku) {
         btnParseBatch.addEventListener('click', () => {
             const rawText = inBatchDanmaku.value.trim();
             if (!rawText) {
-                toast('請先在上方輸入框粘貼文本內容');
+                toast('請先在輸入框粘貼文本內容');
                 return;
             }
 
-            // 按换行、中英文逗号、分号进行切分
             const segments = rawText.split(/[\n,，;；。]+/)
                 .map(s => s.trim())
                 .filter(s => s.length > 0);
@@ -255,12 +260,10 @@ window.DanmakuEngine = {
             }
 
             const colorPalette = ['#ffffff', '#f39c12', '#2ecc71', '#54a0ff', '#fe2c55', '#00d2d3', '#ffeaa7'];
-            
-            // 将切分出来的段落转化为独立弹幕对象
             const newTracks = segments.map((txt, idx) => ({
                 id: 'dm_batch_' + Date.now() + '_' + idx,
                 text: txt,
-                top: 14 + (idx % 7) * 11, // 均匀分布纵向轨道
+                top: 14 + (idx % 7) * 11,
                 color: colorPalette[idx % colorPalette.length],
                 speed: 8 + (idx % 5) * 1.5,
                 opacity: 1.0,
@@ -276,11 +279,21 @@ window.DanmakuEngine = {
     }
 
     /* ==========================================================================
-       6. 弹幕总开关与底部 [彈] 按钮同步状态
+       5. 胶囊按钮切换与播放器画面直接发送弹幕
        ========================================================================== */
+    function syncCapsuleState(isOn) {
+        if (!btnQuickDmToggle) return;
+        if (isOn) {
+            btnQuickDmToggle.classList.add('active');
+        } else {
+            btnQuickDmToggle.classList.remove('active');
+        }
+    }
+
     if (swDanmaku && danmakuContainer) {
         swDanmaku.addEventListener('change', (e) => {
             danmakuContainer.style.display = e.target.checked ? 'block' : 'none';
+            syncCapsuleState(e.target.checked);
         });
     }
 
@@ -288,10 +301,20 @@ window.DanmakuEngine = {
         btnQuickDmToggle.addEventListener('click', () => {
             swDanmaku.checked = !swDanmaku.checked;
             swDanmaku.dispatchEvent(new Event('change'));
-            toast(swDanmaku.checked ? '動態彈幕已開啓' : '動態彈幕已關閉');
+            toast(swDanmaku.checked ? '彈幕已開啓' : '彈幕已關閉');
         });
     }
 
-    // 初始化渲染舞台与编辑器视图
+    // 点击播放器底部输入框：直接弹出发射窗口，并即时漂移在屏幕上
+    if (btnOpenDmInput) {
+        btnOpenDmInput.addEventListener('click', () => {
+            const userDm = prompt('請輸入你要發射的實時彈幕：', document.getElementById('disp-dm-placeholder').textContent);
+            if (userDm && userDm.trim()) {
+                window.DanmakuEngine.fireLive(userDm.trim(), '#ff7675');
+                toast(`🚀 彈幕已發射：「${userDm.trim()}」`);
+            }
+        });
+    }
+
     window.DanmakuEngine.refresh();
 })();
