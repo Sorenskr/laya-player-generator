@@ -58,8 +58,8 @@
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 動態跑馬燈彈幕層 -->
-                <div class="danmaku-layer" id="danmaku-container" style="display: block;"></div>
+                <!-- 動態跑馬燈彈幕層 (默認關閉隱藏) -->
+                <div class="danmaku-layer" id="danmaku-container" style="display: none;"></div>
 
                 <!-- ================= 模式 1: 電腦網頁端 & 手機橫屏 UI ================= -->
                 <div class="player-top" id="web-player-top">
@@ -123,7 +123,7 @@
                     <canvas class="waveform-canvas" id="waveform-canvas"></canvas>
                 </div>
 
-                <!-- 底部控制欄 (已移除画面内部滚动的文字与框) -->
+                <!-- 底部控制欄 (已移除多余的滚动按钮) -->
                 <div class="player-bottom" id="wrap-bottom-bar">
                     <div class="progress-bar-wrap" id="progress-click-bar" title="點擊跳轉進度">
                         <div class="progress-bar-buffer" id="disp-buffer-bar"></div>
@@ -142,9 +142,9 @@
                             </div>
                             <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
                             
-                            <!-- 底部精简發光彈幕膠囊與發射輸入框 -->
+                            <!-- 底部發光彈幕膠囊 (默認未激活) 與發射輸入框 -->
                             <div id="wrap-bot-dm-group">
-                                <div class="dm-switch-capsule active" id="btn-quick-dm-toggle" title="開關彈幕">
+                                <div class="dm-switch-capsule" id="btn-quick-dm-toggle" title="開關彈幕">
                                     <svg class="dm-capsule-icon" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
                                     </svg>
@@ -187,7 +187,6 @@
                         <span>全屏觀看</span>
                     </div>
 
-                    <!-- 右側互動操作欄 -->
                     <div class="dy-right-bar" id="dy-wrap-right-bar">
                         <div class="dy-avatar-wrap interactive-elem" id="dy-avatar-click">
                             <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%230D5BE1'/><circle cx='50' cy='50' r='36' fill='%232172F5'/><circle cx='50' cy='50' r='22' fill='%233D88FD'/><text x='50' y='60' font-size='28' font-weight='900' font-style='italic' fill='%23fff' text-anchor='middle'>Laya</text></svg>" class="dy-avatar-img" id="dy-avatar-img">
@@ -249,7 +248,7 @@
                         </div>
                     </div>
 
-                    <!-- 底部紫黑漸變蒙版與 Tab 欄 -->
+                    <!-- 底部紫黑漸變蒙版与 Tab 栏 -->
                     <div class="dy-bottom-wrap" id="dy-wrap-bottom-bar">
                         <div class="dy-bottom-tabs">
                             <div class="dy-tab-item active interactive-elem">首頁</div>
@@ -357,10 +356,11 @@
                     <span class="badge-tip">即開即顯</span>
                 </div>
                 <div class="switch-grid">
+                    <!-- 关键修复：动态弹幕默认不勾选 -->
                     <div class="switch-tile">
                         <span>動態彈幕</span>
                         <label class="ios-toggle">
-                            <input type="checkbox" id="sw-danmaku" checked>
+                            <input type="checkbox" id="sw-danmaku">
                             <span class="slider-round"></span>
                         </label>
                     </div>
@@ -563,7 +563,7 @@
             </div>
         </div>
 
-        <!-- ================= 選項卡 3: 高級彈幕工坊 (全能微調與原地定格控制) ================= -->
+        <!-- ================= 選項卡 3: 高級彈幕工坊 ================= -->
         <div id="panel-dm-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
@@ -571,7 +571,6 @@
                     <button class="btn btn-sm" id="btn-add-danmaku">+ 新增自定義軌道</button>
                 </div>
 
-                <!-- 核心：一鍵原地定格按鈕 (右侧专属，截图画面不留痕迹) -->
                 <div class="form-row">
                     <button class="btn-dm-pause-toggle" id="btn-toggle-dm-motion">
                         <span id="icon-dm-motion">⏸️</span>
@@ -579,7 +578,6 @@
                     </button>
                 </div>
 
-                <!-- 全局速度縮放滑動條 -->
                 <div class="form-row" style="margin-top: 4px;">
                     <div class="range-box">
                         <label>全局飄動速度 (倍率)</label>
@@ -588,7 +586,6 @@
                     <input type="range" id="in-dm-global-speed" min="2" max="25" value="10" title="向左更慢，向右更快">
                 </div>
 
-                <!-- 模式切換：定格排布(截圖) vs 動態滾動(視頻) -->
                 <div class="form-row" style="margin-top: 4px;">
                     <label>彈幕排布模式</label>
                     <select id="sel-dm-mode" style="background:#151821; font-weight:700; color:#5dade2;">
@@ -597,7 +594,6 @@
                     </select>
                 </div>
 
-                <!-- 預設案例快速裝載按鈕組 -->
                 <div class="form-row" style="margin-top: 4px;">
                     <label>老司機專屬高能預設案例庫 (點擊一鍵裝載)：</label>
                     <div style="display: flex; flex-direction: column; gap: 5px;">
