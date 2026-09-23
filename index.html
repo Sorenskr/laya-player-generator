@@ -30,6 +30,7 @@
            ========================================== */
         header { height: 54px; background: var(--panel-bg); border-bottom: 1px solid var(--card-border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 30; flex-shrink: 0; }
         .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 15px; }
+        .brand-logo { width: 32px; height: 32px; flex-shrink: 0; }
         .nav-actions { display: flex; gap: 10px; align-items: center; }
         .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border-radius: 6px; font-size: 12.5px; font-weight: 600; cursor: pointer; border: none; transition: 0.2s; color: #fff; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
@@ -72,10 +73,11 @@
            模块 4: Web 端流媒体原生 UI
            ========================================== */
         .player-top { position: absolute; top: 0; left: 0; right: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, transparent 100%); padding: 14px 18px 30px; pointer-events: auto; transition: 0.3s; }
-        .top-row { display: flex; justify-content: space-between; align-items: center; }
-        .flex-center { display: flex; align-items: center; gap: 8px; }
+        .top-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .flex-center { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
         
         .laya-badge { background: rgba(13, 91, 225, 0.45); border: 1px solid rgba(61, 136, 253, 0.6); padding: 3px 8px 3px 6px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; color:#fff; font-size: 11px; font-weight: 700; }
+        .mini-laya-logo { width: 16px; height: 16px; flex-shrink: 0; }
         .free-pill { background: linear-gradient(90deg, rgba(230, 126, 34, 0.4), rgba(243, 156, 18, 0.25)); border: 1px solid rgba(243, 156, 18, 0.7); padding: 3px 8px; border-radius: 14px; font-size: 11px; font-weight: 700; color: #f39c12; }
         .viewer-pill { background: rgba(18, 20, 26, 0.75); border: 1px solid rgba(46, 204, 113, 0.45); padding: 3px 8px; border-radius: 12px; font-size: 11px; color: #e1f5fe; }
         .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 6px #2ecc71; display: inline-block; margin-right: 4px; }
@@ -90,13 +92,14 @@
         .play-triangle { width: 0; height: 0; border-top: 9px solid transparent; border-bottom: 9px solid transparent; border-left: 15px solid #fff; margin-left: 3px; }
         .pause-pill { margin-top: 8px; background: rgba(15, 18, 24, 0.8); border: 1px solid rgba(255,255,255,0.25); padding: 4px 12px; border-radius: 14px; font-size: 11.5px; color: #e5e9f0; }
 
-        .player-bottom { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); padding: 25px 18px 10px; pointer-events: auto; }
-        .wave-canvas { position: absolute; bottom: 45px; left: 18px; width: calc(100% - 36px); height: 24px; pointer-events: none; opacity: 0.8;}
-        .progress-bar { position: relative; width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-bottom: 8px; cursor: pointer; }
+        .player-bottom { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%); padding: 35px 18px 15px; pointer-events: auto; }
+        .wave-canvas { position: absolute; bottom: 52px; left: 18px; width: calc(100% - 36px); height: 24px; pointer-events: none; opacity: 0.8;}
+        .progress-bar { position: relative; width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; margin-bottom: 12px; cursor: pointer; }
         .progress-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--primary); border-radius: 2px; }
         .progress-dot { position: absolute; right: -5px; top: -3px; width: 10px; height: 10px; background: #fff; border-radius: 50%; }
         
-        .bot-row { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #d0d4dc; }
+        .bot-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 11.5px; color: #d0d4dc; }
+        .bot-row .flex-center { flex-wrap: wrap; justify-content: flex-end; }
         .res-tag { background: var(--primary); color: #fff; padding: 2px 6px; border-radius: 3px; font-weight: bold; }
         .av-input { background: rgba(255,255,255,0.15); border-radius: 16px; padding: 2px 4px 2px 12px; display: flex; align-items: center; width: 220px; color: #ccc; }
         .av-btn { background: #1877f2; color: #fff; padding: 3px 10px; border-radius: 12px; font-weight: bold; margin-left: auto; }
@@ -105,8 +108,8 @@
            模块 5: 高级动态弹幕系统引擎 (绝对定位渲染)
            ========================================== */
         .danmaku-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 15; overflow: hidden; }
-        /* 实际跑动的弹幕不再使用纯CSS动画，而是通过 JS 时序控制的样式注入，方便完全由属性定制 */
-        .dm-node { position: absolute; white-space: nowrap; font-weight: 700; text-shadow: 1px 1px 2px #000, -1px -1px 2px #000; will-change: transform; }
+        @keyframes dmRoll { 0% { transform: translateX(1100px); } 100% { transform: translateX(-120%); } }
+        .dm-node { position: absolute; white-space: nowrap; font-weight: 700; text-shadow: 1px 1px 2px #000, -1px -1px 2px #000; will-change: transform; animation: dmRoll linear infinite; left: 0; }
         /* 竖屏特调：上半屏限制 + 白字黑厚边 */
         .mode-mobile-port .dm-node { color: #fff !important; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8) !important; }
 
@@ -291,7 +294,7 @@
                             <div class="flex-center">
                                 <!-- AV风格弹幕输入框 -->
                                 <div class="av-input" id="ui-web-avinput">
-                                    <span id="txt-av-ph" style="flex:1; overflow:hidden; white-space:nowrap; font-size:11px;">發個友善的彈幕見證當下</span>
+                                    <span id="txt-av-ph" style="flex:1; overflow:hidden; white-space:nowrap; font-size:11px;">這身材太頂了吧...</span>
                                     <div class="av-btn">發送</div>
                                 </div>
                                 <span id="ui-web-dmcount"><span id="txt-dmcount">● 彈幕 1.8W</span></span>
@@ -390,13 +393,13 @@
                     <div class="form-row">
                         <div class="form-label">底部输入占位 (带AV预设)</div>
                         <select class="input-base" id="sel-av-ph" style="margin-bottom:4px;">
-                            <option value="發個友善的彈幕見證當下">發個友善的彈幕見證當下</option>
                             <option value="這身材太頂了吧...">這身材太頂了吧...</option>
                             <option value="已備好衛生紙">已備好衛生紙</option>
                             <option value="前方高能預警！">前方高能預警！</option>
+                            <option value="發個友善的彈幕見證當下">發個友善的彈幕見證當下</option>
                             <option value="自定">✏️ 手动输入...</option>
                         </select>
-                        <input type="text" class="input-base" id="in-av-ph" value="發個友善的彈幕見證當下">
+                        <input type="text" class="input-base" id="in-av-ph" value="這身材太頂了吧...">
                     </div>
                     <div class="form-row"><div class="form-label">特权横幅正文</div><input type="text" class="input-base" id="in-banner" value="已解鎖完整無碼未刪減版，點擊任意處播放"></div>
                     <div class="form-row"><div class="form-label">在看人数</div><input type="text" class="input-base" id="in-viewer" value="1.0 萬人正在觀看"></div>
