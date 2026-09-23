@@ -1461,3 +1461,30 @@ input[type="range"] {
     background: transparent;
     cursor: pointer;
 }
+
+/* 定格模式弹幕排布规则 (截图专用) */
+.danmaku-item.is-fixed {
+    animation: none !important;
+    transform: none !important;
+    cursor: default;
+    user-select: none;
+    transition: left 0.1s ease, top 0.1s ease, font-size 0.1s ease;
+}
+
+/* 弹幕微调卡片增强 */
+.dm-track-row2 input[type="number"] {
+    background: #181b24;
+    color: #5dade2;
+    font-weight: 700;
+    border: 1px solid #2d3344;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 11px;
+    outline: none;
+}
+
+.dm-track-row2 input[type="checkbox"] {
+    accent-color: var(--primary);
+    cursor: pointer;
+    margin-right: 2px;
+}
