@@ -159,6 +159,7 @@
         .bili-danmaku-input span { flex: 1; font-size: 11px; color: rgba(255,255,255,0.7); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
         .bili-danmaku-btn { background: #00a1d6; color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 14px; font-weight: 600; margin-left: 6px; }
         
+        /* ====== 短视频/抖音 UI 层 ====== */
         .dy-purple-mask { position: absolute; bottom: 0; left: 0; width: 100%; height: 55%; background: linear-gradient(to top, rgba(50, 10, 60, 0.85) 0%, rgba(20, 10, 30, 0.4) 60%, transparent 100%); z-index: 1; transition: opacity 0.2s; pointer-events: none;}
         
         .dy-top-nav { position: absolute; top: 15px; left: 0; width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 16px; z-index: 10; color: #fff; font-size: 14px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
@@ -195,6 +196,7 @@
         .dy-add-btn::before { content: ''; position: absolute; left: -4px; width: 10px; height: 100%; background: #45f3ff; border-radius: 8px 0 0 8px; z-index: -1; }
         .dy-add-btn::after { content: ''; position: absolute; right: -4px; width: 10px; height: 100%; background: #fe2c55; border-radius: 0 8px 8px 0; z-index: -1; }
 
+        /* 🎨 右侧高级 Studio 控制面板 */
         .sidebar { width: 380px; background: var(--panel-bg); border-left: 1px solid var(--card-border); display: flex; flex-direction: column; flex-shrink: 0; z-index: 30;}
         .sidebar-tabs { display: flex; background: #0c0e14; padding: 10px 16px 0 16px; gap: 8px; }
         .side-tab { padding: 10px 14px; color: var(--text-muted); font-size: 13px; font-weight: 700; cursor: pointer; border-bottom: 2px solid transparent; }
@@ -630,7 +632,7 @@
                 <div class="panel-card">
                     <div class="card-header"><span>⭐ 互动数据与头像</span></div>
                     <div class="form-row">
-                        <label>自定义头像</label>
+                        <label>自定义头像 (默认Laya Logo)</label>
                         <input type="file" id="in-dy-avatar" accept="image/*">
                     </div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -694,7 +696,7 @@
         '万人在看': '萬人在看'
     };
     
-    document.getElementById('btn-toggle-lang').addEventListener('click', () => {
+    document.getElementById('btn-toggle-lang')?.addEventListener('click', () => {
         isTraditional = !isTraditional;
         // 定义需要切换的 Input IDs
         const inputsToTranslate = [
@@ -721,6 +723,16 @@
     const defaultAvatarUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
     document.getElementById('disp-dy-avatar').src = defaultAvatarUrl;
 
+    // 自定义头像上传
+    document.getElementById('in-dy-avatar')?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if(file) {
+            const reader = new FileReader();
+            reader.onload = (evt) => { document.getElementById('disp-dy-avatar').src = evt.target.result; };
+            reader.readAsDataURL(file);
+        }
+    });
+
     // 侧边栏 Tab 切换
     document.querySelectorAll('.side-tab').forEach(tab => {
         tab.addEventListener('click', () => {
@@ -734,7 +746,7 @@
     // 滚轮穿透
     const leftWorkspace = document.getElementById('left-workspace');
     const rightSidebar = document.getElementById('right-sidebar');
-    leftWorkspace.addEventListener('wheel', (e) => {
+    leftWorkspace?.addEventListener('wheel', (e) => {
         rightSidebar.scrollBy({ top: e.deltaY, behavior: 'auto' });
     }, { passive: true });
 
@@ -765,12 +777,12 @@
 
     const checkMediaAspect = () => {
         const isMobilePort = renderTarget.classList.contains('mode-mobile-port');
-        const fitMode = document.getElementById('sel-media-fit').value;
+        const fitMode = document.getElementById('sel-media-fit')?.value || 'cover';
         const media = isVideoMode ? previewVideo : previewImg;
         
         if (fitMode === 'contain' && isMobilePort) {
             media.classList.add('media-contain');
-            if(document.getElementById('sw-dy-fullscreen').checked) {
+            if(document.getElementById('sw-dy-fullscreen')?.checked) {
                 document.getElementById('dy-fullscreen-btn').style.display = 'flex';
             }
         } else {
@@ -787,14 +799,15 @@
             checkMediaAspect();
         });
     });
-    document.getElementById('sel-media-fit').addEventListener('change', checkMediaAspect);
-    document.getElementById('sw-dy-fullscreen').addEventListener('change', checkMediaAspect);
+    document.getElementById('sel-media-fit')?.addEventListener('change', checkMediaAspect);
+    document.getElementById('sw-dy-fullscreen')?.addEventListener('change', checkMediaAspect);
 
     // 画面构图微调
     const inPosY = document.getElementById('in-pos-y');
     const inPosX = document.getElementById('in-pos-x');
     const inMediaScale = document.getElementById('in-media-scale');
     const updateMediaTransform = () => {
+        if(!inPosY) return;
         const y = inPosY.value + '%';
         const x = inPosX.value + '%';
         const scale = (inMediaScale.value / 100);
@@ -805,17 +818,15 @@
         document.getElementById('txt-pos-x').textContent = x;
         document.getElementById('txt-media-scale').textContent = inMediaScale.value + '%';
     };
-    inPosY.addEventListener('input', updateMediaTransform);
-    inPosX.addEventListener('input', updateMediaTransform);
-    inMediaScale.addEventListener('input', updateMediaTransform);
+    inPosY?.addEventListener('input', updateMediaTransform);
+    inPosX?.addEventListener('input', updateMediaTransform);
+    inMediaScale?.addEventListener('input', updateMediaTransform);
 
-    document.getElementById('btn-reset-pos').addEventListener('click', () => {
-        inPosY.value = 50; inPosX.value = 50; inMediaScale.value = 100;
-        updateMediaTransform();
+    document.getElementById('btn-reset-pos')?.addEventListener('click', () => {
+        if(inPosY) { inPosY.value = 50; inPosX.value = 50; inMediaScale.value = 100; updateMediaTransform(); }
     });
-    document.getElementById('btn-face-preset').addEventListener('click', () => {
-        inPosY.value = 15; inPosX.value = 50; inMediaScale.value = 110;
-        updateMediaTransform();
+    document.getElementById('btn-face-preset')?.addEventListener('click', () => {
+        if(inPosY) { inPosY.value = 15; inPosX.value = 50; inMediaScale.value = 110; updateMediaTransform(); }
     });
 
     // 进度与时间
@@ -830,31 +841,32 @@
     const selPlayState = document.getElementById('sel-play-state');
 
     const refreshTimeDisplay = () => {
+        if(!inStartTime) return;
         const startSec = timeToSeconds(inStartTime.value);
         const totalSec = timeToSeconds(inTotalTime.value) || 1;
         dispTime.textContent = `${secondsToTime(startSec)} / ${secondsToTime(totalSec)}`;
     };
 
-    inStartTime.addEventListener('input', () => {
+    inStartTime?.addEventListener('input', () => {
         refreshTimeDisplay();
         const s = timeToSeconds(inStartTime.value);
         const t = timeToSeconds(inTotalTime.value);
         if (t > 0) {
             const pct = Math.min(100, Math.max(0, Math.round((s / t) * 100)));
-            inProgress.value = pct;
+            if(inProgress) inProgress.value = pct;
             dispProgressBar.style.width = pct + '%';
             document.getElementById('txt-progress').textContent = pct + '%';
         }
     });
 
-    inTotalTime.addEventListener('input', refreshTimeDisplay);
+    inTotalTime?.addEventListener('input', refreshTimeDisplay);
 
-    inProgress.addEventListener('input', (e) => {
+    inProgress?.addEventListener('input', (e) => {
         const val = e.target.value;
         dispProgressBar.style.width = val + '%';
         document.getElementById('txt-progress').textContent = val + '%';
         const totalSec = timeToSeconds(inTotalTime.value) || 5325;
-        inStartTime.value = secondsToTime(Math.round((val / 100) * totalSec));
+        if(inStartTime) inStartTime.value = secondsToTime(Math.round((val / 100) * totalSec));
         refreshTimeDisplay();
     });
 
@@ -865,9 +877,10 @@
         else previewVideo.pause();
         updatePlayStateIcon();
     };
-    document.getElementById('btn-play-pause-toggle').addEventListener('click', toggleVideoPlayback);
+    document.getElementById('btn-play-pause-toggle')?.addEventListener('click', toggleVideoPlayback);
 
     const updatePlayStateIcon = () => {
+        if(!selPlayState) return;
         const state = selPlayState.value;
         if (state === 'play' || (state === 'auto' && !previewVideo.paused)) {
             iconPlay.style.display = 'none';
@@ -877,11 +890,11 @@
             iconPause.style.display = 'none';
         }
     };
-    selPlayState.addEventListener('change', updatePlayStateIcon);
+    selPlayState?.addEventListener('change', updatePlayStateIcon);
 
-    previewVideo.addEventListener('timeupdate', () => {
+    previewVideo?.addEventListener('timeupdate', () => {
         updatePlayStateIcon();
-        if (!isVideoMode || !swSyncVideoTime.checked) return;
+        if (!isVideoMode || !swSyncVideoTime?.checked) return;
         const baseStartSec = timeToSeconds(inStartTime.value);
         const totalSec = timeToSeconds(inTotalTime.value) || 5325;
         const elapsedSec = Math.floor(previewVideo.currentTime);
@@ -894,7 +907,7 @@
     });
 
     // 媒体上传
-    document.getElementById('media-uploader').addEventListener('change', (e) => {
+    document.getElementById('media-uploader')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
@@ -905,6 +918,7 @@
             previewVideo.src = URL.createObjectURL(file);
             previewVideo.play();
             showToast('视频加载成功');
+            checkMediaAspect();
         } else if (file.type.startsWith('image/')) {
             isVideoMode = false;
             previewVideo.pause();
@@ -959,38 +973,27 @@
         });
     }
 
-    const selBotRes = document.getElementById('sel-bot-res');
-    const inBotRes = document.getElementById('in-bot-res');
-    if (selBotRes && inBotRes) {
-        selBotRes.addEventListener('change', (e) => {
-            if (e.target.value !== 'custom') {
-                inBotRes.value = e.target.value;
-                document.getElementById('disp-bot-res').textContent = e.target.value;
-            } else {
-                inBotRes.focus();
-                inBotRes.select();
-            }
-        });
-    }
-
     // 抖音 Tabs解析
     const renderDyTabs = (inputId, targetId, isBot) => {
-        document.getElementById(inputId).addEventListener('input', (e) => {
-            const arr = e.target.value.split(/\s+/).filter(Boolean);
-            const container = document.getElementById(targetId);
-            container.innerHTML = '';
-            arr.forEach((text, i) => {
-                if (isBot && (text === '[+]' || text === '+')) {
-                    container.innerHTML += `<div class="dy-add-btn"><svg width="18" height="18" viewBox="0 0 24 24" stroke="#000" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
-                } else {
-                    const span = document.createElement('span');
-                    span.className = isBot ? 'dy-tab-bot' : 'dy-tab-item';
-                    if (i === 0) span.classList.add('active');
-                    span.textContent = text;
-                    container.appendChild(span);
-                }
+        const el = document.getElementById(inputId);
+        if(el) {
+            el.addEventListener('input', (e) => {
+                const arr = e.target.value.split(/\s+/).filter(Boolean);
+                const container = document.getElementById(targetId);
+                container.innerHTML = '';
+                arr.forEach((text, i) => {
+                    if (isBot && (text === '[+]' || text === '+')) {
+                        container.innerHTML += `<div class="dy-add-btn"><svg width="18" height="18" viewBox="0 0 24 24" stroke="#000" stroke-width="2" fill="none"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
+                    } else {
+                        const span = document.createElement('span');
+                        span.className = isBot ? 'dy-tab-bot' : 'dy-tab-item';
+                        if (i === 0) span.classList.add('active');
+                        span.textContent = text;
+                        container.appendChild(span);
+                    }
+                });
             });
-        });
+        }
     };
     renderDyTabs('in-dy-top-tabs', 'disp-dy-top-tabs', false);
     renderDyTabs('in-dy-bot-tabs', 'dy-bot-tabs', true);
@@ -1026,19 +1029,20 @@
     bindSwitch('sw-dy-right', 'dy-right-bar');
     bindSwitch('sw-dy-author', 'wrap-dy-author');
     bindSwitch('sw-dy-music', 'wrap-dy-music');
-    document.getElementById('sw-dy-mask').addEventListener('change', e => {
+    document.getElementById('sw-dy-mask')?.addEventListener('change', e => {
         document.getElementById('dy-mask').style.opacity = e.target.checked ? '1' : '0';
     });
 
     // 波浪线系统
     const canvasWave = document.getElementById('waveform-canvas');
-    const ctxWave = canvasWave.getContext('2d');
+    const ctxWave = canvasWave?.getContext('2d');
     const inWaveCustom = document.getElementById('in-wave-custom');
     const selWavePreset = document.getElementById('sel-wave-preset');
     const inWaveH = document.getElementById('in-wave-h');
 
     const drawWaveform = () => {
-        if(!document.getElementById('sw-waveform').checked) {
+        if(!canvasWave) return;
+        if(!document.getElementById('sw-waveform')?.checked) {
             canvasWave.style.display = 'none';
             return;
         }
@@ -1082,19 +1086,20 @@
         ctxWave.fill();
     };
 
-    selWavePreset.addEventListener('change', (e) => {
-        inWaveCustom.style.display = (e.target.value === 'custom') ? 'block' : 'none';
+    selWavePreset?.addEventListener('change', (e) => {
+        if(inWaveCustom) inWaveCustom.style.display = (e.target.value === 'custom') ? 'block' : 'none';
         drawWaveform();
     });
-    inWaveCustom.addEventListener('input', drawWaveform);
-    inWaveH.addEventListener('input', (e) => {
+    inWaveCustom?.addEventListener('input', drawWaveform);
+    inWaveH?.addEventListener('input', (e) => {
         document.getElementById('txt-wave-h').textContent = e.target.value + 'px';
         drawWaveform();
     });
-    document.getElementById('sw-waveform').addEventListener('change', drawWaveform);
+    document.getElementById('sw-waveform')?.addEventListener('change', drawWaveform);
     window.addEventListener('resize', drawWaveform);
     setTimeout(drawWaveform, 500);
 
+    // 弹幕系统
     let danmakuList = [
         { text: '前方高能預警！', top: '16%', color: '#ffffff', speed: 9 },
         { text: '這身材太頂了吧', top: '32%', color: '#f39c12', speed: 11 },
@@ -1106,6 +1111,7 @@
     const danmakuListUI = document.getElementById('danmaku-list');
 
     const renderDanmaku = () => {
+        if(!danmakuContainer || !danmakuListUI) return;
         danmakuContainer.innerHTML = '';
         danmakuListUI.innerHTML = '';
 
@@ -1150,17 +1156,14 @@
 
     renderDanmaku();
 
-    document.getElementById('in-danmaku-size').addEventListener('input', (e) => {
+    document.getElementById('in-danmaku-size')?.addEventListener('input', (e) => {
         document.documentElement.style.setProperty('--danmaku-size', e.target.value + 'px');
         document.getElementById('txt-danmaku-size').textContent = e.target.value + 'px';
     });
 
-    document.getElementById('btn-parse-batch').addEventListener('click', () => {
+    document.getElementById('btn-parse-batch')?.addEventListener('click', () => {
         const raw = document.getElementById('in-batch-danmaku').value.trim();
-        if (!raw) {
-            showToast('请先在上方输入框粘贴一段文字！', true);
-            return;
-        }
+        if (!raw) { showToast('请先在上方输入框粘贴一段文字！', true); return; }
         const segments = raw.split(/[\n,，;；。]+/).map(s => s.trim()).filter(s => s.length > 0);
         if (segments.length === 0) return;
 
@@ -1172,12 +1175,12 @@
         showToast(`成功识别并导入 ${segments.length} 条弹幕！`);
     });
 
-    document.getElementById('btn-add-danmaku').addEventListener('click', () => {
+    document.getElementById('btn-add-danmaku')?.addEventListener('click', () => {
         danmakuList.push({ text: '新彈幕內容在此', top: `${Math.floor(Math.random() * 60) + 15}%`, color: '#ffffff', speed: Math.floor(Math.random() * 4) + 8 });
         renderDanmaku();
     });
 
-    document.getElementById('btn-random-danmaku').addEventListener('click', () => {
+    document.getElementById('btn-random-danmaku')?.addEventListener('click', () => {
         const presets = [ '前方高能！', '這身材太頂了吧', '已備好衛生紙...', '哇塞完整版太刺激了吧！', '無碼畫質吹爆', '這播放器介面質感拉滿' ];
         danmakuList = presets.map((text, i) => ({
             text, top: `${14 + i * 12}%`, color: ['#fff', '#f39c12', '#2ecc71', '#54a0ff'][i % 4], speed: 8 + (i % 3) * 2
@@ -1186,7 +1189,7 @@
     });
 
     // 截图导出
-    document.getElementById('btn-save-img').addEventListener('click', () => {
+    document.getElementById('btn-save-img')?.addEventListener('click', () => {
         const isMobilePort = renderTarget.classList.contains('mode-mobile-port');
         html2canvas(renderTarget, {
             scale: 2.5, useCORS: true, allowTaint: true, backgroundColor: '#000',
@@ -1215,7 +1218,7 @@
     });
 
     // 视频导出 (Canvas 原生绘制以确保性能和兼容性)
-    document.getElementById('btn-save-vid').addEventListener('click', async () => {
+    document.getElementById('btn-save-vid')?.addEventListener('click', async () => {
         if (!isVideoMode) {
             showToast('提示：请先上传一段带声音的 MP4/WebM 视频！', true);
             return;
@@ -1324,7 +1327,7 @@
                 const vH = previewVideo.videoHeight || height;
                 const mediaAspect = vW / vH;
                 const canvasAspect = width / height;
-                const fitMode = document.getElementById('sel-media-fit').value;
+                const fitMode = document.getElementById('sel-media-fit')?.value || 'cover';
                 const zoom = parseFloat(inMediaScale.value) / 100;
 
                 let renderW, renderH;
@@ -1351,7 +1354,7 @@
                 }
 
                 // 3. 动态波浪线 (仅网页模式)
-                if (!isMobilePort && document.getElementById('sw-waveform')?.checked) {
+                if (!isMobilePort && document.getElementById('sw-waveform')?.checked && canvasWave) {
                     ctx.drawImage(canvasWave, 24, height - 66);
                 }
 
