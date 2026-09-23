@@ -3,387 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laya 播放器 · 暂停截图/短视频双模生成器</title>
-    <!-- 高清截图与视频流依赖 -->
+    <title>Laya 播放器 · 双模截图/视频生成器</title>
+    <!-- 引入截图库依赖 -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <style>
-        :root {
-            --primary: #1877F2;
-            --primary-hover: #166fe5;
-            --bg-dark: #090a0f;
-            --panel-bg: #13161f;
-            --card-bg: #1a1e29;
-            --card-border: #262c3a;
-            --text-main: #f0f2f5;
-            --text-muted: #8b93a4;
-            --danmaku-size: 16px;
-            --media-pos-x: 50%;
-            --media-pos-y: 50%;
-            --media-scale: 1;
-            --bar-height: 4px;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft JhengHei", sans-serif; }
-        body { background: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-        /* 顶部导航 */
-        header {
-            height: 52px; background: var(--panel-bg); border-bottom: 1px solid var(--card-border);
-            display: flex; align-items: center; justify-content: space-between; padding: 0 16px; z-index: 50; flex-shrink: 0;
-        }
-        .brand { display: flex; align-items: center; font-weight: 700; font-size: 14.5px; }
-        .brand-logo { width: 28px; height: 28px; border-radius: 6px; margin-right: 8px; flex-shrink: 0; }
-        .nav-actions { display: flex; align-items: center; }
-        .nav-actions > * { margin-left: 8px; }
-        .btn {
-            display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 6px;
-            font-size: 12px; font-weight: 600; cursor: pointer; border: none; transition: 0.15s; white-space: nowrap;
-        }
-        .btn-lang { background: #2b313e; color: #d0d4dc; border: 1px solid #3d4556; }
-        .btn-upload { background: #27ae60; color: #fff; }
-        .btn-save-img { background: var(--primary); color: #fff; }
-        .btn-save-vid { background: linear-gradient(135deg, #e67e22, #d35400); color: #fff; }
-
-        /* 工作区布局 */
-        main { display: flex; flex: 1; overflow: hidden; }
-        .workspace {
-            flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: #06070a; position: relative; overflow: hidden; padding: 12px;
-        }
-
-        .viewport-tabs {
-            display: flex; background: var(--panel-bg); padding: 3px; border-radius: 8px;
-            border: 1px solid var(--card-border); margin-bottom: 10px; z-index: 5;
-        }
-        .tab-btn {
-            padding: 5px 14px; background: transparent; border: none; color: var(--text-muted);
-            border-radius: 5px; cursor: pointer; font-size: 12px; font-weight: 600; margin: 0 2px;
-        }
-        .tab-btn.active { background: var(--primary); color: #fff; }
-
-        /* 播放器容器核心 */
-        .player-stage { display: flex; align-items: center; justify-content: center; width: 100%; height: calc(100% - 50px); }
-        .player-box {
-            position: relative; overflow: hidden; background: #000;
-            box-shadow: 0 16px 48px rgba(0,0,0,0.85); user-select: none; transition: width 0.25s, height 0.25s;
-        }
-        .mode-pc { width: min(1080px, 92%); aspect-ratio: 16 / 9; border-radius: 6px; }
-        .mode-mobile-land { width: min(1120px, 94%); aspect-ratio: 19.5 / 9; border-radius: 14px; }
-        .mode-mobile-port { height: min(650px, calc(100vh - 110px)); aspect-ratio: 9 / 16; border-radius: 18px; }
-
-        .media-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 1; }
-        .player-bg-media {
-            width: 100%; height: 100%; object-fit: cover;
-            object-position: var(--media-pos-x) var(--media-pos-y);
-            transform: scale(var(--media-scale));
-            transform-origin: var(--media-pos-x) var(--media-pos-y);
-        }
-
-        /* 弹幕层 */
-        .danmaku-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: hidden; display: none; }
-        .danmaku-item {
-            position: absolute; white-space: nowrap; font-weight: 700; font-size: var(--danmaku-size);
-            text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
-            letter-spacing: 0.5px; animation: danmakuRoll linear infinite;
-        }
-        @keyframes danmakuRoll { 0% { transform: translateX(1100px); } 100% { transform: translateX(-120%); } }
-
-        /* 手机竖屏模式下弹幕特调：纯白字体+粗黑边，限制在上半区 */
-        .mode-mobile-port .danmaku-item {
-            color: #ffffff !important;
-            text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0,0,0,0.9) !important;
-        }
-
-        /* ==================== 1. 电脑端 (16:9 / 19.5:9) WEB HUD 样式 (防截图挤压崩溃) ==================== */
-        .player-top {
-            position: absolute; top: 0; left: 0; right: 0; z-index: 6;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 75%, rgba(0,0,0,0) 100%);
-            padding: 12px 16px 20px 16px;
-        }
-        .top-first-row { display: flex; justify-content: space-between; align-items: center; }
-        .top-left-group { display: flex; align-items: center; flex-direction: row !important; white-space: nowrap; }
-        .top-left-group > * { margin-right: 8px; flex-shrink: 0; }
-        .back-icon { color: #fff; display: flex; align-items: center; cursor: pointer; }
-
-        .laya-brand-badge {
-            background: rgba(13, 91, 225, 0.5); border: 1px solid rgba(61, 136, 253, 0.7);
-            padding: 2.5px 8px 2.5px 5px; border-radius: 20px; display: inline-flex; align-items: center;
-        }
-        .mini-laya-logo { width: 16px; height: 16px; border-radius: 4px; margin-right: 5px; flex-shrink: 0; }
-        .laya-badge-text { font-size: 11px; font-weight: 700; color: #ffffff !important; line-height: 16px; }
-
-        .free-channel-pill {
-            background: linear-gradient(90deg, rgba(230, 126, 34, 0.45), rgba(243, 156, 18, 0.3));
-            border: 1px solid rgba(243, 156, 18, 0.7); padding: 2.5px 8px; border-radius: 14px;
-            font-size: 11px; font-weight: 700; color: #f39c12 !important; display: inline-flex; align-items: center;
-        }
-        .free-channel-pill span:first-child { margin-right: 4px; }
-
-        .viewer-pill {
-            background: rgba(18, 20, 26, 0.78); border: 1px solid rgba(46, 204, 113, 0.45);
-            padding: 2.5px 8px; border-radius: 12px; font-size: 11px; color: #e1f5fe !important;
-            display: inline-flex; align-items: center;
-        }
-        .pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #2ecc71; box-shadow: 0 0 6px #2ecc71; margin-right: 5px; }
-
-        .video-title { font-size: 13px; font-weight: 600; color: #ffffff !important; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-        .vip-tag {
-            background: #d48806; color: #ffffff !important; font-size: 9px; font-weight: 800;
-            padding: 2px 5px; border-radius: 3px; line-height: 13px;
-        }
-
-        .top-right-group { display: flex; align-items: center; flex-direction: row !important; white-space: nowrap; font-size: 11px; }
-        .top-right-group > * { margin-left: 12px; display: inline-flex; align-items: center; }
-        .status-dot-item span:first-child { margin-right: 5px; }
-
-        .banner-container { margin-top: 7px; display: flex; }
-        .notice-banner {
-            background: rgba(18, 20, 26, 0.88); border: 1px solid rgba(243, 156, 18, 0.5);
-            border-radius: 6px; padding: 3.5px 9px; display: inline-flex; align-items: center;
-        }
-        .notice-banner > * { margin-right: 6px; }
-        .banner-text { font-size: 11px; font-weight: 500; color: #f1f2f6 !important; white-space: nowrap; }
-        .banner-text strong { color: #f39c12 !important; font-weight: 700; }
-        .banner-badge {
-            background: rgba(243, 156, 18, 0.2); color: #f39c12 !important; border: 1px solid rgba(243, 156, 18, 0.4);
-            font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
-        }
-
-        /* 居中播放/暂停按钮 */
-        .center-pause-wrap {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 6; display: flex; flex-direction: column; align-items: center; cursor: pointer;
-        }
-        .play-circle {
-            width: 52px; height: 52px; border-radius: 50%; background: rgba(15, 18, 24, 0.65);
-            border: 1.5px solid rgba(255, 255, 255, 0.4); display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
-        }
-        .play-triangle { width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 14px solid #fff; margin-left: 3px; }
-        .pause-bars { display: none; width: 14px; height: 16px; justify-content: space-between; }
-        .pause-bars span { width: 4.5px; height: 100%; background: #fff; border-radius: 1px; }
-        .pause-pill { margin-top: 7px; background: rgba(15, 18, 24, 0.8); border: 1px solid rgba(255,255,255,0.25); padding: 3px 10px; border-radius: 12px; font-size: 11px; color: #e5e9f0; }
-
-        /* 高能波浪热度曲线图层 */
-        .waveform-layer {
-            position: absolute; left: 16px; right: 16px; bottom: 42px; height: 32px;
-            pointer-events: none; z-index: 5; display: block;
-        }
-        .waveform-canvas { width: 100%; height: 100%; }
-
-        /* 底部控制栏 */
-        .player-bottom {
-            position: absolute; bottom: 0; left: 0; right: 0; z-index: 6;
-            background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%);
-            padding: 14px 16px 8px 16px; display: flex; flex-direction: column;
-        }
-        .progress-bar-wrap { position: relative; width: 100%; height: var(--bar-height); background: rgba(255,255,255,0.2); border-radius: 3px; cursor: pointer; margin-bottom: 8px; }
-        .progress-bar-buffer { position: absolute; left: 0; top: 0; height: 100%; background: rgba(255,255,255,0.4); border-radius: 3px; width: 68%; }
-        .progress-bar-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--primary); border-radius: 3px; width: 42%; }
-        .progress-scrubber { position: absolute; right: -5px; top: -3px; width: 10px; height: 10px; background: #fff; border-radius: 50%; box-shadow: 0 0 6px rgba(0,0,0,0.8); }
-
-        .bottom-ctrl-row { display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #d0d4dc; }
-        .ctrl-left { display: flex; align-items: center; flex-direction: row !important; white-space: nowrap; }
-        .ctrl-left > * { margin-right: 12px; display: inline-flex; align-items: center; }
-        .time-label { font-family: monospace; font-size: 11px; letter-spacing: 0.5px; }
-
-        /* 完美兼容 html2canvas 的伪装弹幕输入栏 */
-        .fake-dm-bar {
-            background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.18);
-            border-radius: 16px; display: inline-flex; align-items: center; padding: 2px 3px 2px 10px; margin-right: 12px;
-        }
-        .fake-dm-txt { font-size: 11px; color: rgba(255,255,255,0.85); margin-right: 8px; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .fake-dm-btn { background: var(--primary); color: #fff; border-radius: 12px; padding: 2px 8px; font-weight: 700; font-size: 10.5px; }
-
-        .ctrl-right { display: flex; align-items: center; flex-direction: row !important; white-space: nowrap; }
-        .ctrl-right > * { margin-left: 12px; display: inline-flex; align-items: center; }
-        .res-tag { background: #1877F2; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; }
-
-        /* ==================== 2. 手机竖屏 (9:16) 抖音/短视频模式专属样式 ==================== */
-        .douyin-hud { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        .mode-mobile-port .douyin-hud { display: block; }
-        .mode-mobile-port .player-top,
-        .mode-mobile-port .player-bottom,
-        .mode-mobile-port .center-pause-wrap,
-        .mode-mobile-port .waveform-layer { display: none !important; }
-
-        /* 抖音顶部导航栏 */
-        .dy-top-nav {
-            position: absolute; top: 12px; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center;
-            padding: 0 16px; font-size: 13.5px; font-weight: 700; color: rgba(255,255,255,0.7); text-shadow: 0 1px 3px rgba(0,0,0,0.8);
-        }
-        .dy-nav-tabs { display: flex; align-items: center; }
-        .dy-nav-tabs > span { margin: 0 8px; cursor: pointer; position: relative; }
-        .dy-nav-tabs > span.active { color: #ffffff; font-size: 14.5px; }
-        .dy-nav-tabs > span.active::after {
-            content: ""; position: absolute; bottom: -4px; left: 15%; width: 70%; height: 2.5px; background: #fff; border-radius: 2px;
-        }
-
-        /* 抖音右侧互动操作栏 */
-        .dy-right-bar {
-            position: absolute; right: 10px; bottom: 100px; display: flex; flex-direction: column; align-items: center;
-        }
-        .dy-action-item { display: flex; flex-direction: column; align-items: center; margin-bottom: 14px; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-        .dy-action-icon {
-            width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.25); color: #fff; margin-bottom: 2px;
-        }
-        .dy-action-txt { font-size: 11px; font-weight: 600; color: #fff; }
-
-        .dy-avatar-wrap { position: relative; margin-bottom: 16px; }
-        .dy-avatar-img { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid #fff; object-fit: cover; background: #0D5BE1; }
-        .dy-follow-plus {
-            position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); width: 17px; height: 17px;
-            border-radius: 50%; background: #fe2c55; color: #fff; display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 900; line-height: 1;
-        }
-
-        /* 抖音左下角信息流 */
-        .dy-left-info {
-            position: absolute; left: 14px; right: 75px; bottom: 84px; display: flex; flex-direction: column;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.9);
-        }
-        .dy-author-name { font-size: 15px; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
-        .dy-video-desc { font-size: 13px; color: #f1f2f6; line-height: 1.4; margin-bottom: 5px; }
-        .dy-tags-row { font-size: 12.5px; font-weight: 600; color: #fff; margin-bottom: 6px; }
-
-        /* 活动胶囊 */
-        .dy-campaign-pill {
-            background: rgba(0, 0, 0, 0.45); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px;
-            padding: 3px 8px; display: inline-flex; align-items: center; font-size: 11px; color: #e1f5fe; margin-bottom: 6px; width: fit-content;
-        }
-        .dy-campaign-badge { background: #2ecc71; color: #fff; font-size: 9.5px; padding: 1px 4px; border-radius: 3px; font-weight: 700; margin-right: 5px; }
-
-        /* 金色引流榜单 */
-        .dy-gold-banner {
-            background: linear-gradient(90deg, rgba(230, 126, 34, 0.85), rgba(243, 156, 18, 0.8));
-            border-radius: 6px; padding: 4px 8px; display: flex; align-items: center; justify-content: space-between;
-            font-size: 11px; font-weight: 700; color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.5); width: 100%;
-        }
-
-        /* 抖音横屏视频自适应：全屏观看居中胶囊 */
-        .dy-fullscreen-pill {
-            position: absolute; top: 58%; left: 50%; transform: translate(-50%, -50%); z-index: 12;
-            background: rgba(18, 20, 26, 0.75); border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 16px;
-            padding: 5px 12px; display: none; align-items: center; font-size: 12px; font-weight: 600; color: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.6); pointer-events: auto; cursor: pointer;
-        }
-
-        /* 抖音底部梦幻紫黑渐变蒙版与 Tab 栏 (参考图 12 / 16) */
-        .dy-bottom-wrap {
-            position: absolute; bottom: 0; left: 0; right: 0; height: 80px; z-index: 11;
-            background: linear-gradient(to top, rgba(35, 10, 48, 0.95) 0%, rgba(18, 10, 28, 0.7) 65%, transparent 100%);
-            display: flex; flex-direction: column; justify-content: flex-end; padding: 0 16px 8px 16px;
-        }
-        .dy-bottom-tabs { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.7); }
-        .dy-tab-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-        .dy-tab-item.active { color: #fff; }
-        
-        /* 瞬间 (发光笑脸星标) */
-        .dy-star-moment {
-            width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #ff7675, #fd79a8);
-            border: 1.5px solid #ffeaa7; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 10px rgba(253, 121, 168, 0.8); margin-bottom: 2px;
-        }
-
-        .dy-home-bar { width: 110px; height: 3.5px; background: rgba(255,255,255,0.8); border-radius: 2px; margin: 8px auto 2px auto; }
-
-        /* ==================== 3. 右侧高级 Studio 管理后台 ==================== */
-        .sidebar {
-            width: 370px; background: var(--panel-bg); border-left: 1px solid var(--card-border);
-            padding: 14px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; flex-shrink: 0;
-        }
-        .sidebar::-webkit-scrollbar { width: 6px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #262c3a; border-radius: 3px; }
-
-        .control-tabs { display: flex; background: #0c0e14; border-radius: 6px; padding: 3px; border: 1px solid #232836; }
-        .c-tab-btn { flex: 1; padding: 6px; background: transparent; border: none; color: var(--text-muted); font-size: 12px; font-weight: 700; border-radius: 4px; cursor: pointer; }
-        .c-tab-btn.active { background: #1c2230; color: #fff; }
-
-        .panel-card {
-            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px;
-            padding: 10px 12px; display: flex; flex-direction: column; gap: 9px;
-        }
-        .card-header {
-            display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.06);
-            padding-bottom: 7px; font-size: 12px; font-weight: 700; color: #fff;
-        }
-        .badge-tip { background: rgba(24, 119, 242, 0.2); color: #5dade2; font-size: 10px; padding: 1.5px 5px; border-radius: 3px; }
-
-        .switch-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
-        .switch-tile {
-            background: #11131a; border: 1px solid #232836; border-radius: 6px;
-            padding: 6px 8px; display: flex; align-items: center; justify-content: space-between; font-size: 11px;
-            color: #d1d5db;
-        }
-
-        .ios-toggle { position: relative; display: inline-block; width: 32px; height: 17px; flex-shrink: 0; }
-        .ios-toggle input { opacity: 0; width: 0; height: 0; }
-        .slider-round {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #374151; transition: .2s; border-radius: 20px;
-        }
-        .slider-round:before {
-            position: absolute; content: ""; height: 13px; width: 13px; left: 2px; bottom: 2px;
-            background-color: white; transition: .2s; border-radius: 50%;
-        }
-        input:checked + .slider-round { background-color: var(--primary); }
-        input:checked + .slider-round:before { transform: translateX(15px); }
-
-        .form-row { display: flex; flex-direction: column; gap: 4px; }
-        .form-row label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
-        .form-row input[type="text"], .form-row select, .form-row textarea {
-            background: #101218; border: 1px solid #242938; color: #fff;
-            padding: 6px 8px; border-radius: 5px; font-size: 11.5px; outline: none;
-        }
-        .range-box { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); }
-        .range-value { color: #5dade2; font-family: monospace; font-weight: 700; }
-        input[type="range"] { accent-color: var(--primary); width: 100%; height: 4px; }
-
-        /* Toast 浮层提示 */
-        #toast-container { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); z-index: 9999; pointer-events: none; }
-        .toast { background: rgba(0,0,0,0.85); color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 12.5px; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.15); opacity: 0; transition: 0.25s; transform: translateY(-8px); }
-        .toast.show { opacity: 1; transform: translateY(0); }
-    </style>
+    <!-- 引入独立样式表 -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
+<!-- 浮动通知容器 -->
 <div id="toast-container"></div>
 
+<!-- 顶部导航栏 -->
 <header>
     <div class="brand">
-        <!-- 还原 Laya 官方图标 (固定尺寸) -->
         <svg class="brand-logo" viewBox="0 0 100 100">
             <rect width="100" height="100" rx="22" fill="#0D5BE1"/>
             <circle cx="50" cy="50" r="32" fill="#2172F5"/>
             <circle cx="50" cy="50" r="20" fill="#3D88FD"/>
             <text x="50" y="58" font-size="24" font-weight="900" font-style="italic" fill="#fff" text-anchor="middle" stroke="#000" stroke-width="2.5">Laya</text>
         </svg>
-        <span id="txt-app-title">Laya 播放器 · 双模生成器</span>
+        <span id="txt-app-title">Laya 播放器 · 雙模生成引擎</span>
     </div>
     <div class="nav-actions">
-        <!-- 繁简切换总开关 -->
         <button class="btn btn-lang" id="btn-toggle-lang">繁 / 簡 轉換</button>
         <input type="file" id="media-uploader" accept="image/*,video/mp4,video/webm" style="display: none;">
         <button class="btn btn-upload" onclick="document.getElementById('media-uploader').click()">上傳截圖/視頻</button>
         <button class="btn btn-save-img" id="btn-save-img">保存高清圖片</button>
         
-        <!-- 录制时长选择 (含自定义秒数) -->
-        <select id="sel-record-sec" style="background:#1a1e29;color:#fff;border:1px solid #3d4556;border-radius:5px;padding:5px 6px;font-size:11.5px;outline:none;">
-            <option value="5">錄製 5 秒</option>
-            <option value="10">錄製 10 秒</option>
-            <option value="15">錄製 15 秒</option>
-            <option value="custom">自定義秒數...</option>
-        </select>
-        <input type="number" id="in-custom-sec" value="8" min="1" max="60" style="display:none;width:50px;background:#101218;color:#fff;border:1px solid #3d4556;border-radius:4px;padding:4px;font-size:11px;" title="自定義錄製秒數">
-
+        <div class="record-group">
+            <select id="sel-record-sec">
+                <option value="5">錄製 5 秒</option>
+                <option value="10">錄製 10 秒</option>
+                <option value="15">錄製 15 秒</option>
+                <option value="custom">自定義秒數...</option>
+            </select>
+            <input type="number" id="in-custom-sec" value="8" min="1" max="120" style="display: none;" title="輸入自定義秒數">
+        </div>
         <button class="btn btn-save-vid" id="btn-save-vid">合成下載視頻 (帶原聲)</button>
     </div>
 </header>
 
+<!-- 主工作台结构 -->
 <main>
+    <!-- 中间预览工作区 -->
     <div class="workspace" id="left-workspace">
-        <!-- 视口切换器：完整支持三档比例切换 -->
+        <!-- 画幅切换 Tab -->
         <div class="viewport-tabs">
             <button class="tab-btn active" data-mode="mode-pc">電腦網頁端 (16:9)</button>
             <button class="tab-btn" data-mode="mode-mobile-land">手機橫屏 (19.5:9)</button>
@@ -392,17 +57,17 @@
 
         <div class="player-stage">
             <div class="player-box mode-pc" id="render-target">
-                <!-- 背景媒体容器 -->
+                <!-- 媒体背景层 -->
                 <div class="media-container">
                     <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg-media" id="preview-img">
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 动态跑马灯弹幕图层 (默认隐藏) -->
+                <!-- 动态跑马灯弹幕层 -->
                 <div class="danmaku-layer" id="danmaku-container"></div>
 
-                <!-- ================= 模式 A: 电脑网页端 & 手机横屏 HUD ================= -->
-                <div class="player-top">
+                <!-- ================= 模式 1: 电脑网页端 & 手机横屏 UI ================= -->
+                <div class="player-top" id="web-player-top">
                     <div class="top-first-row">
                         <div class="top-left-group">
                             <div class="back-icon" id="wrap-back-btn">
@@ -428,12 +93,11 @@
 
                         <div class="top-right-group" id="wrap-top-right">
                             <div class="status-dot-item">
-                                <span class="pulse-dot"></span><span style="color:#2ecc71;">原畫質連線</span>
+                                <span class="pulse-dot"></span><span>原畫質連線</span>
                             </div>
-                            <span style="color:#d0d4dc;">音軌</span>
-                            <!-- 精致现代化调节推子设置图标 (告别难看齿轮) -->
-                            <div style="display:flex;align-items:center;color:#d0d4dc;">
-                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:4px;"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                            <span>音軌</span>
+                            <div class="settings-entry">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
                                 <span>設置</span>
                             </div>
                         </div>
@@ -441,7 +105,7 @@
 
                     <div class="banner-container" id="wrap-banner">
                         <div class="notice-banner">
-                            <span style="font-size:12px;line-height:1;">🎁</span>
+                            <span class="banner-gift-icon">🎁</span>
                             <div class="banner-text">
                                 <strong>【免費通道】限時特權：</strong><span id="disp-banner-body">已解鎖完整無碼未刪減版，點擊任意處播放</span>
                             </div>
@@ -450,7 +114,7 @@
                     </div>
                 </div>
 
-                <!-- 居中暂停/播放按钮组件 -->
+                <!-- 居中播放/暂停操作钮 -->
                 <div class="center-pause-wrap" id="wrap-center-all">
                     <div class="play-circle" id="btn-toggle-playback">
                         <div class="play-triangle" id="icon-center-play"></div>
@@ -459,7 +123,7 @@
                     <div class="pause-pill" id="disp-center-pill">點擊繼續播放</div>
                 </div>
 
-                <!-- 高能波浪热度曲线图层 (位于进度条上方) -->
+                <!-- 高能波浪热度曲线层 -->
                 <div class="waveform-layer" id="wrap-waveform">
                     <canvas class="waveform-canvas" id="waveform-canvas"></canvas>
                 </div>
@@ -474,17 +138,16 @@
                     </div>
                     <div class="bottom-ctrl-row">
                         <div class="ctrl-left">
-                            <!-- 播放状态图标：根据视频状态自动显示 || 或 ▶ -->
-                            <div id="btn-bot-play-state" style="cursor: pointer; display: flex; align-items: center;">
+                            <div id="btn-bot-play-state">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" id="icon-bot-play"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" id="icon-bot-pause" style="display: none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
                             </div>
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="#fff" stroke-width="2"/></svg>
                             <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
                             
-                            <!-- 底部专属 [彈] 开关与伪装弹幕输入框 (骚话预设) -->
-                            <div id="wrap-bot-dm-group" style="display: inline-flex; align-items: center;">
-                                <span style="font-weight:900;border:1px solid #fff;border-radius:4px;padding:0 3px;font-size:10px;margin-right:8px;cursor:pointer;" id="btn-quick-dm-toggle">[ 彈 ]</span>
+                            <!-- 底部弹幕快捷开关与伪装输入框 -->
+                            <div id="wrap-bot-dm-group">
+                                <span class="badge-dm-btn" id="btn-quick-dm-toggle">[ 彈 ]</span>
                                 <div class="fake-dm-bar">
                                     <span class="fake-dm-txt" id="disp-dm-placeholder">這身材太頂了吧...</span>
                                     <span class="fake-dm-btn">發送</span>
@@ -495,15 +158,14 @@
                             <span id="wrap-bot-danmaku-count"><span id="disp-bot-danmaku-count">● 彈幕 1.8W</span></span>
                             <span>倍速 1.0X</span>
                             <span id="wrap-bot-res"><span class="res-tag" id="disp-bot-res">原畫 1080P 60幀 ▾</span></span>
-                            <!-- 精致现代全屏图标 -->
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d0d4dc" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                         </div>
                     </div>
                 </div>
 
-                <!-- ================= 模式 B: 手机竖屏 (9:16) 抖音/短视频模式 HUD ================= -->
+                <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音/短视频模式 HUD ================= -->
                 <div class="douyin-hud" id="douyin-hud">
-                    <!-- 顶部精选/热点等 Tab -->
+                    <!-- 顶部精选/热点栏 -->
                     <div class="dy-top-nav" id="dy-wrap-top-nav">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                         <div class="dy-nav-tabs">
@@ -516,21 +178,20 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </div>
 
-                    <!-- 横屏素材自适应：全屏观看悬浮窗 -->
+                    <!-- 横屏素材居中全屏观看按钮 -->
                     <div class="dy-fullscreen-pill" id="dy-fullscreen-pill">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" style="margin-right:5px;"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                         <span>全屏觀看</span>
                     </div>
 
-                    <!-- 右侧互动列表 -->
+                    <!-- 右侧互动操作栏 -->
                     <div class="dy-right-bar" id="dy-wrap-right-bar">
-                        <!-- 头像 (默认采用立体 Laya 官方 Logo) -->
+                        <!-- 头像 (默认立体 Logo，支持更换) -->
                         <div class="dy-avatar-wrap">
                             <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%230D5BE1'/><circle cx='50' cy='50' r='36' fill='%232172F5'/><circle cx='50' cy='50' r='22' fill='%233D88FD'/><text x='50' y='60' font-size='28' font-weight='900' font-style='italic' fill='%23fff' text-anchor='middle'>Laya</text></svg>" class="dy-avatar-img" id="dy-avatar-img">
                             <div class="dy-follow-plus" id="dy-btn-follow">+</div>
                         </div>
 
-                        <!-- 点赞 -->
                         <div class="dy-action-item">
                             <div class="dy-action-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="#fe2c55"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
@@ -538,7 +199,6 @@
                             <span class="dy-action-txt" id="dy-val-likes">3.3萬</span>
                         </div>
 
-                        <!-- 评论 -->
                         <div class="dy-action-item">
                             <div class="dy-action-icon">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
@@ -546,7 +206,6 @@
                             <span class="dy-action-txt" id="dy-val-comments">1098</span>
                         </div>
 
-                        <!-- 收藏 -->
                         <div class="dy-action-item">
                             <div class="dy-action-icon">
                                 <svg width="24" height="24" viewBox="0 0 24 24" fill="#f1c40f"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
@@ -554,7 +213,6 @@
                             <span class="dy-action-txt" id="dy-val-stars">1.1萬</span>
                         </div>
 
-                        <!-- 分享 -->
                         <div class="dy-action-item">
                             <div class="dy-action-icon">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
@@ -562,10 +220,10 @@
                             <span class="dy-action-txt" id="dy-val-shares">2766</span>
                         </div>
 
-                        <!-- 动态旋转碟片 -->
-                        <div class="dy-action-item" style="margin-bottom:0;">
-                            <div style="width:36px;height:36px;border-radius:50%;background:#111;border:6px solid #222;display:flex;align-items:center;justify-content:center;box-shadow:0 0 6px #000;">
-                                <div style="width:10px;height:10px;border-radius:50%;background:#0D5BE1;"></div>
+                        <!-- 旋转黑胶唱片 -->
+                        <div class="dy-action-item" style="margin-bottom: 0;">
+                            <div class="dy-vinyl-record">
+                                <div class="dy-vinyl-center"></div>
                             </div>
                         </div>
                     </div>
@@ -582,31 +240,30 @@
                             <span id="dy-disp-campaign">來Laya 語音廳，親自演給你看 &gt;</span>
                         </div>
 
-                        <!-- 金色视频引流榜单 -->
+                        <!-- 金色引流榜单 -->
                         <div class="dy-gold-banner" id="dy-wrap-gold">
-                            <div style="display:flex;align-items:center;">
-                                <span style="margin-right:4px;">🔥</span>
+                            <div class="dy-gold-left">
+                                <span class="dy-fire-icon">🔥</span>
                                 <span id="dy-disp-gold-title">視頻榜單：最讓你心動的女優評選大賽</span>
                             </div>
-                            <span style="opacity:0.9;" id="dy-disp-gold-views">45.1萬人在看 &gt;</span>
+                            <span id="dy-disp-gold-views">45.1萬人在看 &gt;</span>
                         </div>
                     </div>
 
-                    <!-- 底部紫色渐变蒙版与 Tab 栏 (参考图 12 / 16) -->
+                    <!-- 底部紫黑渐变蒙版与 Tab 栏 -->
                     <div class="dy-bottom-wrap" id="dy-wrap-bottom-bar">
                         <div class="dy-bottom-tabs">
                             <div class="dy-tab-item active">首頁</div>
                             <div class="dy-tab-item">
-                                <!-- 瞬间发光星标 -->
                                 <div class="dy-star-moment">
-                                    <span style="font-size:16px;line-height:1;">😊</span>
+                                    <span style="font-size: 16px; line-height: 1;">😊</span>
                                 </div>
-                                <span style="color:#ffeaa7;">瞬間</span>
+                                <span style="color: #ffeaa7;">瞬間</span>
                             </div>
                             <div class="dy-tab-item">派對</div>
-                            <div class="dy-tab-item" style="position:relative;">
+                            <div class="dy-tab-item" style="position: relative;">
                                 <span>消息</span>
-                                <span style="position:absolute;top:-4px;right:-7px;width:7px;height:7px;border-radius:50%;background:#fe2c55;"></span>
+                                <span class="dy-msg-badge"></span>
                             </div>
                             <div class="dy-tab-item">我的</div>
                         </div>
@@ -617,30 +274,31 @@
         </div>
     </div>
 
-    <!-- 右侧高级 Studio 管理后台 (双模式独立配置面板) -->
+    <!-- 右侧高级控制面板 -->
     <div class="sidebar" id="right-sidebar">
-        <!-- 模式切换 Tabs -->
+        <!-- 面板顶层选项卡 -->
         <div class="control-tabs">
             <button class="c-tab-btn active" id="tab-btn-web">💻 Web 播放器配置</button>
             <button class="c-tab-btn" id="tab-btn-dy">📱 抖音短視頻配置</button>
+            <button class="c-tab-btn" id="tab-btn-dm">💬 高級彈幕軌道</button>
         </div>
 
-        <!-- ================= 💻 面板 A: Web 播放器设置项 ================= -->
-        <div id="panel-web-settings" style="display: flex; flex-direction: column; gap: 10px;">
-            <!-- 时间与进度 -->
+        <!-- ================= 选项卡 1: Web 版配置 ================= -->
+        <div id="panel-web-settings" class="tab-panel active">
+            <!-- 播放进度与时间 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>⏱️ 起始時間與進度控制</span>
                     <span class="badge-tip">真實累加</span>
                 </div>
-                <div class="switch-tile" style="background: rgba(24, 119, 242, 0.12); border-color: rgba(24, 119, 242, 0.3);">
-                    <span style="font-weight: 600; color: #fff;">播放時起始秒數遞增走動</span>
+                <div class="switch-tile highlight-tile">
+                    <span>播放時起始秒數遞增走動</span>
                     <label class="ios-toggle">
                         <input type="checkbox" id="sw-sync-video-time" checked>
                         <span class="slider-round"></span>
                     </label>
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <div class="form-grid-2">
                     <div class="form-row">
                         <label>起始時間點</label>
                         <input type="text" id="in-start-time" value="00:37:16">
@@ -666,7 +324,7 @@
                 </div>
             </div>
 
-            <!-- 高能波浪热度曲线配置 -->
+            <!-- 高能波浪热度线 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>🌊 高能熱度波浪曲線</span>
@@ -685,7 +343,7 @@
                     </select>
                 </div>
                 <div class="form-row" id="wrap-custom-wave" style="display: none;">
-                    <label>自定義波峰點 (0~100，用逗號隔開)</label>
+                    <label>自定義波峰高度 (0~100，用逗號隔開)</label>
                     <input type="text" id="in-custom-wave" value="10, 30, 85, 40, 95, 60, 20">
                 </div>
                 <div class="form-row">
@@ -777,14 +435,14 @@
                 </div>
             </div>
 
-            <!-- 文案与骚话修改区 -->
+            <!-- 核心文案与骚话修改 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>📝 視頻文案與騷話預設</span>
                     <span class="badge-tip">支持自定義</span>
                 </div>
                 <div class="form-row">
-                    <label>主標題文案</label>
+                    <label>主標題文案 (Laya暗號...)</label>
                     <input type="text" id="in-title" value="Laya暗號：1896">
                 </div>
                 <div class="form-row">
@@ -806,9 +464,8 @@
             </div>
         </div>
 
-        <!-- ================= 📱 面板 B: 抖音/短视频设置项 ================= -->
-        <div id="panel-dy-settings" style="display: none; flex-direction: column; gap: 10px;">
-            <!-- 抖音开关 -->
+        <!-- ================= 选项卡 2: 抖音版配置 ================= -->
+        <div id="panel-dy-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
                     <span>🎛️ 短視頻組件開關</span>
@@ -853,7 +510,6 @@
                 </div>
             </div>
 
-            <!-- 抖音互动数据与文案编辑 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>📊 互動數據與作者資料</span>
@@ -862,7 +518,7 @@
                     <label>自定義頭像上傳 (支持女性/自定義圖)</label>
                     <input type="file" id="dy-avatar-uploader" accept="image/*">
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                <div class="form-grid-2">
                     <div class="form-row">
                         <label>點贊數</label>
                         <input type="text" id="in-dy-likes" value="3.3萬">
@@ -886,7 +542,7 @@
                 </div>
                 <div class="form-row">
                     <label>作品文案說明</label>
-                    <textarea id="in-dy-desc" style="background:#101218;border:1px solid #242938;color:#fff;padding:6px;border-radius:5px;font-size:11.5px;min-height:48px;">Laya 丨 1896 已解鎖完整無碼未刪減版，點擊任意處觀看</textarea>
+                    <textarea id="in-dy-desc">Laya 丨 1896 已解鎖完整無碼未刪減版，點擊任意處觀看</textarea>
                 </div>
                 <div class="form-row">
                     <label>熱門標籤 (Tags)</label>
@@ -894,7 +550,6 @@
                 </div>
             </div>
 
-            <!-- 活动引流胶囊与金色榜单 -->
             <div class="panel-card">
                 <div class="card-header">
                     <span>🔥 引流聲明與金色榜單</span>
@@ -914,7 +569,31 @@
             </div>
         </div>
 
-        <!-- ================= 通用构图与弹幕工坊 ================= -->
+        <!-- ================= 选项卡 3: 高级弹幕工作台 ================= -->
+        <div id="panel-dm-settings" class="tab-panel">
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>💬 彈幕軌道管理矩陣</span>
+                    <button class="btn btn-sm" id="btn-add-danmaku">+ 新增軌道</button>
+                </div>
+                <div class="form-row">
+                    <div class="range-box">
+                        <label>全局彈幕字號</label>
+                        <span class="range-value" id="txt-danmaku-size">16px</span>
+                    </div>
+                    <input type="range" id="in-danmaku-size" min="12" max="32" value="16">
+                </div>
+                <div class="form-row">
+                    <label>批量文本識別導入 (自動分行切分)</label>
+                    <textarea id="in-batch-danmaku" placeholder="輸入多條文本，自動以換行或標點分段"></textarea>
+                    <button class="btn btn-sm btn-upload" id="btn-parse-batch" style="margin-top: 4px;">🚀 識別導入</button>
+                </div>
+                <!-- 动态弹幕轨道列表 -->
+                <div id="danmaku-track-list"></div>
+            </div>
+        </div>
+
+        <!-- 通用画面防切脸构图卡片 -->
         <div class="panel-card">
             <div class="card-header">
                 <span>📐 畫面構圖 (上下位移防切臉)</span>
@@ -928,579 +607,22 @@
             </div>
             <div class="form-row">
                 <div class="range-box">
-                    <label>畫面縮放 (Zoom)</label>
+                    <label>畫面縮放倍率 (Zoom)</label>
                     <span class="range-value" id="txt-media-scale">100%</span>
                 </div>
-                <input type="range" id="in-media-scale" min="80" max="200" value="100">
+                <input type="range" id="in-media-scale" min="80" max="220" value="100">
             </div>
-            <div style="display:flex;gap:6px;">
-                <button class="btn" style="flex:1;background:#232733;color:#fff;padding:5px;" id="btn-reset-pos">↺ 居中默認</button>
-                <button class="btn" style="flex:1;background:#232733;color:#fff;padding:5px;" id="btn-face-preset">👤 快速露臉預設</button>
+            <div class="preset-btn-group">
+                <button class="btn btn-secondary" id="btn-reset-pos">↺ 居中默認</button>
+                <button class="btn btn-secondary" id="btn-face-preset">👤 快速露臉預設</button>
             </div>
         </div>
     </div>
 </main>
 
-<script>
-    // 基础 Toast 提示
-    const showToast = (msg) => {
-        const c = document.getElementById('toast-container');
-        const t = document.createElement('div');
-        t.className = 'toast';
-        t.textContent = msg;
-        c.appendChild(t);
-        requestAnimationFrame(() => t.classList.add('show'));
-        setTimeout(() => {
-            t.classList.remove('show');
-            setTimeout(() => t.remove(), 250);
-        }, 2800);
-    };
-
-    // 时间转换与格式化
-    const timeToSec = (str) => {
-        if (!str) return 0;
-        const p = str.trim().split(':').map(Number);
-        if (p.length === 3) return (p[0]||0)*3600 + (p[1]||0)*60 + (p[2]||0);
-        if (p.length === 2) return (p[0]||0)*60 + (p[1]||0);
-        return parseInt(str, 10) || 0;
-    };
-    const secToTime = (s) => {
-        if (isNaN(s) || s < 0) s = 0;
-        const h = Math.floor(s / 3600);
-        const m = Math.floor((s % 3600) / 60);
-        const sc = Math.floor(s % 60);
-        return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
-    };
-
-    // 1. 视口画幅切换
-    const renderTarget = document.getElementById('render-target');
-    const dyFullscreenPill = document.getElementById('dy-fullscreen-pill');
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderTarget.className = `player-box ${btn.dataset.mode}`;
-            
-            // 如果切到手机竖屏，自动联动右侧面板切换到抖音设置页
-            if (btn.dataset.mode === 'mode-mobile-port') {
-                switchRightTab('dy');
-            } else {
-                switchRightTab('web');
-            }
-            checkMediaAspect();
-            drawWaveform();
-        });
-    });
-
-    // 2. 右侧配置面板选项卡切换
-    const tabBtnWeb = document.getElementById('tab-btn-web');
-    const tabBtnDy = document.getElementById('tab-btn-dy');
-    const panelWeb = document.getElementById('panel-web-settings');
-    const panelDy = document.getElementById('panel-dy-settings');
-
-    function switchRightTab(mode) {
-        if (mode === 'web') {
-            tabBtnWeb.classList.add('active');
-            tabBtnDy.classList.remove('active');
-            panelWeb.style.display = 'flex';
-            panelDy.style.display = 'none';
-        } else {
-            tabBtnDy.classList.add('active');
-            tabBtnWeb.classList.remove('active');
-            panelDy.style.display = 'flex';
-            panelWeb.style.display = 'none';
-        }
-    }
-    tabBtnWeb.addEventListener('click', () => switchRightTab('web'));
-    tabBtnDy.addEventListener('click', () => switchRightTab('dy'));
-
-    // 3. 画面构图微调
-    const inPosY = document.getElementById('in-pos-y');
-    const inMediaScale = document.getElementById('in-media-scale');
-    const updateTransform = () => {
-        document.documentElement.style.setProperty('--media-pos-y', inPosY.value + '%');
-        document.documentElement.style.setProperty('--media-scale', inMediaScale.value / 100);
-        document.getElementById('txt-pos-y').textContent = inPosY.value + '%';
-        document.getElementById('txt-media-scale').textContent = inMediaScale.value + '%';
-    };
-    inPosY.addEventListener('input', updateTransform);
-    inMediaScale.addEventListener('input', updateTransform);
-    document.getElementById('btn-reset-pos').addEventListener('click', () => {
-        inPosY.value = 50; inMediaScale.value = 100; updateTransform();
-    });
-    document.getElementById('btn-face-preset').addEventListener('click', () => {
-        inPosY.value = 18; inMediaScale.value = 110; updateTransform();
-    });
-
-    // 4. 起始时间、总时长与进度控制
-    const inStartTime = document.getElementById('in-start-time');
-    const inTotalTime = document.getElementById('in-total-time');
-    const inProgress = document.getElementById('in-progress');
-    const inBuffer = document.getElementById('in-buffer');
-    const dispProgressBar = document.getElementById('disp-progress-bar');
-    const dispBufferBar = document.getElementById('disp-buffer-bar');
-    const dispTime = document.getElementById('disp-time');
-    const swSyncVideoTime = document.getElementById('sw-sync-video-time');
-
-    const refreshTimeUI = () => {
-        const s = timeToSec(inStartTime.value);
-        const t = timeToSec(inTotalTime.value) || 1;
-        dispTime.textContent = `${secToTime(s)} / ${secToTime(t)}`;
-    };
-    inStartTime.addEventListener('input', () => {
-        refreshTimeUI();
-        const pct = Math.min(100, Math.round((timeToSec(inStartTime.value) / timeToSec(inTotalTime.value)) * 100));
-        inProgress.value = pct;
-        dispProgressBar.style.width = pct + '%';
-        document.getElementById('txt-progress').textContent = pct + '%';
-    });
-    inTotalTime.addEventListener('input', refreshTimeUI);
-    inProgress.addEventListener('input', (e) => {
-        const val = e.target.value;
-        dispProgressBar.style.width = val + '%';
-        document.getElementById('txt-progress').textContent = val + '%';
-        const total = timeToSec(inTotalTime.value) || 5325;
-        inStartTime.value = secToTime(Math.round((val / 100) * total));
-        refreshTimeUI();
-    });
-    inBuffer.addEventListener('input', (e) => {
-        dispBufferBar.style.width = e.target.value + '%';
-        document.getElementById('txt-buffer').textContent = e.target.value + '%';
-    });
-
-    // 5. 媒体上传与处理
-    const mediaUploader = document.getElementById('media-uploader');
-    const previewImg = document.getElementById('preview-img');
-    const previewVideo = document.getElementById('preview-video');
-    let isVideoMode = false;
-
-    mediaUploader.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.type.startsWith('video/')) {
-            isVideoMode = true;
-            previewImg.style.display = 'none';
-            previewVideo.style.display = 'block';
-            previewVideo.src = URL.createObjectURL(file);
-            previewVideo.play();
-            updatePlayStateUI(true);
-        } else if (file.type.startsWith('image/')) {
-            isVideoMode = false;
-            previewVideo.pause();
-            previewVideo.style.display = 'none';
-            previewImg.style.display = 'block';
-            const reader = new FileReader();
-            reader.onload = (evt) => {
-                previewImg.src = evt.target.result;
-                checkMediaAspect();
-            };
-            reader.readAsDataURL(file);
-            updatePlayStateUI(false);
-        }
-        showToast('素材加載成功！');
-    });
-
-    // 检查媒体横竖画幅，若在手机竖屏模式下导入横屏素材，自动唤起全屏观看胶囊
-    function checkMediaAspect() {
-        if (!renderTarget.classList.contains('mode-mobile-port')) {
-            dyFullscreenPill.style.display = 'none';
-            return;
-        }
-        let w = 1920, h = 1080;
-        if (isVideoMode) {
-            w = previewVideo.videoWidth || 1920;
-            h = previewVideo.videoHeight || 1080;
-        } else {
-            w = previewImg.naturalWidth || 1920;
-            h = previewImg.naturalHeight || 1080;
-        }
-        if (w > h) {
-            dyFullscreenPill.style.display = 'flex';
-        } else {
-            dyFullscreenPill.style.display = 'none';
-        }
-    }
-    previewVideo.addEventListener('loadedmetadata', checkMediaAspect);
-
-    // 6. 播放与暂停状态切换 (联动中心圆钮与左下角图标)
-    const iconBotPlay = document.getElementById('icon-bot-play');
-    const iconBotPause = document.getElementById('icon-bot-pause');
-    const iconCenterPlay = document.getElementById('icon-center-play');
-    const iconCenterPause = document.getElementById('icon-center-pause');
-
-    function updatePlayStateUI(isPlaying) {
-        if (isPlaying) {
-            iconBotPlay.style.display = 'none';
-            iconBotPause.style.display = 'block';
-            iconCenterPlay.style.display = 'none';
-            iconCenterPause.style.display = 'flex';
-            document.getElementById('disp-center-pill').textContent = '點擊暫停播放';
-        } else {
-            iconBotPlay.style.display = 'block';
-            iconBotPause.style.display = 'none';
-            iconCenterPlay.style.display = 'block';
-            iconCenterPause.style.display = 'none';
-            document.getElementById('disp-center-pill').textContent = '點擊繼續播放';
-        }
-    }
-
-    const togglePlayback = () => {
-        if (!isVideoMode) return;
-        if (previewVideo.paused) {
-            previewVideo.play();
-            updatePlayStateUI(true);
-        } else {
-            previewVideo.pause();
-            updatePlayStateUI(false);
-        }
-    };
-    document.getElementById('btn-toggle-playback').addEventListener('click', togglePlayback);
-    document.getElementById('btn-bot-play-state').addEventListener('click', togglePlayback);
-
-    // 视频真实播放时：秒数在起始时间上累加走动
-    previewVideo.addEventListener('timeupdate', () => {
-        if (!isVideoMode || !swSyncVideoTime.checked) return;
-        const baseStart = timeToSec(inStartTime.value);
-        const totalSec = timeToSec(inTotalTime.value) || 5325;
-        const curSec = baseStart + Math.floor(previewVideo.currentTime);
-        dispTime.textContent = `${secToTime(curSec)} / ${secToTime(totalSec)}`;
-        const pct = Math.min(100, (curSec / totalSec) * 100);
-        dispProgressBar.style.width = pct.toFixed(2) + '%';
-        document.getElementById('txt-progress').textContent = Math.round(pct) + '%';
-    });
-
-    // 7. 高能波浪热度曲线绘制引擎
-    const waveCanvas = document.getElementById('waveform-canvas');
-    const selWavePreset = document.getElementById('sel-waveform-preset');
-    const inWaveHeight = document.getElementById('in-wave-height');
-    const inCustomWave = document.getElementById('in-custom-wave');
-
-    function drawWaveform() {
-        if (!document.getElementById('sw-waveform').checked) {
-            document.getElementById('wrap-waveform').style.display = 'none';
-            return;
-        }
-        document.getElementById('wrap-waveform').style.display = 'block';
-        const ctx = waveCanvas.getContext('2d');
-        const w = (waveCanvas.width = waveCanvas.offsetWidth || 800);
-        const h = (waveCanvas.height = parseInt(inWaveHeight.value) || 32);
-
-        ctx.clearRect(0, 0, w, h);
-        let points = [15, 25, 60, 40, 85, 95, 45, 75, 30, 10];
-        if (selWavePreset.value === 'climax') {
-            points = [10, 15, 20, 25, 40, 50, 70, 85, 100, 90];
-        } else if (selWavePreset.value === 'dense') {
-            points = [30, 80, 45, 90, 35, 85, 40, 95, 50, 70, 30];
-        } else if (selWavePreset.value === 'custom') {
-            points = inCustomWave.value.split(',').map(n => Math.min(100, Math.max(0, parseInt(n.trim())||0)));
-            if (points.length < 2) points = [10, 80, 20];
-        }
-
-        ctx.beginPath();
-        ctx.moveTo(0, h);
-        const step = w / (points.length - 1);
-        for (let i = 0; i < points.length; i++) {
-            const x = i * step;
-            const y = h - (points[i] / 100) * (h - 4);
-            if (i === 0) ctx.lineTo(x, y);
-            else {
-                const prevX = (i - 1) * step;
-                const prevY = h - (points[i - 1] / 100) * (h - 4);
-                const cx = (prevX + x) / 2;
-                ctx.bezierCurveTo(cx, prevY, cx, y, x, y);
-            }
-        }
-        ctx.lineTo(w, h);
-        ctx.closePath();
-
-        const grad = ctx.createLinearGradient(0, 0, 0, h);
-        grad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
-        grad.addColorStop(0.7, 'rgba(255, 255, 255, 0.15)');
-        grad.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
-        ctx.fillStyle = grad;
-        ctx.fill();
-
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-    }
-    selWavePreset.addEventListener('change', () => {
-        document.getElementById('wrap-custom-wave').style.display = selWavePreset.value === 'custom' ? 'flex' : 'none';
-        drawWaveform();
-    });
-    inWaveHeight.addEventListener('input', (e) => {
-        document.getElementById('txt-wave-height').textContent = e.target.value + 'px';
-        document.getElementById('wrap-waveform').style.height = e.target.value + 'px';
-        drawWaveform();
-    });
-    inCustomWave.addEventListener('input', drawWaveform);
-    window.addEventListener('resize', drawWaveform);
-    setTimeout(drawWaveform, 200);
-
-    // 8. 录制时长控制与自定义秒数联动
-    const selRecordSec = document.getElementById('sel-record-sec');
-    const inCustomSec = document.getElementById('in-custom-sec');
-    selRecordSec.addEventListener('change', (e) => {
-        if (e.target.value === 'custom') {
-            inCustomSec.style.display = 'inline-block';
-            inCustomSec.focus();
-        } else {
-            inCustomSec.style.display = 'none';
-        }
-    });
-
-    // 9. 文本实时双向绑定
-    const bindSync = (inId, outId) => {
-        const inp = document.getElementById(inId);
-        const out = document.getElementById(outId);
-        if (inp && out) {
-            inp.addEventListener('input', (e) => { out.textContent = e.target.value; });
-        }
-    };
-    bindSync('in-title', 'disp-title');
-    bindSync('in-banner-body', 'disp-banner-body');
-    bindSync('in-dm-placeholder', 'disp-dm-placeholder');
-    bindSync('in-dy-likes', 'dy-val-likes');
-    bindSync('in-dy-comments', 'dy-val-comments');
-    bindSync('in-dy-stars', 'dy-val-stars');
-    bindSync('in-dy-shares', 'dy-val-shares');
-    bindSync('in-dy-author', 'dy-disp-author');
-    bindSync('in-dy-desc', 'dy-disp-desc');
-    bindSync('in-dy-tags', 'dy-disp-tags');
-    bindSync('in-dy-campaign', 'dy-disp-campaign');
-    bindSync('in-dy-gold-title', 'dy-disp-gold-title');
-    bindSync('in-dy-gold-views', 'dy-disp-gold-views');
-
-    // 骚话下拉框联动
-    const selDmPreset = document.getElementById('sel-dm-preset');
-    const inDmPlaceholder = document.getElementById('in-dm-placeholder');
-    selDmPreset.addEventListener('change', (e) => {
-        if (e.target.value !== 'custom') {
-            inDmPlaceholder.value = e.target.value;
-            document.getElementById('disp-dm-placeholder').textContent = e.target.value;
-        } else {
-            inDmPlaceholder.focus();
-            inDmPlaceholder.select();
-        }
-    });
-
-    // 抖音头像上传
-    document.getElementById('dy-avatar-uploader').addEventListener('change', (e) => {
-        const f = e.target.files[0];
-        if (!f) return;
-        const reader = new FileReader();
-        reader.onload = (evt) => { document.getElementById('dy-avatar-img').src = evt.target.result; };
-        reader.readAsDataURL(f);
-    });
-
-    // 10. 开关绑定
-    const bindSw = (swId, targetId) => {
-        const sw = document.getElementById(swId);
-        const tar = document.getElementById(targetId);
-        if (sw && tar) {
-            sw.addEventListener('change', (e) => {
-                tar.style.display = e.target.checked ? '' : 'none';
-                if (swId === 'sw-waveform') drawWaveform();
-            });
-        }
-    };
-    bindSw('sw-danmaku', 'danmaku-container');
-    bindSw('sw-bot-dm-group', 'wrap-bot-dm-group');
-    bindSw('sw-viewer', 'wrap-viewer-pill');
-    bindSw('sw-banner', 'wrap-banner');
-    bindSw('sw-free-pill', 'wrap-free-pill');
-    bindSw('sw-laya-badge', 'wrap-laya-badge');
-    bindSw('sw-vip-tag', 'wrap-vip-tag');
-    bindSw('sw-back-btn', 'wrap-back-btn');
-    bindSw('sw-top-right', 'wrap-top-right');
-    bindSw('sw-bottom-bar', 'wrap-bottom-bar');
-    bindSw('sw-waveform', 'wrap-waveform');
-    bindSw('sw-dy-gold', 'dy-wrap-gold');
-    bindSw('sw-dy-campaign', 'dy-wrap-campaign');
-    bindSw('sw-dy-right-bar', 'dy-wrap-right-bar');
-    bindSw('sw-dy-top-nav', 'dy-wrap-top-nav');
-    bindSw('sw-dy-purple-mask', 'dy-wrap-bottom-bar');
-
-    // 底部专属 [彈] 快速切换
-    document.getElementById('btn-quick-dm-toggle').addEventListener('click', () => {
-        const sw = document.getElementById('sw-danmaku');
-        sw.checked = !sw.checked;
-        sw.dispatchEvent(new Event('change'));
-        showToast(sw.checked ? '彈幕已開啓' : '彈幕已關閉');
-    });
-
-    // 11. 弹幕系统初始化
-    const danmakuContainer = document.getElementById('danmaku-container');
-    const danmakuTexts = ['這清晰度太絕了！', '免費通道真的良心', '前方高能，衛生紙已備好', '已截圖，感謝樓主', 'Laya 播放器牛逼！'];
-    danmakuTexts.forEach((t, i) => {
-        const el = document.createElement('div');
-        el.className = 'danmaku-item';
-        el.textContent = t;
-        el.style.top = (14 + i * 14) + '%';
-        el.style.color = ['#ffffff', '#f39c12', '#2ecc71', '#00d2d3'][i % 4];
-        el.style.animationDuration = (8 + i * 2) + 's';
-        danmakuContainer.appendChild(el);
-    });
-
-    // 12. 繁简一键智能转换总引擎
-    let isTraditional = true;
-    const s2tDict = {'视频':'視頻','暗号':'暗號','独家':'獨家','私密':'私密','免费':'免費','通道':'通道','正在观看':'正在觀看','原画':'原畫','原画质连线':'原畫質連線','音轨':'音軌','设置':'設置','限时特权':'限時特權','已解锁完整无码未删减版，点击任意处播放':'已解鎖完整無碼未刪減版，點擊任意處播放','特权生效中':'特權生效中','点击继续播放':'點擊繼續播放','弹幕':'彈幕','倍速':'倍速','精选':'精選','热点':'熱點','关注':'關注','全屏观看':'全屏觀看','心动匹配':'心動匹配','来Laya 语音厅，亲自演给你看 >':'來Laya 語音廳，親自演給你看 >','视频榜单：最让你心动的女优评选大赛':'視頻榜單：最讓你心動的女優評選大賽','万人在看 >':'萬人在看 >','首页':'首頁','瞬间':'瞬間','派对':'派對','我的':'我的'};
-    const t2sDict = Object.fromEntries(Object.entries(s2tDict).map(([k, v]) => [v, k]));
-
-    document.getElementById('btn-toggle-lang').addEventListener('click', () => {
-        isTraditional = !isTraditional;
-        const dict = isTraditional ? s2tDict : t2sDict;
-        document.querySelectorAll('#render-target *').forEach(node => {
-            if (node.children.length === 0 && node.textContent.trim()) {
-                let txt = node.textContent;
-                for (const [k, v] of Object.entries(dict)) {
-                    txt = txt.replaceAll(k, v);
-                }
-                node.textContent = txt;
-            }
-        });
-        showToast(isTraditional ? '已切換為：繁體中文' : '已切换为：简体中文');
-    });
-
-    // 13. 保存高清图片 (PNG 导出：彻底修复 html2canvas 的排版挤压与文字变黑问题)
-    document.getElementById('btn-save-img').addEventListener('click', () => {
-        showToast('📸 正在渲染超高清圖片...');
-        html2canvas(renderTarget, {
-            scale: 2.5,
-            useCORS: true,
-            allowTaint: true,
-            backgroundColor: '#000',
-            onclone: (clonedDoc) => {
-                // 冻结弹幕真实位置
-                const origBox = renderTarget.getBoundingClientRect();
-                const origItems = danmakuContainer.querySelectorAll('.danmaku-item');
-                const clonedContainer = clonedDoc.getElementById('danmaku-container');
-                const clonedItems = clonedContainer ? clonedContainer.querySelectorAll('.danmaku-item') : [];
-                origItems.forEach((orig, idx) => {
-                    if (clonedItems[idx]) {
-                        const r = orig.getBoundingClientRect();
-                        clonedItems[idx].style.animation = 'none';
-                        clonedItems[idx].style.transform = 'none';
-                        clonedItems[idx].style.left = (r.left - origBox.left) + 'px';
-                        clonedItems[idx].style.top = (r.top - origBox.top) + 'px';
-                    }
-                });
-            }
-        }).then(canvas => {
-            const link = document.createElement('a');
-            link.download = `Laya_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png', 1.0);
-            link.click();
-            showToast('✅ 圖片已成功保存！');
-        }).catch(err => {
-            showToast(`❌ 導出失敗: ${err.message}`);
-        });
-    });
-
-    // 14. 实时合成带框短视频 (保留原声 + 自定义录制时长 + 真实秒数走动)
-    document.getElementById('btn-save-vid').addEventListener('click', async () => {
-        if (!isVideoMode) {
-            showToast('提示：請先上傳一段 MP4/WebM 視頻素材！');
-            return;
-        }
-
-        let recordSeconds = parseInt(selRecordSec.value);
-        if (selRecordSec.value === 'custom') {
-            recordSeconds = Math.max(1, parseInt(inCustomSec.value) || 8);
-        }
-
-        const btn = document.getElementById('btn-save-vid');
-        btn.textContent = `⏳ 錄製合成中 (${recordSeconds}s)...`;
-        btn.disabled = true;
-
-        try {
-            const isDouyin = renderTarget.classList.contains('mode-mobile-port');
-            const w = isDouyin ? 720 : 1280;
-            const h = isDouyin ? 1280 : 720;
-
-            const offCanvas = document.createElement('canvas');
-            offCanvas.width = w;
-            offCanvas.height = h;
-            const ctx = offCanvas.getContext('2d');
-
-            // 音频捕获管线
-            let audioTracks = [];
-            try {
-                if (!window._audioCtx) {
-                    window._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    window._audioSrc = window._audioCtx.createMediaElementSource(previewVideo);
-                    window._audioDst = window._audioCtx.createMediaStreamDestination();
-                    window._audioSrc.connect(window._audioDst);
-                    window._audioSrc.connect(window._audioCtx.destination);
-                }
-                audioTracks = window._audioDst.stream.getAudioTracks();
-            } catch (e) {
-                console.warn('Audio capture:', e);
-            }
-
-            const canvasStream = offCanvas.captureStream(30);
-            const combinedStream = new MediaStream([...canvasStream.getVideoTracks(), ...audioTracks]);
-            const mime = MediaRecorder.isTypeSupported('video/mp4;codecs=avc1') ? 'video/mp4' : 'video/webm';
-            const recorder = new MediaRecorder(combinedStream, { mimeType: mime });
-            const chunks = [];
-
-            recorder.ondataavailable = (e) => chunks.push(e.data);
-            recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: mime });
-                const a = document.createElement('a');
-                a.download = `Laya_${isDouyin ? 'ShortVideo' : 'Player'}_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
-                a.href = URL.createObjectURL(blob);
-                a.click();
-                btn.textContent = '合成下載視頻 (帶原聲)';
-                btn.disabled = false;
-                showToast('🎉 帶框視頻已成功導出！');
-            };
-
-            previewVideo.currentTime = 0;
-            previewVideo.play();
-            updatePlayStateUI(true);
-            recorder.start();
-
-            let isRecording = true;
-            const drawFrame = () => {
-                if (!isRecording) return;
-                ctx.fillStyle = '#000';
-                ctx.fillRect(0, 0, w, h);
-
-                // 绘制当前视角缩放与位移后的视频帧
-                const vw = previewVideo.videoWidth || 1280;
-                const vh = previewVideo.videoHeight || 720;
-                const mAspect = vw / vh;
-                const cAspect = w / h;
-                const zoom = (inMediaScale.value / 100);
-
-                let rw, rh;
-                if (mAspect > cAspect) {
-                    rh = h * zoom;
-                    rw = rh * mAspect;
-                } else {
-                    rw = w * zoom;
-                    rh = rw / mAspect;
-                }
-                const offY = (h - rh) * (inPosY.value / 100);
-                const offX = (w - rw) * 0.5;
-                ctx.drawImage(previewVideo, offX, offY, rw, rh);
-
-                requestAnimationFrame(drawFrame);
-            };
-            drawFrame();
-
-            setTimeout(() => {
-                isRecording = false;
-                recorder.stop();
-            }, recordSeconds * 1000);
-
-        } catch (err) {
-            btn.textContent = '合成下載視頻 (帶原聲)';
-            btn.disabled = false;
-            showToast(`導出異常: ${err.message}`);
-        }
-    });
-</script>
+<!-- 模块化外部 JS 脚本引入 -->
+<script src="player.js"></script>
+<script src="danmaku.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
