@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * danmaku.js - 高级动态/定格弹幕双模工作台与参数交互引擎
+ * danmaku.js - 高级动态/定格弹幕双模工作台与参数交互引擎 (支持原地物理定格)
  * ==========================================================================
  */
 
@@ -8,17 +8,36 @@ window.DanmakuEngine = {
     list: [],
     container: null,
     trackListUI: null,
-    mode: 'scroll', // 'scroll' (动态滚动) | 'fixed' (定格排布，截图推荐)
+    mode: 'scroll', // 'scroll' (动态滚动) | 'fixed' (静态坐标排布)
+    isPaused: false, // 是否处于原地物理定格状态
+    speedFactor: 1.0, // 全局速度缩放倍率
 
-    // 获取激活且显示的弹幕列表
     getActiveList() {
         return this.list.filter(item => item.visible !== false);
     },
 
-    // 刷新画面与右侧控制面板
     refresh() {
         renderDanmakuStage();
         renderDanmakuTracksUI();
+    },
+
+    // 一键原地定格 / 恢复滚动切换函数
+    togglePause(forceState) {
+        if (!this.container) return;
+        this.isPaused = (forceState !== undefined) ? forceState : !this.isPaused;
+
+        if (this.isPaused) {
+            this.container.classList.add('is-paused');
+        } else {
+            this.container.classList.remove('is-paused');
+        }
+
+        // 同步所有控制按钮状态
+        syncPauseButtonUI(this.isPaused);
+
+        if (typeof window.showToast === 'function') {
+            window.showToast(this.isPaused ? '⏸️ 彈幕已原地定格 (便於預覽位置與截圖)' : '▶ 彈幕已恢復正常飄動');
+        }
     },
 
     // 载入特定预设案例库
@@ -31,7 +50,7 @@ window.DanmakuEngine = {
         }
     },
 
-    // 画面即时发射弹幕
+    // 发射实时弹幕
     fireLive(text, color = '#ffffff') {
         if (!text || !text.trim()) return;
         const newTrack = {
@@ -49,7 +68,6 @@ window.DanmakuEngine = {
     }
 };
 
-// 预设名称与案例库
 const presetNames = {
     driver: '🔥 老司機身材熱評組',
     climax: '💥 劇情高能爆點組',
@@ -58,14 +76,14 @@ const presetNames = {
 
 const presetsDB = {
     driver: [
-        { id: 'd1', text: '這身材太頂了吧！純欲天花板', top: 14, left: 15, color: '#ffffff', size: 18, speed: 8, visible: true },
-        { id: 'd2', text: '這腰臀比是真實存在的嗎？我好了', top: 28, left: 45, color: '#f39c12', size: 16, speed: 10, visible: true },
-        { id: 'd3', text: '極品尤物，營養快線徹底跟不上了！', top: 46, left: 10, color: '#fe2c55', size: 20, speed: 7, visible: true },
-        { id: 'd4', text: '4K 無碼原畫就是香，毛孔都看得清', top: 64, left: 55, color: '#00d2d3', size: 16, speed: 11, visible: true },
-        { id: 'd5', text: '已截圖珍藏，感謝樓主好人一生平安！', top: 80, left: 25, color: '#2ecc71', size: 15, speed: 9, visible: true }
+        { id: 'd1', text: '這身材太頂了吧！純欲天花板', top: 14, left: 15, color: '#ffffff', size: 18, speed: 9, visible: true },
+        { id: 'd2', text: '這腰臀比是真實存在的嗎？我好了', top: 28, left: 45, color: '#f39c12', size: 16, speed: 11, visible: true },
+        { id: 'd3', text: '極品尤物，營養快線徹底跟不上了！', top: 46, left: 10, color: '#fe2c55', size: 20, speed: 8, visible: true },
+        { id: 'd4', text: '4K 無碼原畫就是香，毛孔都看得清', top: 64, left: 55, color: '#00d2d3', size: 16, speed: 12, visible: true },
+        { id: 'd5', text: '已截圖珍藏，感謝樓主好人一生平安！', top: 80, left: 25, color: '#2ecc71', size: 15, speed: 10, visible: true }
     ],
     climax: [
-        { id: 'c1', text: '前方高能！3分20秒直接起飛預警！', top: 15, left: 20, color: '#fe2c55', size: 22, speed: 6, visible: true },
+        { id: 'c1', text: '前方高能！3分20秒直接起飛預警！', top: 15, left: 20, color: '#fe2c55', size: 22, speed: 7, visible: true },
         { id: 'c2', text: '衛生紙已經用掉半包了，這誰頂得住', top: 32, left: 50, color: '#ff7675', size: 17, speed: 9, visible: true },
         { id: 'c3', text: '兄弟們我先衝為敬，後面跟上！', top: 52, left: 12, color: '#f1c40f', size: 18, speed: 8, visible: true },
         { id: 'c4', text: '求女主番號！這聲音聽得骨頭都酥了', top: 68, left: 60, color: '#ffffff', size: 16, speed: 10, visible: true },
@@ -74,11 +92,31 @@ const presetsDB = {
     traffic: [
         { id: 't1', text: 'Laya 暗號 1896 真的能看！已解鎖未刪減版', top: 16, left: 15, color: '#f39c12', size: 18, speed: 9, visible: true },
         { id: 't2', text: '免費通道竟然一點都不卡，太良心了', top: 30, left: 48, color: '#ffffff', size: 16, speed: 11, visible: true },
-        { id: 't3', text: '來 Laya 語音廳，親自演給你看，懂的都懂！', top: 48, left: 8, color: '#2ecc71', size: 20, speed: 7, visible: true },
+        { id: 't3', text: '來 Laya 語音廳，親自演給你看，懂的都懂！', top: 48, left: 8, color: '#2ecc71', size: 20, speed: 8, visible: true },
         { id: 't4', text: '私密群已上車，高清完整無水印爽翻', top: 66, left: 52, color: '#00d2d3', size: 16, speed: 10, visible: true },
         { id: 't5', text: '原畫質連線就是爽，今晚不用睡了', top: 80, left: 22, color: '#ff9ff3', size: 16, speed: 12, visible: true }
     ]
 };
+
+// 按钮状态同步函数
+function syncPauseButtonUI(isPaused) {
+    const btnToggle = document.getElementById('btn-toggle-dm-motion');
+    const txtMotion = document.getElementById('txt-dm-motion');
+    const iconMotion = document.getElementById('icon-dm-motion');
+    const btnMini = document.getElementById('btn-mini-dm-pause');
+    const txtMini = document.getElementById('txt-mini-dm-pause');
+
+    if (btnToggle) {
+        btnToggle.classList.toggle('paused', isPaused);
+        if (txtMotion) txtMotion.textContent = isPaused ? '▶ 恢復彈幕滾動' : '⏸️ 原地定格彈幕 (方便預覽/截圖)';
+        if (iconMotion) iconMotion.textContent = isPaused ? '▶' : '⏸️';
+    }
+
+    if (btnMini) {
+        btnMini.classList.toggle('paused', isPaused);
+        if (txtMini) txtMini.textContent = isPaused ? '▶ 滾動' : '⏸️ 定格';
+    }
+}
 
 (function () {
     const danmakuContainer = document.getElementById('danmaku-container');
@@ -93,6 +131,12 @@ const presetsDB = {
     const btnOpenDmInput = document.getElementById('btn-open-dm-input');
     const selDmMode = document.getElementById('sel-dm-mode');
 
+    // 暂停按钮与速度滑块
+    const btnToggleDmMotion = document.getElementById('btn-toggle-dm-motion');
+    const btnMiniDmPause = document.getElementById('btn-mini-dm-pause');
+    const inDmGlobalSpeed = document.getElementById('in-dm-global-speed');
+    const txtDmGlobalSpeed = document.getElementById('txt-dm-global-speed');
+
     window.DanmakuEngine.container = danmakuContainer;
     window.DanmakuEngine.trackListUI = danmakuTrackList;
     window.DanmakuEngine.list = JSON.parse(JSON.stringify(presetsDB.driver));
@@ -102,7 +146,7 @@ const presetsDB = {
     };
 
     /* ==========================================================================
-       1. 舞台弹幕渲染 (支持滚动/定格排布)
+       1. 舞台弹幕渲染函数
        ========================================================================== */
     function renderDanmakuStage() {
         if (!danmakuContainer) return;
@@ -125,16 +169,25 @@ const presetsDB = {
                 el.style.transform = 'none';
                 el.style.left = (dm.left !== undefined ? dm.left : 20) + '%';
             } else {
-                el.style.animationDuration = (dm.speed || 8) + 's';
+                // 计算全局倍率后的实际耗时
+                const duration = Math.max(2, (dm.speed || 8) / window.DanmakuEngine.speedFactor);
+                el.style.animationDuration = duration.toFixed(1) + 's';
             }
 
             danmakuContainer.appendChild(el);
         });
+
+        // 保持暂停状态
+        if (window.DanmakuEngine.isPaused) {
+            danmakuContainer.classList.add('is-paused');
+        } else {
+            danmakuContainer.classList.remove('is-paused');
+        }
     }
     window.renderDanmakuStage = renderDanmakuStage;
 
     /* ==========================================================================
-       2. 右侧面板轨道列表卡片渲染与实时双向交互
+       2. 右侧面板轨道列表可视化卡片
        ========================================================================== */
     function renderDanmakuTracksUI() {
         if (!danmakuTrackList) return;
@@ -166,21 +219,21 @@ const presetsDB = {
                 </div>
             `;
 
-            // 文本绑定
+            // 文本改写
             card.querySelector('.dm-input-text').addEventListener('input', (e) => {
                 dm.text = e.target.value;
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.textContent = e.target.value;
             });
 
-            // Y 轴垂直位置绑定
+            // Y轴高度
             card.querySelector('.dm-input-top').addEventListener('input', (e) => {
                 dm.top = Math.min(95, Math.max(5, parseInt(e.target.value) || 20));
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.top = dm.top + '%';
             });
 
-            // X 轴水平位置绑定 (定格模式)
+            // X轴水平位置 (定格模式)
             const inputLeft = card.querySelector('.dm-input-left');
             if (inputLeft) {
                 inputLeft.addEventListener('input', (e) => {
@@ -190,31 +243,34 @@ const presetsDB = {
                 });
             }
 
-            // 速度绑定 (滚动模式)
+            // 单条速度 (滚动模式)
             const inputSpeed = card.querySelector('.dm-input-speed');
             if (inputSpeed) {
                 inputSpeed.addEventListener('input', (e) => {
                     dm.speed = Math.min(30, Math.max(3, parseInt(e.target.value) || 8));
                     const stageEl = document.getElementById('stage_' + dm.id);
-                    if (stageEl) stageEl.style.animationDuration = dm.speed + 's';
+                    if (stageEl) {
+                        const duration = Math.max(2, dm.speed / window.DanmakuEngine.speedFactor);
+                        stageEl.style.animationDuration = duration.toFixed(1) + 's';
+                    }
                 });
             }
 
-            // 独立字号大小绑定
+            // 独立字号
             card.querySelector('.dm-input-size').addEventListener('input', (e) => {
                 dm.size = Math.min(40, Math.max(12, parseInt(e.target.value) || 16));
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.fontSize = dm.size + 'px';
             });
 
-            // 颜色绑定
+            // 颜色
             card.querySelector('.dm-input-color').addEventListener('input', (e) => {
                 dm.color = e.target.value;
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.color = e.target.value;
             });
 
-            // 显隐独立控制
+            // 显隐
             card.querySelector('.dm-input-vis').addEventListener('change', (e) => {
                 dm.visible = e.target.checked;
                 renderDanmakuStage();
@@ -233,13 +289,45 @@ const presetsDB = {
     window.renderDanmakuTracksUI = renderDanmakuTracksUI;
 
     /* ==========================================================================
-       3. 弹幕模式切换 (滚动 vs 定格截图)
+       3. 定格控制与速度倍率事件绑定
        ========================================================================== */
+    if (btnToggleDmMotion) {
+        btnToggleDmMotion.addEventListener('click', () => {
+            window.DanmakuEngine.togglePause();
+        });
+    }
+
+    if (btnMiniDmPause) {
+        btnMiniDmPause.addEventListener('click', () => {
+            window.DanmakuEngine.togglePause();
+        });
+    }
+
+    // 全局速度滑块 (滑动即时改变所有弹幕漂移快慢)
+    if (inDmGlobalSpeed && txtDmGlobalSpeed) {
+        inDmGlobalSpeed.addEventListener('input', (e) => {
+            const rawVal = parseInt(e.target.value) || 10;
+            const factor = rawVal / 10; // 0.2x ~ 2.5x
+            window.DanmakuEngine.speedFactor = factor;
+            txtDmGlobalSpeed.textContent = factor.toFixed(1) + 'X';
+
+            // 即时应用到画面中已存在的弹幕
+            window.DanmakuEngine.list.forEach((dm) => {
+                const stageEl = document.getElementById('stage_' + dm.id);
+                if (stageEl && window.DanmakuEngine.mode !== 'fixed') {
+                    const duration = Math.max(1.5, (dm.speed || 8) / factor);
+                    stageEl.style.animationDuration = duration.toFixed(1) + 's';
+                }
+            });
+        });
+    }
+
+    // 模式切换
     if (selDmMode) {
         selDmMode.addEventListener('change', (e) => {
             window.DanmakuEngine.mode = e.target.value;
             window.DanmakuEngine.refresh();
-            toast(e.target.value === 'fixed' ? '📌 已切換為：定格排布模式 (可自定義X/Y位置，截圖推薦)' : '🎬 已切換為：動態滾動模式 (視頻推薦)');
+            toast(e.target.value === 'fixed' ? '📌 已切換為：定格排布模式 (自由調X/Y位置)' : '🎬 已切換為：動態滾動模式');
         });
     }
 
@@ -257,7 +345,6 @@ const presetsDB = {
             const sizeVal = e.target.value + 'px';
             document.documentElement.style.setProperty('--danmaku-size', sizeVal);
             txtDanmakuSize.textContent = sizeVal;
-            // 同步调整每条弹幕字号
             window.DanmakuEngine.list.forEach(dm => dm.size = parseInt(e.target.value));
             renderDanmakuStage();
         });
