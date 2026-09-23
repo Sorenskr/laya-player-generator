@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * danmaku.js - 高级动态/定格弹幕双模工作台与参数交互引擎 (支持原地物理定格)
+ * danmaku.js - 高级动态/定格弹幕双模工作台 (默认关闭弹幕 + 全参数微调)
  * ==========================================================================
  */
 
@@ -8,9 +8,9 @@ window.DanmakuEngine = {
     list: [],
     container: null,
     trackListUI: null,
-    mode: 'scroll', // 'scroll' (动态滚动) | 'fixed' (静态坐标排布)
-    isPaused: false, // 是否处于原地物理定格状态
-    speedFactor: 1.0, // 全局速度缩放倍率
+    mode: 'scroll',
+    isPaused: false,
+    speedFactor: 1.0,
 
     getActiveList() {
         return this.list.filter(item => item.visible !== false);
@@ -21,7 +21,6 @@ window.DanmakuEngine = {
         renderDanmakuTracksUI();
     },
 
-    // 一键原地定格 / 恢复滚动切换函数
     togglePause(forceState) {
         if (!this.container) return;
         this.isPaused = (forceState !== undefined) ? forceState : !this.isPaused;
@@ -32,7 +31,6 @@ window.DanmakuEngine = {
             this.container.classList.remove('is-paused');
         }
 
-        // 同步所有控制按钮状态
         syncPauseButtonUI(this.isPaused);
 
         if (typeof window.showToast === 'function') {
@@ -40,7 +38,6 @@ window.DanmakuEngine = {
         }
     },
 
-    // 载入特定预设案例库
     loadPreset(presetKey) {
         if (!presetsDB[presetKey]) return;
         this.list = JSON.parse(JSON.stringify(presetsDB[presetKey]));
@@ -50,7 +47,6 @@ window.DanmakuEngine = {
         }
     },
 
-    // 发射实时弹幕
     fireLive(text, color = '#ffffff') {
         if (!text || !text.trim()) return;
         const newTrack = {
@@ -98,23 +94,15 @@ const presetsDB = {
     ]
 };
 
-// 按钮状态同步函数
 function syncPauseButtonUI(isPaused) {
     const btnToggle = document.getElementById('btn-toggle-dm-motion');
     const txtMotion = document.getElementById('txt-dm-motion');
     const iconMotion = document.getElementById('icon-dm-motion');
-    const btnMini = document.getElementById('btn-mini-dm-pause');
-    const txtMini = document.getElementById('txt-mini-dm-pause');
 
     if (btnToggle) {
         btnToggle.classList.toggle('paused', isPaused);
         if (txtMotion) txtMotion.textContent = isPaused ? '▶ 恢復彈幕滾動' : '⏸️ 原地定格彈幕 (方便預覽/截圖)';
         if (iconMotion) iconMotion.textContent = isPaused ? '▶' : '⏸️';
-    }
-
-    if (btnMini) {
-        btnMini.classList.toggle('paused', isPaused);
-        if (txtMini) txtMini.textContent = isPaused ? '▶ 滾動' : '⏸️ 定格';
     }
 }
 
@@ -131,9 +119,7 @@ function syncPauseButtonUI(isPaused) {
     const btnOpenDmInput = document.getElementById('btn-open-dm-input');
     const selDmMode = document.getElementById('sel-dm-mode');
 
-    // 暂停按钮与速度滑块
     const btnToggleDmMotion = document.getElementById('btn-toggle-dm-motion');
-    const btnMiniDmPause = document.getElementById('btn-mini-dm-pause');
     const inDmGlobalSpeed = document.getElementById('in-dm-global-speed');
     const txtDmGlobalSpeed = document.getElementById('txt-dm-global-speed');
 
@@ -145,9 +131,6 @@ function syncPauseButtonUI(isPaused) {
         if (typeof window.showToast === 'function') window.showToast(msg);
     };
 
-    /* ==========================================================================
-       1. 舞台弹幕渲染函数
-       ========================================================================== */
     function renderDanmakuStage() {
         if (!danmakuContainer) return;
         danmakuContainer.innerHTML = '';
@@ -169,7 +152,6 @@ function syncPauseButtonUI(isPaused) {
                 el.style.transform = 'none';
                 el.style.left = (dm.left !== undefined ? dm.left : 20) + '%';
             } else {
-                // 计算全局倍率后的实际耗时
                 const duration = Math.max(2, (dm.speed || 8) / window.DanmakuEngine.speedFactor);
                 el.style.animationDuration = duration.toFixed(1) + 's';
             }
@@ -177,7 +159,6 @@ function syncPauseButtonUI(isPaused) {
             danmakuContainer.appendChild(el);
         });
 
-        // 保持暂停状态
         if (window.DanmakuEngine.isPaused) {
             danmakuContainer.classList.add('is-paused');
         } else {
@@ -186,9 +167,6 @@ function syncPauseButtonUI(isPaused) {
     }
     window.renderDanmakuStage = renderDanmakuStage;
 
-    /* ==========================================================================
-       2. 右侧面板轨道列表可视化卡片
-       ========================================================================== */
     function renderDanmakuTracksUI() {
         if (!danmakuTrackList) return;
         danmakuTrackList.innerHTML = '';
@@ -219,21 +197,18 @@ function syncPauseButtonUI(isPaused) {
                 </div>
             `;
 
-            // 文本改写
             card.querySelector('.dm-input-text').addEventListener('input', (e) => {
                 dm.text = e.target.value;
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.textContent = e.target.value;
             });
 
-            // Y轴高度
             card.querySelector('.dm-input-top').addEventListener('input', (e) => {
                 dm.top = Math.min(95, Math.max(5, parseInt(e.target.value) || 20));
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.top = dm.top + '%';
             });
 
-            // X轴水平位置 (定格模式)
             const inputLeft = card.querySelector('.dm-input-left');
             if (inputLeft) {
                 inputLeft.addEventListener('input', (e) => {
@@ -243,7 +218,6 @@ function syncPauseButtonUI(isPaused) {
                 });
             }
 
-            // 单条速度 (滚动模式)
             const inputSpeed = card.querySelector('.dm-input-speed');
             if (inputSpeed) {
                 inputSpeed.addEventListener('input', (e) => {
@@ -256,27 +230,23 @@ function syncPauseButtonUI(isPaused) {
                 });
             }
 
-            // 独立字号
             card.querySelector('.dm-input-size').addEventListener('input', (e) => {
                 dm.size = Math.min(40, Math.max(12, parseInt(e.target.value) || 16));
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.fontSize = dm.size + 'px';
             });
 
-            // 颜色
             card.querySelector('.dm-input-color').addEventListener('input', (e) => {
                 dm.color = e.target.value;
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.color = e.target.value;
             });
 
-            // 显隐
             card.querySelector('.dm-input-vis').addEventListener('change', (e) => {
                 dm.visible = e.target.checked;
                 renderDanmakuStage();
             });
 
-            // 删除
             card.querySelector('.dm-track-del').addEventListener('click', () => {
                 window.DanmakuEngine.list.splice(index, 1);
                 window.DanmakuEngine.refresh();
@@ -288,30 +258,19 @@ function syncPauseButtonUI(isPaused) {
     }
     window.renderDanmakuTracksUI = renderDanmakuTracksUI;
 
-    /* ==========================================================================
-       3. 定格控制与速度倍率事件绑定
-       ========================================================================== */
     if (btnToggleDmMotion) {
         btnToggleDmMotion.addEventListener('click', () => {
             window.DanmakuEngine.togglePause();
         });
     }
 
-    if (btnMiniDmPause) {
-        btnMiniDmPause.addEventListener('click', () => {
-            window.DanmakuEngine.togglePause();
-        });
-    }
-
-    // 全局速度滑块 (滑动即时改变所有弹幕漂移快慢)
     if (inDmGlobalSpeed && txtDmGlobalSpeed) {
         inDmGlobalSpeed.addEventListener('input', (e) => {
             const rawVal = parseInt(e.target.value) || 10;
-            const factor = rawVal / 10; // 0.2x ~ 2.5x
+            const factor = rawVal / 10;
             window.DanmakuEngine.speedFactor = factor;
             txtDmGlobalSpeed.textContent = factor.toFixed(1) + 'X';
 
-            // 即时应用到画面中已存在的弹幕
             window.DanmakuEngine.list.forEach((dm) => {
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl && window.DanmakuEngine.mode !== 'fixed') {
@@ -322,7 +281,6 @@ function syncPauseButtonUI(isPaused) {
         });
     }
 
-    // 模式切换
     if (selDmMode) {
         selDmMode.addEventListener('change', (e) => {
             window.DanmakuEngine.mode = e.target.value;
@@ -331,7 +289,6 @@ function syncPauseButtonUI(isPaused) {
         });
     }
 
-    // 预设点击装载
     document.querySelectorAll('.btn-preset-load').forEach(btn => {
         btn.addEventListener('click', () => {
             const key = btn.dataset.preset;
@@ -339,7 +296,6 @@ function syncPauseButtonUI(isPaused) {
         });
     });
 
-    // 全局字号滑动条
     if (inDanmakuSize && txtDanmakuSize) {
         inDanmakuSize.addEventListener('input', (e) => {
             const sizeVal = e.target.value + 'px';
@@ -350,7 +306,6 @@ function syncPauseButtonUI(isPaused) {
         });
     }
 
-    // 新增独立弹幕
     if (btnAddDanmaku) {
         btnAddDanmaku.addEventListener('click', () => {
             const randomTops = [15, 25, 40, 55, 70, 82];
@@ -373,7 +328,6 @@ function syncPauseButtonUI(isPaused) {
         });
     }
 
-    // 批量导入
     if (btnParseBatch && inBatchDanmaku) {
         btnParseBatch.addEventListener('click', () => {
             const raw = inBatchDanmaku.value.trim();
@@ -403,21 +357,35 @@ function syncPauseButtonUI(isPaused) {
         });
     }
 
-    // 总开关绑定
-    if (swDanmaku && danmakuContainer) {
+    /* ==========================================================================
+       ★ 核心：弹幕开关默认关闭 + 与底部 [彈] 胶囊双向同步
+       ========================================================================== */
+    function applyDanmakuVisibility(isVisible) {
+        if (danmakuContainer) {
+            danmakuContainer.style.display = isVisible ? 'block' : 'none';
+        }
+        if (swDanmaku) {
+            swDanmaku.checked = isVisible;
+        }
+        if (btnQuickDmToggle) {
+            btnQuickDmToggle.classList.toggle('active', isVisible);
+        }
+    }
+
+    // 默认执行一次关闭
+    applyDanmakuVisibility(false);
+
+    if (swDanmaku) {
         swDanmaku.addEventListener('change', (e) => {
-            danmakuContainer.style.display = e.target.checked ? 'block' : 'none';
-            if (btnQuickDmToggle) {
-                btnQuickDmToggle.classList.toggle('active', e.target.checked);
-            }
+            applyDanmakuVisibility(e.target.checked);
         });
     }
 
-    if (btnQuickDmToggle && swDanmaku) {
+    if (btnQuickDmToggle) {
         btnQuickDmToggle.addEventListener('click', () => {
-            swDanmaku.checked = !swDanmaku.checked;
-            swDanmaku.dispatchEvent(new Event('change'));
-            toast(swDanmaku.checked ? '彈幕已開啓' : '彈幕已關閉');
+            const nextState = !swDanmaku.checked;
+            applyDanmakuVisibility(nextState);
+            toast(nextState ? '彈幕已開啓' : '彈幕已關閉');
         });
     }
 
@@ -426,6 +394,8 @@ function syncPauseButtonUI(isPaused) {
             const userDm = prompt('請輸入你要發射的實時彈幕：', document.getElementById('disp-dm-placeholder').textContent);
             if (userDm && userDm.trim()) {
                 window.DanmakuEngine.fireLive(userDm.trim(), '#ff7675');
+                // 发射后自动临时开启弹幕便于看见
+                applyDanmakuVisibility(true);
                 toast(`🚀 彈幕已發射：「${userDm.trim()}」`);
             }
         });
