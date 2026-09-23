@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * danmaku.js - 高级动态/定格弹幕双模工作台 (默认关闭弹幕 + 全参数微调)
+ * danmaku.js - 高级动态/定格弹幕双模工作台 (纯简体控制面板 + 繁体预设库)
  * ==========================================================================
  */
 
@@ -34,7 +34,7 @@ window.DanmakuEngine = {
         syncPauseButtonUI(this.isPaused);
 
         if (typeof window.showToast === 'function') {
-            window.showToast(this.isPaused ? '⏸️ 彈幕已原地定格 (便於預覽位置與截圖)' : '▶ 彈幕已恢復正常飄動');
+            window.showToast(this.isPaused ? '⏸️ 弹幕已原地定格 (便于预览位置与截图)' : '▶ 弹幕已恢复正常飘动');
         }
     },
 
@@ -43,7 +43,7 @@ window.DanmakuEngine = {
         this.list = JSON.parse(JSON.stringify(presetsDB[presetKey]));
         this.refresh();
         if (typeof window.showToast === 'function') {
-            window.showToast(`已載入預設案例：${presetNames[presetKey]}`);
+            window.showToast(`已载入预设案例：${presetNames[presetKey]}`);
         }
     },
 
@@ -65,9 +65,9 @@ window.DanmakuEngine = {
 };
 
 const presetNames = {
-    driver: '🔥 老司機身材熱評組',
-    climax: '💥 劇情高能爆點組',
-    traffic: '👑 Laya暗號引流組'
+    driver: '🔥 老司机身材热评组',
+    climax: '💥 剧情高能爆点组',
+    traffic: '👑 Laya暗号引流组'
 };
 
 const presetsDB = {
@@ -101,7 +101,7 @@ function syncPauseButtonUI(isPaused) {
 
     if (btnToggle) {
         btnToggle.classList.toggle('paused', isPaused);
-        if (txtMotion) txtMotion.textContent = isPaused ? '▶ 恢復彈幕滾動' : '⏸️ 原地定格彈幕 (方便預覽/截圖)';
+        if (txtMotion) txtMotion.textContent = isPaused ? '▶ 恢复弹幕滚动' : '⏸️ 原地定格弹幕 (方便预览/截图)';
         if (iconMotion) iconMotion.textContent = isPaused ? '▶' : '⏸️';
     }
 }
@@ -179,8 +179,8 @@ function syncPauseButtonUI(isPaused) {
 
             card.innerHTML = `
                 <div class="dm-track-row1">
-                    <input type="text" class="dm-input-text" value="${dm.text}" placeholder="彈幕文字">
-                    <button class="dm-track-del" title="刪除此條">✕</button>
+                    <input type="text" class="dm-input-text" value="${dm.text}" placeholder="弹幕文字">
+                    <button class="dm-track-del" title="删除此条">✕</button>
                 </div>
                 <div class="dm-track-row2">
                     <label>Y高: <input type="number" class="dm-input-top" value="${dm.top}" min="5" max="92" style="width:38px;">%</label>
@@ -189,10 +189,10 @@ function syncPauseButtonUI(isPaused) {
                     ` : `
                         <label>速度: <input type="number" class="dm-input-speed" value="${dm.speed || 8}" min="3" max="25" style="width:36px;">s</label>
                     `}
-                    <label>字號: <input type="number" class="dm-input-size" value="${dm.size || 16}" min="12" max="36" style="width:38px;">px</label>
+                    <label>字号: <input type="number" class="dm-input-size" value="${dm.size || 16}" min="12" max="36" style="width:38px;">px</label>
                     <label>色: <input type="color" class="dm-input-color" value="${dm.color}"></label>
                     <label style="cursor:pointer; display:flex; align-items:center;">
-                        <input type="checkbox" class="dm-input-vis" ${dm.visible !== false ? 'checked' : ''}> 顯示
+                        <input type="checkbox" class="dm-input-vis" ${dm.visible !== false ? 'checked' : ''}> 显示
                     </label>
                 </div>
             `;
@@ -250,7 +250,7 @@ function syncPauseButtonUI(isPaused) {
             card.querySelector('.dm-track-del').addEventListener('click', () => {
                 window.DanmakuEngine.list.splice(index, 1);
                 window.DanmakuEngine.refresh();
-                toast('彈幕已刪除');
+                toast('弹幕已删除');
             });
 
             danmakuTrackList.appendChild(card);
@@ -285,7 +285,7 @@ function syncPauseButtonUI(isPaused) {
         selDmMode.addEventListener('change', (e) => {
             window.DanmakuEngine.mode = e.target.value;
             window.DanmakuEngine.refresh();
-            toast(e.target.value === 'fixed' ? '📌 已切換為：定格排布模式 (自由調X/Y位置)' : '🎬 已切換為：動態滾動模式');
+            toast(e.target.value === 'fixed' ? '📌 已切换为：定格排布模式 (自由调X/Y位置)' : '🎬 已切换为：动态滚动模式');
         });
     }
 
@@ -324,7 +324,7 @@ function syncPauseButtonUI(isPaused) {
                 visible: true
             });
             window.DanmakuEngine.refresh();
-            toast('已新增 1 條自定義彈幕');
+            toast('已新增 1 条自定义弹幕');
         });
     }
 
@@ -332,7 +332,7 @@ function syncPauseButtonUI(isPaused) {
         btnParseBatch.addEventListener('click', () => {
             const raw = inBatchDanmaku.value.trim();
             if (!raw) {
-                toast('請先粘貼文本內容');
+                toast('请先粘贴文本内容');
                 return;
             }
             const segs = raw.split(/[\n,，;；。]+/).map(s => s.trim()).filter(s => s.length > 0);
@@ -353,13 +353,10 @@ function syncPauseButtonUI(isPaused) {
             window.DanmakuEngine.list = [...window.DanmakuEngine.list, ...newTracks];
             window.DanmakuEngine.refresh();
             inBatchDanmaku.value = '';
-            toast(`已導入 ${segs.length} 條彈幕！`);
+            toast(`已导入 ${segs.length} 条弹幕！`);
         });
     }
 
-    /* ==========================================================================
-       ★ 核心：弹幕开关默认关闭 + 与底部 [彈] 胶囊双向同步
-       ========================================================================== */
     function applyDanmakuVisibility(isVisible) {
         if (danmakuContainer) {
             danmakuContainer.style.display = isVisible ? 'block' : 'none';
@@ -372,7 +369,6 @@ function syncPauseButtonUI(isPaused) {
         }
     }
 
-    // 默认执行一次关闭
     applyDanmakuVisibility(false);
 
     if (swDanmaku) {
@@ -385,18 +381,17 @@ function syncPauseButtonUI(isPaused) {
         btnQuickDmToggle.addEventListener('click', () => {
             const nextState = !swDanmaku.checked;
             applyDanmakuVisibility(nextState);
-            toast(nextState ? '彈幕已開啓' : '彈幕已關閉');
+            toast(nextState ? '弹幕已开启' : '弹幕已关闭');
         });
     }
 
     if (btnOpenDmInput) {
         btnOpenDmInput.addEventListener('click', () => {
-            const userDm = prompt('請輸入你要發射的實時彈幕：', document.getElementById('disp-dm-placeholder').textContent);
+            const userDm = prompt('请输入你要发射的实时弹幕：', document.getElementById('disp-dm-placeholder').textContent);
             if (userDm && userDm.trim()) {
                 window.DanmakuEngine.fireLive(userDm.trim(), '#ff7675');
-                // 发射后自动临时开启弹幕便于看见
                 applyDanmakuVisibility(true);
-                toast(`🚀 彈幕已發射：「${userDm.trim()}」`);
+                toast(`🚀 弹幕已发射：「${userDm.trim()}」`);
             }
         });
     }
