@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * app.js - 全局中枢控制、全自动记忆引擎 (LocalStorage) 与无损截图/视频引擎
+ * app.js - 全局中枢控制、彻底解决录屏黑屏、全屏实机预览与双皮肤切换引擎
  * ==========================================================================
  */
 
@@ -43,8 +43,8 @@ window.switchRightTab = function (mode) {
     }
 };
 
-// 官方原生默认头像 Base64 常量
-const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjUwIiBmaWxsPSIjMEQ1QkUxIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMzYiIGZpbGw9IiMyMTcyRjUiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIyMiIgZmlsbD0iIzNEODhGRCIvPjx0ZXh0IHg9IjUwIiB5PSI2MiIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjkwMCIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+TGF5YTwvdGV4dD48L3N2Zz4=";
+// 官方原版 3D 拟真 Laya 图标 Base64 (稳定展示，防止破损)
+const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjUwIiBmaWxsPSIjMEQ1QkUxIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMzgiIGZpbGw9IiMyMTcyRjUiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIyNiIgZmlsbD0iIzNEODhGRCIvPjxwYXRoIGQ9Ik0yOCAzMiBoMTIgdiAyNCBoMTYgdiAxMSBIMjggeiIgZmlsbD0iI2ZmZmZmZiIvPjx0ZXh0IHg9IjU1IiB5PSI2NCIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjkwMCIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+YXlhPC90ZXh0Pjwvc3ZnPg==";
 
 (function () {
     const tabWeb = document.getElementById('tab-btn-web');
@@ -56,7 +56,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
     if (tabDm) tabDm.addEventListener('click', () => window.switchRightTab('dm'));
 
     /* ==========================================================================
-       A. 高能热度波浪曲线 (Canvas 贝塞尔平滑绘制)
+       A. 波浪热度曲线
        ========================================================================== */
     const waveCanvas = document.getElementById('waveform-canvas');
     const wrapWaveform = document.getElementById('wrap-waveform');
@@ -221,7 +221,32 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
     }
 
     /* ==========================================================================
-       C. 全站显隐开关与文案绑定
+       ★ C. 手机端双风格原生切换引擎 (通过类名锁定，杜绝样式覆盖失效)
+       ========================================================================== */
+    const selMobileSkin = document.getElementById('sel-mobile-skin');
+    const renderTarget = document.getElementById('render-target');
+
+    function applyMobileSkin(skin) {
+        if (!renderTarget) return;
+        if (skin === 'laya') {
+            renderTarget.classList.remove('skin-douyin');
+            renderTarget.classList.add('skin-laya');
+        } else {
+            renderTarget.classList.remove('skin-laya');
+            renderTarget.classList.add('skin-douyin');
+        }
+        triggerSaveStorage();
+    }
+
+    if (selMobileSkin) {
+        selMobileSkin.addEventListener('change', (e) => {
+            applyMobileSkin(e.target.value);
+            window.showToast(e.target.value === 'laya' ? '💎 已切换为：Laya 官方原生交友社区风格 (图三)' : '📱 已切换为：抖音原生短视频风格 (图二)');
+        });
+    }
+
+    /* ==========================================================================
+       D. 全站显隐开关与文案绑定
        ========================================================================== */
     const bindToggle = (switchId, targetId) => {
         const sw = document.getElementById(switchId);
@@ -252,7 +277,16 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
     bindToggle('sw-dy-campaign', 'dy-wrap-campaign');
     bindToggle('sw-dy-right-bar', 'dy-wrap-right-bar');
     bindToggle('sw-dy-top-nav', 'dy-wrap-top-nav');
-    bindToggle('sw-dy-purple-mask', 'dy-wrap-bottom-bar');
+
+    // 核心新增：【🔥热点】栏显隐开关联动 (默认关闭)
+    const swDyHotspot = document.getElementById('sw-dy-hotspot');
+    const dyWrapHotspot = document.getElementById('dy-wrap-hotspot');
+    if (swDyHotspot && dyWrapHotspot) {
+        swDyHotspot.addEventListener('change', (e) => {
+            dyWrapHotspot.style.display = e.target.checked ? 'flex' : 'none';
+            triggerSaveStorage();
+        });
+    }
 
     const bindText = (inputId, outputId) => {
         const inp = document.getElementById(inputId);
@@ -277,8 +311,9 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
     bindText('in-dy-tags', 'dy-disp-tags');
     bindText('in-dy-campaign', 'dy-disp-campaign');
     bindText('in-dy-gold-title', 'dy-disp-gold-title');
+    bindText('in-dy-hotspot-title', 'dy-disp-hotspot-title');
+    bindText('in-dy-hotspot-views', 'dy-disp-hotspot-views');
 
-    // 核心新增：未读消息数量双向绑定 (填空则隐藏角标)
     const inDyMsgCount = document.getElementById('in-dy-msg-count');
     const dyDispMsgBubble = document.getElementById('dy-disp-msg-bubble');
     if (inDyMsgCount && dyDispMsgBubble) {
@@ -310,10 +345,14 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
         });
     }
 
-    // 头像自定义上传与恢复默认机制
+    // 头像装载与恢复默认
     const dyAvatarUploader = document.getElementById('dy-avatar-uploader');
     const dyAvatarImg = document.getElementById('dy-avatar-img');
     const btnResetAvatar = document.getElementById('btn-reset-avatar');
+
+    if (dyAvatarImg && !dyAvatarImg.src) {
+        dyAvatarImg.src = OFFICIAL_LAYA_B64;
+    }
 
     if (dyAvatarUploader && dyAvatarImg) {
         dyAvatarUploader.addEventListener('change', (e) => {
@@ -322,7 +361,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
             const reader = new FileReader();
             reader.onload = (evt) => {
                 dyAvatarImg.src = evt.target.result;
-                window.showToast('头像已成功更新并记忆！');
+                window.showToast('头像已成功更换！');
                 triggerSaveStorage();
             };
             reader.readAsDataURL(file);
@@ -331,30 +370,50 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
 
     if (btnResetAvatar && dyAvatarImg) {
         btnResetAvatar.addEventListener('click', () => {
-            dyAvatarImg.src = DEFAULT_AVATAR_B64;
-            window.showToast('已恢复原生官方头像！');
-            triggerSaveStorage();
-        });
-    }
-
-    const selRecordSec = document.getElementById('sel-record-sec');
-    const inCustomSec = document.getElementById('in-custom-sec');
-    if (selRecordSec && inCustomSec) {
-        selRecordSec.addEventListener('change', (e) => {
-            if (e.target.value === 'custom') {
-                inCustomSec.style.display = 'inline-block';
-                inCustomSec.focus();
-            } else {
-                inCustomSec.style.display = 'none';
-            }
+            dyAvatarImg.src = OFFICIAL_LAYA_B64;
+            window.showToast('已恢复官方 3D Laya 头像！');
             triggerSaveStorage();
         });
     }
 
     /* ==========================================================================
-       ★ D. 全自动 LocalStorage 记忆系统与“一键重置”引擎
+       ★ E. 全屏实机预览模式 (所见即所得、真机比例复刻、带播放/暂停)
        ========================================================================== */
-    const STORAGE_KEY = 'LAYA_PLAYER_STUDIO_PERSIST_V2';
+    const btnOpenPreview = document.getElementById('btn-open-preview');
+    const btnClosePreview = document.getElementById('btn-close-preview');
+    const fullscreenPreviewModal = document.getElementById('fullscreen-preview-modal');
+    const previewStageWrap = document.getElementById('preview-stage-wrap');
+    const playerStage = document.querySelector('.player-stage');
+    const btnPreviewPauseToggle = document.getElementById('btn-preview-pause-toggle');
+
+    if (btnOpenPreview && fullscreenPreviewModal && renderTarget && previewStageWrap) {
+        btnOpenPreview.addEventListener('click', () => {
+            previewStageWrap.appendChild(renderTarget);
+            fullscreenPreviewModal.classList.add('show');
+            window.showToast('🖥️ 全屏实机预览已开启：预览效果与下载 100% 一致');
+        });
+    }
+
+    function exitFullscreenPreview() {
+        if (!fullscreenPreviewModal || !renderTarget || !playerStage) return;
+        playerStage.appendChild(renderTarget);
+        fullscreenPreviewModal.classList.remove('show');
+    }
+
+    if (btnClosePreview) btnClosePreview.addEventListener('click', exitFullscreenPreview);
+
+    if (btnPreviewPauseToggle) {
+        btnPreviewPauseToggle.addEventListener('click', () => {
+            if (window.PlayerEngine && window.PlayerEngine.togglePlayback) {
+                window.PlayerEngine.togglePlayback();
+            }
+        });
+    }
+
+    /* ==========================================================================
+       F. 全自动 LocalStorage 记忆系统与“一键重置”
+       ========================================================================== */
+    const STORAGE_KEY = 'LAYA_STUDIO_PERSIST_V4';
     let saveTimeout = null;
 
     function triggerSaveStorage() {
@@ -371,10 +430,10 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                 selects: {},
                 avatar: document.getElementById('dy-avatar-img')?.src || '',
                 danmakuList: window.DanmakuEngine ? window.DanmakuEngine.list : [],
-                danmakuMode: window.DanmakuEngine ? window.DanmakuEngine.mode : 'scroll'
+                danmakuMode: window.DanmakuEngine ? window.DanmakuEngine.mode : 'scroll',
+                skin: document.getElementById('sel-mobile-skin')?.value || 'douyin'
             };
 
-            // 自动抓取全部表单值
             document.querySelectorAll('input[type="text"], input[type="number"], input[type="range"], textarea').forEach(el => {
                 if (el.id) data.inputs[el.id] = el.value;
             });
@@ -387,17 +446,19 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
 
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {
-            console.warn('LocalStorage save error:', e);
+            console.warn('Storage save:', e);
         }
     }
 
     function loadAllFromStorage() {
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
-            if (!raw) return;
+            if (!raw) {
+                if (dyAvatarImg) dyAvatarImg.src = OFFICIAL_LAYA_B64;
+                return;
+            }
             const data = JSON.parse(raw);
 
-            // 1. 恢复输入文本与滑块
             if (data.inputs) {
                 Object.entries(data.inputs).forEach(([id, val]) => {
                     const el = document.getElementById(id);
@@ -408,7 +469,6 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                 });
             }
 
-            // 2. 恢复开关
             if (data.checkboxes) {
                 Object.entries(data.checkboxes).forEach(([id, checked]) => {
                     const el = document.getElementById(id);
@@ -419,7 +479,6 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                 });
             }
 
-            // 3. 恢复下拉选择
             if (data.selects) {
                 Object.entries(data.selects).forEach(([id, val]) => {
                     const el = document.getElementById(id);
@@ -430,25 +489,29 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                 });
             }
 
-            // 4. 恢复头像
-            if (data.avatar && document.getElementById('dy-avatar-img')) {
-                document.getElementById('dy-avatar-img').src = data.avatar;
+            if (data.avatar && dyAvatarImg) {
+                dyAvatarImg.src = data.avatar;
+            } else if (dyAvatarImg) {
+                dyAvatarImg.src = OFFICIAL_LAYA_B64;
             }
 
-            // 5. 恢复弹幕列表与模式
+            if (data.skin && selMobileSkin) {
+                selMobileSkin.value = data.skin;
+                applyMobileSkin(data.skin);
+            }
+
             if (data.danmakuList && window.DanmakuEngine) {
                 window.DanmakuEngine.list = data.danmakuList;
                 if (data.danmakuMode) window.DanmakuEngine.mode = data.danmakuMode;
                 window.DanmakuEngine.refresh();
             }
 
-            window.showToast('✨ 已自动载入上次保存的配置！');
+            window.showToast('✨ 已自动恢复上次保存的配置！');
         } catch (e) {
-            console.warn('LocalStorage load error:', e);
+            console.warn('Storage load:', e);
         }
     }
 
-    // 一键重置功能
     const btnGlobalReset = document.getElementById('btn-global-reset');
     if (btnGlobalReset) {
         btnGlobalReset.addEventListener('click', () => {
@@ -459,11 +522,10 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
         });
     }
 
-    // 页面加载完成后自动恢复记忆
     setTimeout(loadAllFromStorage, 100);
 
     /* ==========================================================================
-       E. 全局繁简一键智能互转 (仅作用于左侧视频区)
+       G. 全局繁简一键互转 (作用于左侧)
        ========================================================================== */
     let isTraditional = true;
     const s2tDict = {
@@ -473,7 +535,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
         '已解锁完整无码未删减版，点击任意处播放': '已解鎖完整無碼未刪減版，點擊任意處播放',
         '特权生效中': '特權生效中', '点击继续播放': '點擊繼續播放', '点击暂停播放': '點擊暫停播放', '弹幕': '彈幕',
         '倍速': '倍速', '精选': '精選', '热点': '熱點', '关注': '關注', '全屏观看': '全屏觀看',
-        '首页': '首頁', '朋友': '朋友', '消息': '消息', '我': '我'
+        '首页': '首頁', '朋友': '朋友', '消息': '消息', '我': '我', '发现': '發現', '瞬间': '瞬間', '视讯': '視訊', '娱乐': '娛樂', '我的': '我的'
     };
     const t2sDict = Object.fromEntries(Object.entries(s2tDict).map(([k, v]) => [v, k]));
 
@@ -482,7 +544,6 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
         btnToggleLang.addEventListener('click', () => {
             isTraditional = !isTraditional;
             const dict = isTraditional ? s2tDict : t2sDict;
-            const renderTarget = document.getElementById('render-target');
             if (!renderTarget) return;
 
             const walker = document.createTreeWalker(renderTarget, NodeFilter.SHOW_TEXT, null, false);
@@ -500,12 +561,11 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
     }
 
     /* ==========================================================================
-       F. 超高清截图导出 (PNG 导出，防压扁)
+       H. 超高清截图导出
        ========================================================================== */
     const btnSaveImg = document.getElementById('btn-save-img');
     if (btnSaveImg) {
         btnSaveImg.addEventListener('click', () => {
-            const renderTarget = document.getElementById('render-target');
             if (!renderTarget) return;
 
             window.showToast('📸 正在渲染超高清图片...');
@@ -516,9 +576,6 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                 allowTaint: true,
                 backgroundColor: '#000000',
                 onclone: (clonedDoc) => {
-                    const clonedVf = clonedDoc.getElementById('viewfinder-overlay');
-                    if (clonedVf) clonedVf.style.display = 'none';
-
                     const containerBox = renderTarget.getBoundingClientRect();
                     const cW = containerBox.width;
                     const cH = containerBox.height;
@@ -600,13 +657,12 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
     }
 
     /* ==========================================================================
-       G. 带框视频合成录制引擎
+       ★ I. 核心修复：彻底消灭录屏黑屏 (外壳剥离纯黑背景 + 100% 透明 UI 合成)
        ========================================================================== */
     const btnSaveVid = document.getElementById('btn-save-vid');
     if (btnSaveVid) {
         btnSaveVid.addEventListener('click', async () => {
             const previewVideo = document.getElementById('preview-video');
-            const renderTarget = document.getElementById('render-target');
             const inMediaScale = document.getElementById('in-media-scale');
             const inPosY = document.getElementById('in-pos-y');
             const inPosX = document.getElementById('in-pos-x');
@@ -616,12 +672,12 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                 return;
             }
 
-            let recordSeconds = parseInt(selRecordSec.value);
-            if (selRecordSec.value === 'custom') {
-                recordSeconds = Math.max(1, parseInt(inCustomSec.value) || 8);
+            let recordSeconds = parseInt(document.getElementById('sel-record-sec').value);
+            if (document.getElementById('sel-record-sec').value === 'custom') {
+                recordSeconds = Math.max(1, parseInt(document.getElementById('in-custom-sec').value) || 8);
             }
 
-            btnSaveVid.textContent = `⏳ 预处理 UI 图层...`;
+            btnSaveVid.textContent = `⏳ 预处理 UI 蒙版...`;
             btnSaveVid.disabled = true;
 
             try {
@@ -629,18 +685,26 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                 const outW = isDouyin ? 720 : 1280;
                 const outH = isDouyin ? 1280 : 720;
 
+                // ★ 致命修复：在克隆节点中彻底抹除 .player-box 的 #000 黑色背景，防止遮盖视频
                 const uiSnapshotCanvas = await html2canvas(renderTarget, {
-                    backgroundColor: null,
+                    backgroundColor: null, // 透明背景
                     scale: outW / renderTarget.offsetWidth,
                     useCORS: true,
                     allowTaint: true,
                     onclone: (clonedDoc) => {
+                        const target = clonedDoc.getElementById('render-target');
+                        if (target) {
+                            // 移除任何带有 background 的类
+                            target.className = target.className.replace(/\bplayer-box\b/, '');
+                            target.style.setProperty('background', 'transparent', 'important');
+                            target.style.setProperty('background-color', 'transparent', 'important');
+                            target.style.setProperty('box-shadow', 'none', 'important');
+                            target.style.setProperty('border', 'none', 'important');
+                        }
                         const media = clonedDoc.getElementById('player-media-wrap');
-                        if (media) media.style.visibility = 'hidden';
+                        if (media) media.style.display = 'none';
                         const dm = clonedDoc.getElementById('danmaku-container');
-                        if (dm) dm.style.visibility = 'hidden';
-                        const vf = clonedDoc.getElementById('viewfinder-overlay');
-                        if (vf) vf.style.display = 'none';
+                        if (dm) dm.style.display = 'none';
                     }
                 });
 
@@ -651,6 +715,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                 offCanvas.height = outH;
                 const ctx = offCanvas.getContext('2d');
 
+                // 音频抓取保护
                 let audioTracks = [];
                 try {
                     if (!window._audioCtx) {
@@ -667,7 +732,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                     }
                     audioTracks = window._audioDstNode.stream.getAudioTracks();
                 } catch (audioErr) {
-                    console.warn('Audio capture fallback:', audioErr);
+                    console.warn('Audio fallback:', audioErr);
                 }
 
                 const canvasStream = offCanvas.captureStream(30);
@@ -705,7 +770,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                     const downloadUrl = URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.style.display = 'none';
-                    link.download = `Laya_${isDouyin ? 'TikTok' : 'WebPlayer'}_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
+                    link.download = `Laya_${isDouyin ? 'Mobile' : 'WebPlayer'}_${Date.now()}.${mime.includes('mp4') ? 'mp4' : 'webm'}`;
                     link.href = downloadUrl;
                     document.body.appendChild(link);
                     link.click();
@@ -716,7 +781,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
 
                     btnSaveVid.textContent = '合成下载视频 (带边框与原声)';
                     btnSaveVid.disabled = false;
-                    window.showToast('🎉 视频导出完成！');
+                    window.showToast('🎉 视频合成导出成功！绝无黑屏！');
                 };
 
                 const danmakuParticles = (window.DanmakuEngine ? window.DanmakuEngine.getActiveList() : []).map((dm, idx) => ({
@@ -751,6 +816,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(0, 0, outW, outH);
 
+                    // 1. 真实比例绘制视频底层
                     const vw = previewVideo.videoWidth || 1280;
                     const vh = previewVideo.videoHeight || 720;
                     const mAspect = vw / vh;
@@ -773,7 +839,7 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                             rh = rw / mAspect;
                         } else {
                             rh = outH * zoom;
-                            rh = rw / mAspect;
+                            rw = rh * mAspect;
                         }
                     }
 
@@ -782,9 +848,14 @@ const DEFAULT_AVATAR_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3
                     const offX = (outW - rw) * posX;
                     const offY = (outH - rh) * posY;
 
-                    ctx.drawImage(previewVideo, offX, offY, rw, rh);
+                    if (previewVideo.readyState >= 2) {
+                        ctx.drawImage(previewVideo, offX, offY, rw, rh);
+                    }
+
+                    // 2. 覆盖纯透明 UI 图层 (包含边框与全部按钮，绝无纯黑底布)
                     ctx.drawImage(uiSnapshotCanvas, 0, 0, outW, outH);
 
+                    // 3. 动态绘制弹幕
                     const swDm = document.getElementById('sw-danmaku');
                     if (swDm && swDm.checked) {
                         const fontSize = (parseInt(document.getElementById('in-danmaku-size').value) || 16) * (outW / 960);
