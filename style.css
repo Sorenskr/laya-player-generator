@@ -174,7 +174,12 @@ header {
     transform: translateY(0);
 }
 
-/* 一键重置记忆按键 */
+.btn-preview {
+    background: linear-gradient(135deg, #0984e3, #6c5ce7);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(108, 92, 231, 0.35);
+}
+
 .btn-reset {
     background: rgba(231, 76, 60, 0.18);
     border: 1px solid rgba(231, 76, 60, 0.5);
@@ -226,6 +231,7 @@ main {
     display: flex;
     flex: 1;
     overflow: hidden;
+    position: relative;
 }
 
 .workspace {
@@ -312,15 +318,6 @@ main {
     height: 100%;
     overflow: hidden;
     z-index: 1;
-    cursor: default;
-}
-
-.media-container.can-drag {
-    cursor: grab;
-}
-
-.media-container.is-dragging {
-    cursor: grabbing !important;
 }
 
 .player-bg-media {
@@ -334,60 +331,182 @@ main {
 }
 
 /* ==========================================================================
-   构图参考线
+   ★ 核心新增：图四独立小窗取景器样式 (Crop Inspector Window)
    ========================================================================== */
-.viewfinder-overlay {
+.crop-inspector-window {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 4;
-    border: 1.5px dashed rgba(61, 136, 253, 0.7);
-    display: none;
+    bottom: 24px;
+    left: 24px;
+    width: 220px;
+    background: rgba(19, 22, 31, 0.96);
+    border: 1.5px solid rgba(61, 136, 253, 0.6);
+    border-radius: 10px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.85);
+    z-index: 80;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-.viewfinder-overlay.active {
-    display: block;
+.crop-window-header {
+    background: #181c26;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.vf-grid-line {
-    position: absolute;
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.vf-h1 { top: 33.33%; left: 0; width: 100%; height: 1px; }
-.vf-h2 { top: 66.66%; left: 0; width: 100%; height: 1px; }
-.vf-v1 { left: 33.33%; top: 0; width: 1px; height: 100%; }
-.vf-v2 { left: 66.66%; top: 0; width: 1px; height: 100%; }
-
-.vf-corner {
-    position: absolute;
-    width: 14px;
-    height: 14px;
-    border-color: #3D88FD;
-    border-style: solid;
-}
-.vf-corner.tl { top: 6px; left: 6px; border-width: 2.5px 0 0 2.5px; }
-.vf-corner.tr { top: 6px; right: 6px; border-width: 2.5px 2.5px 0 0; }
-.vf-corner.bl { bottom: 6px; left: 6px; border-width: 0 0 2.5px 2.5px; }
-.vf-corner.br { bottom: 6px; right: 6px; border-width: 0 2.5px 2.5px 0; }
-
-.vf-hint-pill {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(13, 91, 225, 0.75);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    color: #fff;
-    padding: 4px 10px;
-    border-radius: 12px;
+.crop-window-title {
     font-size: 11px;
-    font-weight: 600;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
-    opacity: 0.85;
+    font-weight: 700;
+    color: #e5e9f0;
+}
+
+.crop-window-close {
+    background: transparent;
+    border: none;
+    color: #8b93a4;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.crop-window-close:hover {
+    color: #ff7675;
+}
+
+.crop-window-body {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+.crop-thumb-img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* 图四同款：红绿高亮取景方框 */
+.crop-selection-box {
+    position: absolute;
+    width: 70%;
+    height: 70%;
+    border: 2px solid #2ecc71;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+    cursor: move;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.crop-box-border {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    border: 1px dashed #e74c3c;
+}
+
+.crop-box-tag {
+    font-size: 9px;
+    color: #2ecc71;
+    font-weight: 800;
+    background: rgba(0,0,0,0.7);
+    padding: 1px 4px;
+    border-radius: 3px;
+    pointer-events: none;
+}
+
+.crop-window-footer {
+    background: #181c26;
+    padding: 4px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #8b93a4;
+}
+
+/* ==========================================================================
+   ★ 核心新增：全屏实机预览弹窗 (Fullscreen Preview Modal)
+   ========================================================================== */
+.fullscreen-preview-modal {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+}
+
+.fullscreen-preview-modal.show {
+    display: flex;
+}
+
+.preview-modal-header {
+    height: 48px;
+    background: #11131a;
+    border-bottom: 1px solid #262c3a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.preview-modal-tip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.preview-badge {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    font-size: 10.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.preview-modal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preview-modal-body {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    overflow: hidden;
+}
+
+.preview-stage-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
+}
+
+.preview-modal-footer {
+    height: 42px;
+    background: #11131a;
+    border-top: 1px solid #262c3a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
 }
 
 /* ==========================================================================
@@ -437,7 +556,7 @@ main {
 }
 
 /* ==========================================================================
-   5. 顶部 HUD 样式
+   5. 电脑端 HUD 样式
    ========================================================================== */
 .player-top {
     position: absolute;
@@ -784,9 +903,6 @@ main {
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
 }
 
-/* ==========================================================================
-   底栏文字舒展对齐
-   ========================================================================== */
 .bottom-ctrl-row {
     display: flex;
     justify-content: space-between;
@@ -973,7 +1089,7 @@ main {
 }
 
 /* ==========================================================================
-   ★ 6. 模式 B: 手机竖屏 (9:16 抖音模式) 1:1 像素级原生复刻
+   ★ 6. 模式 B: 手机竖屏 (9:16) 抖音/Laya 双风格原生样式
    ========================================================================== */
 .douyin-hud {
     display: none;
@@ -997,6 +1113,7 @@ main {
     display: none !important;
 }
 
+/* 风格 1：抖音原生顶部导航 */
 .dy-top-nav {
     position: absolute;
     top: 14px;
@@ -1040,6 +1157,57 @@ main {
     border-radius: 2px;
 }
 
+/* ★ 风格 2：Laya 原生顶部导航 (图三复刻) */
+.laya-top-nav {
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 16px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.7);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    pointer-events: auto;
+}
+
+.laya-nav-tabs {
+    display: flex;
+    align-items: center;
+}
+
+.laya-nav-tabs > span {
+    margin: 0 6px;
+    cursor: pointer;
+    position: relative;
+}
+
+.laya-nav-tabs > span.active {
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.laya-recom-sparkle {
+    font-style: normal;
+    font-size: 11px;
+    margin-left: 2px;
+}
+
+.laya-top-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.laya-trophy-btn {
+    font-size: 16px;
+    cursor: pointer;
+}
+
 .dy-fullscreen-pill {
     position: absolute;
     top: 58%;
@@ -1080,7 +1248,7 @@ main {
     margin-bottom: 14px;
 }
 
-/* 核心优化：确保原生 Base64 头像完美渲染无毛刺 */
+/* 高保真 Laya 3D 拟真头像 */
 .dy-avatar-img {
     width: 44px;
     height: 44px;
@@ -1089,7 +1257,7 @@ main {
     object-fit: cover;
     background: #0D5BE1;
     display: block;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
 }
 
 .dy-follow-plus {
@@ -1296,6 +1464,69 @@ main {
     box-shadow: 0 0 8px rgba(24, 119, 242, 0.5);
 }
 
+/* ★ 核心新增：【🔥热点】精巧条样式 (图二复刻：字号小、排版精细) */
+.dy-hotspot-bar {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 0 8px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.dy-hotspot-left {
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+}
+
+.dy-hot-fire {
+    font-size: 11px;
+    margin-right: 3px;
+}
+
+.dy-hot-tag {
+    color: #ff7675;
+    font-weight: 700;
+    font-size: 10.5px;
+}
+
+.dy-hot-dot {
+    margin: 0 3px;
+    color: rgba(255,255,255,0.4);
+}
+
+.dy-hot-title {
+    color: #f1f2f6;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.dy-hotspot-right {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.dy-hot-views {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 10px;
+}
+
+.dy-hot-arrow {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 10px;
+}
+
 .dy-tiny-progressbar {
     position: relative;
     width: 100%;
@@ -1331,7 +1562,7 @@ main {
     box-shadow: 0 0 4px rgba(0,0,0,0.8);
 }
 
-/* 底部导航栏 */
+/* 风格 1：抖音底部导航栏 */
 .dy-bottom-wrap {
     position: absolute;
     bottom: 0;
@@ -1409,7 +1640,6 @@ main {
     z-index: 2;
 }
 
-/* 消息红色数字气泡：自动适应多位数 */
 .dy-msg-bubble {
     position: absolute;
     top: -5px;
@@ -1427,6 +1657,73 @@ main {
     padding: 0 3.5px;
     line-height: 1;
     box-sizing: border-box;
+}
+
+/* ★ 风格 2：Laya 原生底部导航栏 (图三复刻：發現/瞬間/視訊/娛樂/消息/我的) */
+.laya-bottom-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 52px;
+    z-index: 11;
+    background: rgba(12, 10, 18, 0.98);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 10px 2px 10px;
+    pointer-events: auto;
+}
+
+.laya-bottom-tabs {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.laya-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    gap: 2px;
+}
+
+.laya-tab-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.laya-tab-item.active {
+    color: #3D88FD;
+}
+
+.laya-tab-item.active span:last-child {
+    font-weight: 800;
+    color: #ffffff;
+}
+
+.laya-msg-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    min-width: 15px;
+    height: 14px;
+    background: #FE2C55;
+    color: #fff;
+    border-radius: 7px;
+    font-size: 9.5px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    line-height: 1;
 }
 
 .dy-home-bar {
