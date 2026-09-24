@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * app.js - 全局中枢控制、全图层视频合成引擎与原生互动中心 (强化防空文件与音频复用)
+ * app.js - 全局中枢控制、防畸变全图层视频合成与无损截图引擎
  * ==========================================================================
  */
 
@@ -138,7 +138,7 @@ window.switchRightTab = function (mode) {
     setTimeout(window.drawWaveform, 200);
 
     /* ==========================================================================
-       B. 播放器内部控件原生交互
+       B. 内部控件互动
        ========================================================================== */
     const btnCycleSpeed = document.getElementById('btn-cycle-speed');
     const dispSpeedVal = document.getElementById('disp-speed-val');
@@ -344,7 +344,7 @@ window.switchRightTab = function (mode) {
     }
 
     /* ==========================================================================
-       E. 超高清截图导出
+       ★ E. 超高清截图导出 (核心修复：强制非线性几何矫正，绝不压扁画面)
        ========================================================================== */
     const btnSaveImg = document.getElementById('btn-save-img');
     if (btnSaveImg) {
@@ -352,7 +352,7 @@ window.switchRightTab = function (mode) {
             const renderTarget = document.getElementById('render-target');
             if (!renderTarget) return;
 
-            window.showToast('📸 正在渲染超高清图片 (包含全套边框与UI)...');
+            window.showToast('📸 正在执行几何抗压扁渲染...');
 
             html2canvas(renderTarget, {
                 scale: 2.5,
@@ -360,6 +360,64 @@ window.switchRightTab = function (mode) {
                 allowTaint: true,
                 backgroundColor: '#000000',
                 onclone: (clonedDoc) => {
+                    // 1. 隐藏构图取景线
+                    const clonedVf = clonedDoc.getElementById('viewfinder-overlay');
+                    if (clonedVf) clonedVf.style.display = 'none';
+
+                    // 2. 核心抗畸变矫正算法：计算真实像素比例，防止 html2canvas 强制撑满导致压扁
+                    const containerBox = renderTarget.getBoundingClientRect();
+                    const cW = containerBox.width;
+                    const cH = containerBox.height;
+                    const cAspect = cW / cH;
+
+                    const mediaDims = window.PlayerEngine ? window.PlayerEngine.getMediaNaturalDimensions() : { width: 1280, height: 720 };
+                    const mW = mediaDims.width;
+                    const mH = mediaDims.height;
+                    const mAspect = mW / mH;
+
+                    const zoom = (parseFloat(document.getElementById('in-media-scale').value) || 100) / 100;
+                    const fitMode = document.getElementById('sel-crop-fit')?.value || 'cover';
+
+                    let renderW, renderH;
+                    if (fitMode === 'cover') {
+                        if (mAspect > cAspect) {
+                            renderH = cH * zoom;
+                            renderW = renderH * mAspect;
+                        } else {
+                            renderW = cW * zoom;
+                            renderH = renderW / mAspect;
+                        }
+                    } else { // contain
+                        if (mAspect > cAspect) {
+                            renderW = cW * zoom;
+                            renderH = renderW / mAspect;
+                        } else {
+                            renderH = cH * zoom;
+                            renderW = renderH * mAspect;
+                        }
+                    }
+
+                    const posX = (parseFloat(document.getElementById('in-pos-x').value) || 50) / 100;
+                    const posY = (parseFloat(document.getElementById('in-pos-y').value) || 50) / 100;
+                    const offX = (cW - renderW) * posX;
+                    const offY = (cH - renderH) * posY;
+
+                    // 将克隆 DOM 中的媒体强制锁定为精确的像素长宽与位置，彻底消灭变形
+                    const clonedMedia = window.PlayerEngine.isVideoMode 
+                        ? clonedDoc.getElementById('preview-video')
+                        : clonedDoc.getElementById('preview-img');
+
+                    if (clonedMedia) {
+                        clonedMedia.style.position = 'absolute';
+                        clonedMedia.style.width = renderW + 'px';
+                        clonedMedia.style.height = renderH + 'px';
+                        clonedMedia.style.left = offX + 'px';
+                        clonedMedia.style.top = offY + 'px';
+                        clonedMedia.style.objectFit = 'fill';
+                        clonedMedia.style.transform = 'none';
+                    }
+
+                    // 3. 深度冻结弹幕实时坐标
                     const origBox = renderTarget.getBoundingClientRect();
                     const origItems = renderTarget.querySelectorAll('.danmaku-item');
                     const clonedContainer = clonedDoc.getElementById('danmaku-container');
@@ -382,7 +440,7 @@ window.switchRightTab = function (mode) {
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
-                window.showToast('✅ 高清图片已成功保存！');
+                window.showToast('✅ 高清图片已保存 (无畸变压扁)！');
             }).catch(err => {
                 window.showToast(`❌ 导出失败: ${err.message}`);
             });
@@ -390,7 +448,7 @@ window.switchRightTab = function (mode) {
     }
 
     /* ==========================================================================
-       F. 核心：加固版全图层视频合成引擎 (彻底杜绝 0 字节与空文件)
+       ★ F. 核心：带框视频合成引擎 (等比几何抗压扁 + 原声录制)
        ========================================================================== */
     const btnSaveVid = document.getElementById('btn-save-vid');
     if (btnSaveVid) {
@@ -399,6 +457,7 @@ window.switchRightTab = function (mode) {
             const renderTarget = document.getElementById('render-target');
             const inMediaScale = document.getElementById('in-media-scale');
             const inPosY = document.getElementById('in-pos-y');
+            const inPosX = document.getElementById('in-pos-x');
 
             if (!window.PlayerEngine || !window.PlayerEngine.isVideoMode || !previewVideo) {
                 window.showToast('提示：请先上传一段 MP4/WebM 视频素材！');
@@ -410,7 +469,7 @@ window.switchRightTab = function (mode) {
                 recordSeconds = Math.max(1, parseInt(inCustomSec.value) || 8);
             }
 
-            btnSaveVid.textContent = `⏳ 预处理 UI 图层...`;
+            btnSaveVid.textContent = `⏳ 预处理 UI 边框图层...`;
             btnSaveVid.disabled = true;
 
             try {
@@ -418,7 +477,7 @@ window.switchRightTab = function (mode) {
                 const outW = isDouyin ? 720 : 1280;
                 const outH = isDouyin ? 1280 : 720;
 
-                // 1. 抓取透明 UI 边框快照
+                // 抓取透明 UI 覆盖层
                 const uiSnapshotCanvas = await html2canvas(renderTarget, {
                     backgroundColor: null,
                     scale: outW / renderTarget.offsetWidth,
@@ -429,18 +488,18 @@ window.switchRightTab = function (mode) {
                         if (media) media.style.visibility = 'hidden';
                         const dm = clonedDoc.getElementById('danmaku-container');
                         if (dm) dm.style.visibility = 'hidden';
+                        const vf = clonedDoc.getElementById('viewfinder-overlay');
+                        if (vf) vf.style.display = 'none';
                     }
                 });
 
                 btnSaveVid.textContent = `⏳ 录制合成中 (${recordSeconds}s)...`;
 
-                // 2. 准备离屏画布与媒体流
                 const offCanvas = document.createElement('canvas');
                 offCanvas.width = outW;
                 offCanvas.height = outH;
                 const ctx = offCanvas.getContext('2d');
 
-                // 3. 安全音频捕获 (单例保护 + 强制唤醒 AudioContext)
                 let audioTracks = [];
                 try {
                     if (!window._audioCtx) {
@@ -466,26 +525,21 @@ window.switchRightTab = function (mode) {
                     ...audioTracks
                 ]);
 
-                // 4. 嗅探支持的编码类型
                 let mime = 'video/webm';
                 if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
                     mime = 'video/mp4;codecs=avc1';
                 } else if (MediaRecorder.isTypeSupported('video/mp4')) {
                     mime = 'video/mp4';
-                } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-                    mime = 'video/webm;codecs=vp9';
                 }
 
                 const recorder = new MediaRecorder(combinedStream, {
                     mimeType: mime,
-                    videoBitsPerSecond: 6000000 // 保证导出码率与清晰度
+                    videoBitsPerSecond: 6000000
                 });
 
                 const chunks = [];
                 recorder.ondataavailable = (e) => {
-                    if (e.data && e.data.size > 0) {
-                        chunks.push(e.data);
-                    }
+                    if (e.data && e.data.size > 0) chunks.push(e.data);
                 };
 
                 recorder.onstop = () => {
@@ -522,7 +576,6 @@ window.switchRightTab = function (mode) {
                     speed: (dm.speed ? (22 - dm.speed) : 9) * 0.95
                 }));
 
-                // 5. 准确定位并等待对齐后再开启录制器
                 previewVideo.currentTime = 0;
                 await new Promise(resolve => {
                     const onSeeked = () => {
@@ -530,7 +583,6 @@ window.switchRightTab = function (mode) {
                         resolve();
                     };
                     previewVideo.addEventListener('seeked', onSeeked);
-                    // 超时兜底防卡死
                     setTimeout(resolve, 300);
                 });
 
@@ -539,7 +591,6 @@ window.switchRightTab = function (mode) {
                     window.PlayerEngine.updatePlayStateUI(true);
                 }
 
-                // 250ms 产出一次数据切片，保证数据完整不丢包
                 recorder.start(250);
 
                 let isRecording = true;
@@ -549,24 +600,37 @@ window.switchRightTab = function (mode) {
                     ctx.fillStyle = '#000000';
                     ctx.fillRect(0, 0, outW, outH);
 
+                    // 精准等比绘制视频帧 (杜绝压扁)
                     const vw = previewVideo.videoWidth || 1280;
                     const vh = previewVideo.videoHeight || 720;
                     const mAspect = vw / vh;
                     const cAspect = outW / outH;
                     const zoom = (parseFloat(inMediaScale.value) || 100) / 100;
+                    const fitMode = document.getElementById('sel-crop-fit')?.value || 'cover';
 
                     let rw, rh;
-                    if (mAspect > cAspect) {
-                        rh = outH * zoom;
-                        rw = rh * mAspect;
+                    if (fitMode === 'cover') {
+                        if (mAspect > cAspect) {
+                            rh = outH * zoom;
+                            rw = rh * mAspect;
+                        } else {
+                            rw = outW * zoom;
+                            rh = rw / mAspect;
+                        }
                     } else {
-                        rw = outW * zoom;
-                        rh = rw / mAspect;
+                        if (mAspect > cAspect) {
+                            rw = outW * zoom;
+                            rh = rw / mAspect;
+                        } else {
+                            rh = outH * zoom;
+                            rw = rh * mAspect;
+                        }
                     }
 
+                    const posX = (parseFloat(inPosX.value) || 50) / 100;
                     const posY = (parseFloat(inPosY.value) || 50) / 100;
+                    const offX = (outW - rw) * posX;
                     const offY = (outH - rh) * posY;
-                    const offX = (outW - rw) * 0.5;
 
                     ctx.drawImage(previewVideo, offX, offY, rw, rh);
                     ctx.drawImage(uiSnapshotCanvas, 0, 0, outW, outH);
