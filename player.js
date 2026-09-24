@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * player.js - 媒体播放器核心控制引擎 (支持鼠标画面拖拽构图与滚轮缩放)
+ * player.js - 媒体播放器引擎 (支持图四独立取景浮窗拖拽与全屏预览联动)
  * ==========================================================================
  */
 
@@ -26,7 +26,6 @@ window.PlayerEngine = {
         return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     },
 
-    // 获取当前媒体的自然原始尺寸 (用于导出时数学等比反畸变)
     getMediaNaturalDimensions() {
         if (this.isVideoMode && this.previewVideo) {
             return {
@@ -49,9 +48,6 @@ window.PlayerEngine = {
     const previewVideo = document.getElementById('preview-video');
     const mediaUploader = document.getElementById('media-uploader');
     const dyFullscreenPill = document.getElementById('dy-fullscreen-pill');
-    const playerMediaWrap = document.getElementById('player-media-wrap');
-    const viewfinderOverlay = document.getElementById('viewfinder-overlay');
-    const swViewfinder = document.getElementById('sw-viewfinder');
     const selCropFit = document.getElementById('sel-crop-fit');
 
     const btnTogglePlayback = document.getElementById('btn-toggle-playback');
@@ -83,6 +79,15 @@ window.PlayerEngine = {
     const btnResetPos = document.getElementById('btn-reset-pos');
     const btnFacePreset = document.getElementById('btn-face-preset');
 
+    // 图四独立小窗 DOM
+    const swCropWindow = document.getElementById('sw-crop-window');
+    const cropInspectorWindow = document.getElementById('crop-inspector-window');
+    const btnCloseCropWindow = document.getElementById('btn-close-crop-window');
+    const cropThumbImg = document.getElementById('crop-thumb-img');
+    const cropSelectionBox = document.getElementById('crop-selection-box');
+    const cropWindowBody = document.getElementById('crop-window-body');
+    const btnCropReset = document.getElementById('btn-crop-reset');
+
     window.PlayerEngine.renderTarget = renderTarget;
     window.PlayerEngine.previewImg = previewImg;
     window.PlayerEngine.previewVideo = previewVideo;
@@ -110,12 +115,13 @@ window.PlayerEngine = {
             }
 
             checkMediaAspect();
+            syncCropBoxRatio();
             if (typeof window.drawWaveform === 'function') window.drawWaveform();
         });
     });
 
     /* ==========================================================================
-       2. 媒体上传、嗅探与自适应
+       2. 媒体上传、嗅探与小窗同步
        ========================================================================== */
     if (mediaUploader) {
         mediaUploader.addEventListener('click', () => {
@@ -141,12 +147,25 @@ window.PlayerEngine = {
                     URL.revokeObjectURL(previewVideo.src);
                 }
 
-                previewVideo.src = URL.createObjectURL(file);
+                const vidUrl = URL.createObjectURL(file);
+                previewVideo.src = vidUrl;
                 previewVideo.play().then(() => {
                     updatePlayStateUI(true);
                 }).catch(() => {
                     updatePlayStateUI(false);
                 });
+
+                // 为小窗生成缩略海报
+                const tempVid = document.createElement('video');
+                tempVid.src = vidUrl;
+                tempVid.currentTime = 1;
+                tempVid.onloadeddata = () => {
+                    const c = document.createElement('canvas');
+                    c.width = tempVid.videoWidth;
+                    c.height = tempVid.videoHeight;
+                    c.getContext('2d').drawImage(tempVid, 0, 0);
+                    cropThumbImg.src = c.toDataURL();
+                };
 
                 toast('視頻素材加載成功，原聲已接入！');
             } else if (isImage || !isVideo) {
@@ -159,7 +178,9 @@ window.PlayerEngine = {
                     URL.revokeObjectURL(previewImg.src);
                 }
 
-                previewImg.src = URL.createObjectURL(file);
+                const imgUrl = URL.createObjectURL(file);
+                previewImg.src = imgUrl;
+                cropThumbImg.src = imgUrl;
                 previewImg.onload = () => {
                     checkMediaAspect();
                 };
@@ -167,6 +188,7 @@ window.PlayerEngine = {
                 updatePlayStateUI(false);
                 toast('圖片素材加載成功！');
             }
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
         });
     }
 
@@ -304,7 +326,7 @@ window.PlayerEngine = {
     });
 
     /* ==========================================================================
-       ★ 5. 画面防变形缩放、直接鼠标拖拽构图与滚轮缩放
+       ★ 5. 画面防变形缩放与图四独立取景框小窗交互
        ========================================================================== */
     function updateTransform() {
         const yVal = inPosY.value + '%';
@@ -318,87 +340,150 @@ window.PlayerEngine = {
         txtPosY.textContent = yVal;
         txtPosX.textContent = xVal;
         txtMediaScale.textContent = inMediaScale.value + '%';
+
+        syncCropBoxPosition();
+        if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
     }
 
     inPosY.addEventListener('input', updateTransform);
     inPosX.addEventListener('input', updateTransform);
     inMediaScale.addEventListener('input', updateTransform);
 
-    // 填充模式切换 (Cover 无黑边裁切 vs Contain 完整留黑边)
     if (selCropFit) {
         selCropFit.addEventListener('change', (e) => {
             const fit = e.target.value;
             previewImg.style.objectFit = fit;
             previewVideo.style.objectFit = fit;
             toast(fit === 'cover' ? '已切換為：等比裁切填充 (無黑邊)' : '已切換為：完整畫面包含 (留黑邊不變形)');
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
         });
     }
 
-    // 取景框开关联动
-    if (swViewfinder && viewfinderOverlay && playerMediaWrap) {
-        swViewfinder.addEventListener('change', (e) => {
-            const active = e.target.checked;
-            viewfinderOverlay.classList.toggle('active', active);
-            playerMediaWrap.classList.toggle('can-drag', active);
-            toast(active ? '📐 取景框已開啟：可在畫面上按住鼠標拖拽構圖' : '取景框已關閉');
+    // A. 开启/关闭图四独立小窗
+    if (swCropWindow && cropInspectorWindow) {
+        swCropWindow.addEventListener('change', (e) => {
+            cropInspectorWindow.style.display = e.target.checked ? 'flex' : 'none';
+            if (e.target.checked) {
+                // 初始化缩略图
+                if (!cropThumbImg.src || cropThumbImg.src === window.location.href) {
+                    cropThumbImg.src = previewImg.src;
+                }
+                syncCropBoxRatio();
+                syncCropBoxPosition();
+            }
         });
     }
 
-    // 核心交互：在画面中按住鼠标左键直接拖拽移动画面
-    let isDraggingMedia = false;
-    let startDragX = 0;
-    let startDragY = 0;
-    let startValX = 50;
-    let startValY = 50;
+    if (btnCloseCropWindow) {
+        btnCloseCropWindow.addEventListener('click', () => {
+            swCropWindow.checked = false;
+            cropInspectorWindow.style.display = 'none';
+        });
+    }
 
-    if (playerMediaWrap) {
-        playerMediaWrap.addEventListener('mousedown', (e) => {
-            isDraggingMedia = true;
-            playerMediaWrap.classList.add('is-dragging');
-            startDragX = e.clientX;
-            startDragY = e.clientY;
-            startValX = parseFloat(inPosX.value) || 50;
-            startValY = parseFloat(inPosY.value) || 50;
+    // B. 小窗内根据当前画幅 (16:9 / 19.5:9 / 9:16) 动态约束选框长宽比
+    function syncCropBoxRatio() {
+        if (!cropSelectionBox) return;
+        const isPort = renderTarget.classList.contains('mode-mobile-port');
+        const isLand = renderTarget.classList.contains('mode-mobile-land');
+        
+        if (isPort) {
+            cropSelectionBox.style.width = '42%';
+            cropSelectionBox.style.aspectRatio = '9 / 16';
+        } else if (isLand) {
+            cropSelectionBox.style.width = '80%';
+            cropSelectionBox.style.aspectRatio = '19.5 / 9';
+        } else {
+            cropSelectionBox.style.width = '75%';
+            cropSelectionBox.style.aspectRatio = '16 / 9';
+        }
+    }
+
+    function syncCropBoxPosition() {
+        if (!cropSelectionBox || !cropWindowBody) return;
+        const xPct = parseFloat(inPosX.value) || 50;
+        const yPct = parseFloat(inPosY.value) || 50;
+        
+        const bodyW = cropWindowBody.offsetWidth;
+        const bodyH = cropWindowBody.offsetHeight;
+        const boxW = cropSelectionBox.offsetWidth;
+        const boxH = cropSelectionBox.offsetHeight;
+
+        const maxLeft = bodyW - boxW;
+        const maxTop = bodyH - boxH;
+
+        if (maxLeft > 0 && maxTop > 0) {
+            cropSelectionBox.style.left = (maxLeft * (1 - xPct / 100)) + 'px';
+            cropSelectionBox.style.top = (maxTop * (1 - yPct / 100)) + 'px';
+        }
+    }
+
+    // C. 核心拖拽：在图四小窗里按住绿色框框直接拖拽，实时改变大屏取景！
+    let isDraggingCrop = false;
+    let cropStartX = 0, cropStartY = 0;
+    let cropBoxStartLeft = 0, cropBoxStartTop = 0;
+
+    if (cropSelectionBox && cropWindowBody) {
+        cropSelectionBox.addEventListener('mousedown', (e) => {
+            isDraggingCrop = true;
+            cropStartX = e.clientX;
+            cropStartY = e.clientY;
+            cropBoxStartLeft = cropSelectionBox.offsetLeft;
+            cropBoxStartTop = cropSelectionBox.offsetTop;
             e.preventDefault();
+            e.stopPropagation();
         });
 
         window.addEventListener('mousemove', (e) => {
-            if (!isDraggingMedia) return;
-            const deltaX = e.clientX - startDragX;
-            const deltaY = e.clientY - startDragY;
+            if (!isDraggingCrop) return;
+            const deltaX = e.clientX - cropStartX;
+            const deltaY = e.clientY - cropStartY;
 
-            // 根据容器实际像素计算拖拽位移百分比
-            const rect = renderTarget.getBoundingClientRect();
-            const sensX = (deltaX / rect.width) * 100;
-            const sensY = (deltaY / rect.height) * 100;
+            const bodyW = cropWindowBody.offsetWidth;
+            const bodyH = cropWindowBody.offsetHeight;
+            const boxW = cropSelectionBox.offsetWidth;
+            const boxH = cropSelectionBox.offsetHeight;
 
-            const nextX = Math.min(100, Math.max(0, Math.round(startValX - sensX)));
-            const nextY = Math.min(100, Math.max(0, Math.round(startValY - sensY)));
+            const maxLeft = Math.max(1, bodyW - boxW);
+            const maxTop = Math.max(1, bodyH - boxH);
 
-            inPosX.value = nextX;
-            inPosY.value = nextY;
-            updateTransform();
+            let newLeft = Math.min(maxLeft, Math.max(0, cropBoxStartLeft + deltaX));
+            let newTop = Math.min(maxTop, Math.max(0, cropBoxStartTop + deltaY));
+
+            cropSelectionBox.style.left = newLeft + 'px';
+            cropSelectionBox.style.top = newTop + 'px';
+
+            // 反算为百分比并实时驱动主画面移动
+            const revXPct = Math.round((1 - newLeft / maxLeft) * 100);
+            const revYPct = Math.round((1 - newTop / maxTop) * 100);
+
+            inPosX.value = revXPct;
+            inPosY.value = revYPct;
+
+            const yVal = revYPct + '%';
+            const xVal = revXPct + '%';
+            document.documentElement.style.setProperty('--media-pos-y', yVal);
+            document.documentElement.style.setProperty('--media-pos-x', xVal);
+            txtPosY.textContent = yVal;
+            txtPosX.textContent = xVal;
         });
 
         window.addEventListener('mouseup', () => {
-            if (isDraggingMedia) {
-                isDraggingMedia = false;
-                playerMediaWrap.classList.remove('is-dragging');
+            if (isDraggingCrop) {
+                isDraggingCrop = false;
+                if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             }
         });
+    }
 
-        // 鼠标滚轮在画面上无级缩放
-        playerMediaWrap.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            let curScale = parseInt(inMediaScale.value) || 100;
-            if (e.deltaY < 0) {
-                curScale = Math.min(250, curScale + 5);
-            } else {
-                curScale = Math.max(80, curScale - 5);
-            }
-            inMediaScale.value = curScale;
+    if (btnCropReset) {
+        btnCropReset.addEventListener('click', () => {
+            inPosY.value = 50;
+            inPosX.value = 50;
+            inMediaScale.value = 100;
             updateTransform();
-        }, { passive: false });
+            toast('小窗取景已居中');
+        });
     }
 
     btnResetPos.addEventListener('click', () => {
