@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * danmaku.js - 高级动态/定格弹幕双模工作台 (自动记忆与状态持久化)
+ * danmaku.js - 高级动态/定格弹幕双模工作台 (首屏负延时秒现、持久记忆与多端同步)
  * ==========================================================================
  */
 
@@ -8,7 +8,7 @@ window.DanmakuEngine = {
     list: [],
     container: null,
     trackListUI: null,
-    mode: 'scroll',
+    mode: 'scroll', // 'scroll' (动态滚动) | 'fixed' (静态坐标排布)
     isPaused: false,
     speedFactor: 1.0,
 
@@ -74,25 +74,25 @@ const presetNames = {
 
 const presetsDB = {
     driver: [
-        { id: 'd1', text: '這身材太頂了吧！純欲天花板', top: 14, left: 15, color: '#ffffff', size: 18, speed: 9, visible: true },
+        { id: 'd1', text: '這身材太頂了吧！純欲天花板', top: 15, left: 14, color: '#ffffff', size: 17, speed: 9, visible: true },
         { id: 'd2', text: '這腰臀比是真實存在的嗎？我好了', top: 28, left: 45, color: '#f39c12', size: 16, speed: 11, visible: true },
-        { id: 'd3', text: '極品尤物，營養快線徹底跟不上了！', top: 46, left: 10, color: '#fe2c55', size: 20, speed: 8, visible: true },
-        { id: 'd4', text: '4K 無碼原畫就是香，毛孔都看得清', top: 64, left: 55, color: '#00d2d3', size: 16, speed: 12, visible: true },
-        { id: 'd5', text: '已截圖珍藏，感謝樓主好人一生平安！', top: 80, left: 25, color: '#2ecc71', size: 15, speed: 10, visible: true }
+        { id: 'd3', text: '極品尤物，營養快線徹底跟不上了！', top: 46, left: 10, color: '#fe2c55', size: 19, speed: 8, visible: true },
+        { id: 'd4', text: '4K 無碼原畫就是香，毛孔都看得清', top: 62, left: 52, color: '#00d2d3', size: 16, speed: 12, visible: true },
+        { id: 'd5', text: '已截圖珍藏，感謝樓主好人一生平安！', top: 78, left: 22, color: '#2ecc71', size: 15, speed: 10, visible: true }
     ],
     climax: [
-        { id: 'c1', text: '前方高能！3分20秒直接起飛預警！', top: 15, left: 20, color: '#fe2c55', size: 22, speed: 7, visible: true },
-        { id: 'c2', text: '衛生紙已經用掉半包了，這誰頂得住', top: 32, left: 50, color: '#ff7675', size: 17, speed: 9, visible: true },
+        { id: 'c1', text: '前方高能！3分20秒直接起飛預警！', top: 16, left: 20, color: '#fe2c55', size: 20, speed: 7, visible: true },
+        { id: 'c2', text: '衛生紙已經用掉半包了，這誰頂得住', top: 32, left: 48, color: '#ff7675', size: 17, speed: 9, visible: true },
         { id: 'c3', text: '兄弟們我先衝為敬，後面跟上！', top: 52, left: 12, color: '#f1c40f', size: 18, speed: 8, visible: true },
-        { id: 'c4', text: '求女主番號！這聲音聽得骨頭都酥了', top: 68, left: 60, color: '#ffffff', size: 16, speed: 10, visible: true },
-        { id: 'c5', text: '刺激！這劇情反轉直接戳中XP了', top: 82, left: 30, color: '#a29bfe', size: 16, speed: 12, visible: true }
+        { id: 'c4', text: '求女主番號！這聲音聽得骨頭都酥了', top: 68, left: 58, color: '#ffffff', size: 16, speed: 10, visible: true },
+        { id: 'c5', text: '刺激！這劇情反轉直接戳中XP了', top: 82, left: 28, color: '#a29bfe', size: 16, speed: 12, visible: true }
     ],
     traffic: [
         { id: 't1', text: 'Laya 暗號 1896 真的能看！已解鎖未刪減版', top: 16, left: 15, color: '#f39c12', size: 18, speed: 9, visible: true },
-        { id: 't2', text: '免費通道竟然一點都不卡，太良心了', top: 30, left: 48, color: '#ffffff', size: 16, speed: 11, visible: true },
-        { id: 't3', text: '來 Laya 語音廳，親自演給你看，懂的都懂！', top: 48, left: 8, color: '#2ecc71', size: 20, speed: 8, visible: true },
+        { id: 't2', text: '免費通道竟然一點都不卡，太良心了', top: 30, left: 46, color: '#ffffff', size: 16, speed: 11, visible: true },
+        { id: 't3', text: '來 Laya 語音廳，親自演給你看，懂的都懂！', top: 48, left: 8, color: '#2ecc71', size: 19, speed: 8, visible: true },
         { id: 't4', text: '私密群已上車，高清完整無水印爽翻', top: 66, left: 52, color: '#00d2d3', size: 16, speed: 10, visible: true },
-        { id: 't5', text: '原畫質連線就是爽，今晚不用睡了', top: 80, left: 22, color: '#ff9ff3', size: 16, speed: 12, visible: true }
+        { id: 't5', text: '原畫質連線就是爽，今晚不用睡了', top: 80, left: 20, color: '#ff9ff3', size: 16, speed: 12, visible: true }
     ]
 };
 
@@ -134,12 +134,15 @@ function syncPauseButtonUI(isPaused) {
         if (typeof window.showToast === 'function') window.showToast(msg);
     };
 
+    /* ==========================================================================
+       1. 舞台弹幕渲染 (核心：首屏负延时预分布，打开弹幕即见全屏飘字)
+       ========================================================================== */
     function renderDanmakuStage() {
         if (!danmakuContainer) return;
         danmakuContainer.innerHTML = '';
         const isFixed = (window.DanmakuEngine.mode === 'fixed');
 
-        window.DanmakuEngine.list.forEach((dm) => {
+        window.DanmakuEngine.list.forEach((dm, idx) => {
             if (dm.visible === false) return;
 
             const el = document.createElement('div');
@@ -155,8 +158,12 @@ function syncPauseButtonUI(isPaused) {
                 el.style.transform = 'none';
                 el.style.left = (dm.left !== undefined ? dm.left : 20) + '%';
             } else {
-                const duration = Math.max(2, (dm.speed || 8) / window.DanmakuEngine.speedFactor);
-                el.style.animationDuration = duration.toFixed(1) + 's';
+                const baseDuration = Math.max(2, (dm.speed || 8) / window.DanmakuEngine.speedFactor);
+                el.style.animationDuration = baseDuration.toFixed(1) + 's';
+                
+                // ★ 关键修复：交错负延时，让动画在初次开启或刷新时直接处于中途，全屏立即见字
+                const staggerDelay = -((idx * 1.9) % baseDuration);
+                el.style.animationDelay = staggerDelay.toFixed(1) + 's';
             }
 
             danmakuContainer.appendChild(el);
@@ -170,6 +177,9 @@ function syncPauseButtonUI(isPaused) {
     }
     window.renderDanmakuStage = renderDanmakuStage;
 
+    /* ==========================================================================
+       2. 右侧面板轨道列表可视化卡片
+       ========================================================================== */
     function renderDanmakuTracksUI() {
         if (!danmakuTrackList) return;
         danmakuTrackList.innerHTML = '';
@@ -200,6 +210,7 @@ function syncPauseButtonUI(isPaused) {
                 </div>
             `;
 
+            // 文本改写
             card.querySelector('.dm-input-text').addEventListener('input', (e) => {
                 dm.text = e.target.value;
                 const stageEl = document.getElementById('stage_' + dm.id);
@@ -207,6 +218,7 @@ function syncPauseButtonUI(isPaused) {
                 if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
+            // Y轴高度
             card.querySelector('.dm-input-top').addEventListener('input', (e) => {
                 dm.top = Math.min(95, Math.max(5, parseInt(e.target.value) || 20));
                 const stageEl = document.getElementById('stage_' + dm.id);
@@ -214,6 +226,7 @@ function syncPauseButtonUI(isPaused) {
                 if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
+            // X轴水平位置 (定格模式)
             const inputLeft = card.querySelector('.dm-input-left');
             if (inputLeft) {
                 inputLeft.addEventListener('input', (e) => {
@@ -224,6 +237,7 @@ function syncPauseButtonUI(isPaused) {
                 });
             }
 
+            // 单条速度 (滚动模式)
             const inputSpeed = card.querySelector('.dm-input-speed');
             if (inputSpeed) {
                 inputSpeed.addEventListener('input', (e) => {
@@ -237,6 +251,7 @@ function syncPauseButtonUI(isPaused) {
                 });
             }
 
+            // 独立字号
             card.querySelector('.dm-input-size').addEventListener('input', (e) => {
                 dm.size = Math.min(40, Math.max(12, parseInt(e.target.value) || 16));
                 const stageEl = document.getElementById('stage_' + dm.id);
@@ -244,6 +259,7 @@ function syncPauseButtonUI(isPaused) {
                 if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
+            // 颜色
             card.querySelector('.dm-input-color').addEventListener('input', (e) => {
                 dm.color = e.target.value;
                 const stageEl = document.getElementById('stage_' + dm.id);
@@ -251,12 +267,14 @@ function syncPauseButtonUI(isPaused) {
                 if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
+            // 显隐
             card.querySelector('.dm-input-vis').addEventListener('change', (e) => {
                 dm.visible = e.target.checked;
                 renderDanmakuStage();
                 if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
+            // 删除
             card.querySelector('.dm-track-del').addEventListener('click', () => {
                 window.DanmakuEngine.list.splice(index, 1);
                 window.DanmakuEngine.refresh();
@@ -269,6 +287,9 @@ function syncPauseButtonUI(isPaused) {
     }
     window.renderDanmakuTracksUI = renderDanmakuTracksUI;
 
+    /* ==========================================================================
+       3. 事件监听绑定
+       ========================================================================== */
     if (btnToggleDmMotion) {
         btnToggleDmMotion.addEventListener('click', () => {
             window.DanmakuEngine.togglePause();
@@ -373,6 +394,7 @@ function syncPauseButtonUI(isPaused) {
         });
     }
 
+    // 全局弹幕显隐同步
     function applyDanmakuVisibility(isVisible) {
         if (danmakuContainer) {
             danmakuContainer.style.display = isVisible ? 'block' : 'none';
@@ -388,6 +410,7 @@ function syncPauseButtonUI(isPaused) {
         }
     }
 
+    // 默认关闭
     applyDanmakuVisibility(false);
 
     if (swDanmaku) {
