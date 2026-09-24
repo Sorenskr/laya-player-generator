@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * player.js - 媒体播放器核心控制引擎 (修复图片上传/多格式嗅探/防切脸)
+ * player.js - 媒体播放器核心控制引擎 (支持鼠标画面拖拽构图与滚轮缩放)
  * ==========================================================================
  */
 
@@ -24,6 +24,22 @@ window.PlayerEngine = {
         const m = Math.floor((totalSec % 3600) / 60);
         const s = Math.floor(totalSec % 60);
         return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    },
+
+    // 获取当前媒体的自然原始尺寸 (用于导出时数学等比反畸变)
+    getMediaNaturalDimensions() {
+        if (this.isVideoMode && this.previewVideo) {
+            return {
+                width: this.previewVideo.videoWidth || 1280,
+                height: this.previewVideo.videoHeight || 720
+            };
+        } else if (this.previewImg) {
+            return {
+                width: this.previewImg.naturalWidth || 1280,
+                height: this.previewImg.naturalHeight || 720
+            };
+        }
+        return { width: 1280, height: 720 };
     }
 };
 
@@ -33,6 +49,10 @@ window.PlayerEngine = {
     const previewVideo = document.getElementById('preview-video');
     const mediaUploader = document.getElementById('media-uploader');
     const dyFullscreenPill = document.getElementById('dy-fullscreen-pill');
+    const playerMediaWrap = document.getElementById('player-media-wrap');
+    const viewfinderOverlay = document.getElementById('viewfinder-overlay');
+    const swViewfinder = document.getElementById('sw-viewfinder');
+    const selCropFit = document.getElementById('sel-crop-fit');
 
     const btnTogglePlayback = document.getElementById('btn-toggle-playback');
     const btnBotPlayState = document.getElementById('btn-bot-play-state');
@@ -56,6 +76,8 @@ window.PlayerEngine = {
 
     const inPosY = document.getElementById('in-pos-y');
     const txtPosY = document.getElementById('txt-pos-y');
+    const inPosX = document.getElementById('in-pos-x');
+    const txtPosX = document.getElementById('txt-pos-x');
     const inMediaScale = document.getElementById('in-media-scale');
     const txtMediaScale = document.getElementById('txt-media-scale');
     const btnResetPos = document.getElementById('btn-reset-pos');
@@ -93,15 +115,13 @@ window.PlayerEngine = {
     });
 
     /* ==========================================================================
-       2. 媒体上传、嗅探与自适应 (彻底修复无法上传与类型丢失)
+       2. 媒体上传、嗅探与自适应
        ========================================================================== */
     if (mediaUploader) {
-        // 关键修复 1：点击时先清空 value，允许用户重复选择同一张图片文件
         mediaUploader.addEventListener('click', () => {
             mediaUploader.value = '';
         });
 
-        // 关键修复 2：支持 MIME 类型 + 后缀名双重保底嗅探
         mediaUploader.addEventListener('change', (e) => {
             const file = e.target.files && e.target.files[0];
             if (!file) return;
@@ -109,8 +129,8 @@ window.PlayerEngine = {
             const fileName = file.name || '';
             const fileType = file.type || '';
 
-            const isVideo = fileType.startsWith('video/') || /\.(mp4|webm|mov|mkv|m4v|flv|avi)$/i.test(fileName);
-            const isImage = fileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|bmp|jfif|svg|avif|heic)$/i.test(fileName);
+            const isVideo = fileType.startsWith('video/') || /\.(mp4|webm|mov|m4v|avi)$/i.test(fileName);
+            const isImage = fileType.startsWith('image/') || /\.(jpg|jpeg|png|gif|webp|jfif|bmp|svg)$/i.test(fileName);
 
             if (isVideo) {
                 window.PlayerEngine.isVideoMode = true;
@@ -130,7 +150,6 @@ window.PlayerEngine = {
 
                 toast('視頻素材加載成功，原聲已接入！');
             } else if (isImage || !isVideo) {
-                // 如果是图片或无法识别的媒体，一律以图像模式加载展示
                 window.PlayerEngine.isVideoMode = false;
                 previewVideo.pause();
                 previewVideo.style.display = 'none';
@@ -140,7 +159,6 @@ window.PlayerEngine = {
                     URL.revokeObjectURL(previewImg.src);
                 }
 
-                // 关键修复 3：采用毫秒级 Blob 对象生成，绝不卡死
                 previewImg.src = URL.createObjectURL(file);
                 previewImg.onload = () => {
                     checkMediaAspect();
@@ -158,16 +176,8 @@ window.PlayerEngine = {
             return;
         }
 
-        let w = 1920, h = 1080;
-        if (window.PlayerEngine.isVideoMode) {
-            w = previewVideo.videoWidth || 1920;
-            h = previewVideo.videoHeight || 1080;
-        } else {
-            w = previewImg.naturalWidth || 1920;
-            h = previewImg.naturalHeight || 1080;
-        }
-
-        if (w > h) {
+        const dims = window.PlayerEngine.getMediaNaturalDimensions();
+        if (dims.width > dims.height) {
             if (dyFullscreenPill) dyFullscreenPill.style.display = 'flex';
         } else {
             if (dyFullscreenPill) dyFullscreenPill.style.display = 'none';
@@ -294,24 +304,106 @@ window.PlayerEngine = {
     });
 
     /* ==========================================================================
-       5. 画面防切脸构图微调
+       ★ 5. 画面防变形缩放、直接鼠标拖拽构图与滚轮缩放
        ========================================================================== */
     function updateTransform() {
         const yVal = inPosY.value + '%';
+        const xVal = inPosX.value + '%';
         const scaleVal = inMediaScale.value / 100;
 
         document.documentElement.style.setProperty('--media-pos-y', yVal);
+        document.documentElement.style.setProperty('--media-pos-x', xVal);
         document.documentElement.style.setProperty('--media-scale', scaleVal);
 
         txtPosY.textContent = yVal;
+        txtPosX.textContent = xVal;
         txtMediaScale.textContent = inMediaScale.value + '%';
     }
 
     inPosY.addEventListener('input', updateTransform);
+    inPosX.addEventListener('input', updateTransform);
     inMediaScale.addEventListener('input', updateTransform);
+
+    // 填充模式切换 (Cover 无黑边裁切 vs Contain 完整留黑边)
+    if (selCropFit) {
+        selCropFit.addEventListener('change', (e) => {
+            const fit = e.target.value;
+            previewImg.style.objectFit = fit;
+            previewVideo.style.objectFit = fit;
+            toast(fit === 'cover' ? '已切換為：等比裁切填充 (無黑邊)' : '已切換為：完整畫面包含 (留黑邊不變形)');
+        });
+    }
+
+    // 取景框开关联动
+    if (swViewfinder && viewfinderOverlay && playerMediaWrap) {
+        swViewfinder.addEventListener('change', (e) => {
+            const active = e.target.checked;
+            viewfinderOverlay.classList.toggle('active', active);
+            playerMediaWrap.classList.toggle('can-drag', active);
+            toast(active ? '📐 取景框已開啟：可在畫面上按住鼠標拖拽構圖' : '取景框已關閉');
+        });
+    }
+
+    // 核心交互：在画面中按住鼠标左键直接拖拽移动画面
+    let isDraggingMedia = false;
+    let startDragX = 0;
+    let startDragY = 0;
+    let startValX = 50;
+    let startValY = 50;
+
+    if (playerMediaWrap) {
+        playerMediaWrap.addEventListener('mousedown', (e) => {
+            isDraggingMedia = true;
+            playerMediaWrap.classList.add('is-dragging');
+            startDragX = e.clientX;
+            startDragY = e.clientY;
+            startValX = parseFloat(inPosX.value) || 50;
+            startValY = parseFloat(inPosY.value) || 50;
+            e.preventDefault();
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDraggingMedia) return;
+            const deltaX = e.clientX - startDragX;
+            const deltaY = e.clientY - startDragY;
+
+            // 根据容器实际像素计算拖拽位移百分比
+            const rect = renderTarget.getBoundingClientRect();
+            const sensX = (deltaX / rect.width) * 100;
+            const sensY = (deltaY / rect.height) * 100;
+
+            const nextX = Math.min(100, Math.max(0, Math.round(startValX - sensX)));
+            const nextY = Math.min(100, Math.max(0, Math.round(startValY - sensY)));
+
+            inPosX.value = nextX;
+            inPosY.value = nextY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDraggingMedia) {
+                isDraggingMedia = false;
+                playerMediaWrap.classList.remove('is-dragging');
+            }
+        });
+
+        // 鼠标滚轮在画面上无级缩放
+        playerMediaWrap.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            let curScale = parseInt(inMediaScale.value) || 100;
+            if (e.deltaY < 0) {
+                curScale = Math.min(250, curScale + 5);
+            } else {
+                curScale = Math.max(80, curScale - 5);
+            }
+            inMediaScale.value = curScale;
+            updateTransform();
+        }, { passive: false });
+    }
 
     btnResetPos.addEventListener('click', () => {
         inPosY.value = 50;
+        inPosX.value = 50;
         inMediaScale.value = 100;
         updateTransform();
         toast('畫面已恢復默認居中');
@@ -319,6 +411,7 @@ window.PlayerEngine = {
 
     btnFacePreset.addEventListener('click', () => {
         inPosY.value = 18;
+        inPosX.value = 50;
         inMediaScale.value = 110;
         updateTransform();
         toast('已應用快速露臉構圖預設');
