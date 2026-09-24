@@ -1,5 +1,5 @@
 /* ==========================================================================
-   0. 全局设计系统变量与重置层 (强化现代无衬线字体栈与抗锯齿)
+   0. 全局设计系统变量与重置层
    ========================================================================== */
 :root {
     --primary: #1877F2;
@@ -770,9 +770,6 @@ main {
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
 }
 
-/* ==========================================================================
-   ★ 核心修复：底栏完全告别文字压扁与截断 (空间舒展，行高正常)
-   ========================================================================== */
 .bottom-ctrl-row {
     display: flex;
     justify-content: space-between;
@@ -873,7 +870,6 @@ main {
     box-shadow: 0 0 6px #2ecc71;
 }
 
-/* 弹幕输入框：舒展高度 + normal 行高，让文字底部笔画完整舒展 */
 .fake-dm-bar {
     background: rgba(255, 255, 255, 0.14);
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -960,7 +956,7 @@ main {
 }
 
 /* ==========================================================================
-   6. 模式 B: 手机竖屏 (9:16 抖音模式)
+   ★ 6. 模式 B: 手机竖屏 (9:16 抖音模式) 1:1 像素级原生复刻
    ========================================================================== */
 .douyin-hud {
     display: none;
@@ -986,17 +982,17 @@ main {
 
 .dy-top-nav {
     position: absolute;
-    top: 12px;
+    top: 14px;
     left: 0;
     right: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 0 16px;
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.7);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    color: rgba(255, 255, 255, 0.65);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
     pointer-events: auto;
 }
 
@@ -1013,7 +1009,7 @@ main {
 
 .dy-nav-tabs > span.active {
     color: #ffffff;
-    font-size: 14.5px;
+    font-size: 15px;
 }
 
 .dy-nav-tabs > span.active::after {
@@ -1022,7 +1018,7 @@ main {
     bottom: -4px;
     left: 15%;
     width: 70%;
-    height: 2.5px;
+    height: 2px;
     background: #fff;
     border-radius: 2px;
 }
@@ -1051,10 +1047,11 @@ main {
     margin-right: 5px;
 }
 
+/* 右侧互动栏 */
 .dy-right-bar {
     position: absolute;
-    right: 10px;
-    bottom: 96px;
+    right: 8px;
+    bottom: 84px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1063,7 +1060,7 @@ main {
 
 .dy-avatar-wrap {
     position: relative;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 .dy-avatar-img {
@@ -1104,7 +1101,7 @@ main {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 13px;
+    margin-bottom: 12px;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
 }
 
@@ -1115,7 +1112,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.25);
+    background: rgba(0, 0, 0, 0.2);
     color: #fff;
     margin-bottom: 2px;
 }
@@ -1150,96 +1147,193 @@ main {
     100% { transform: rotate(360deg); }
 }
 
+/* ==========================================================================
+   ★ 核心：左下角抖音原生信息流 (层次分明、绝不压扁)
+   ========================================================================== */
 .dy-left-info {
     position: absolute;
-    left: 14px;
-    right: 75px;
-    bottom: 84px;
+    left: 12px;
+    right: 76px;
+    bottom: 58px;
     display: flex;
     flex-direction: column;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
     pointer-events: auto;
 }
 
-.dy-author-name {
-    font-size: 15px;
-    font-weight: 700;
-    color: #ffffff;
+.dy-author-row {
     margin-bottom: 4px;
 }
 
-.dy-video-desc {
-    font-size: 13px;
+.dy-author-name {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.3px;
+    line-height: normal;
+}
+
+.dy-desc-row {
+    font-size: 13.5px;
+    font-weight: 400;
     color: #f1f2f6;
-    line-height: 1.4;
-    margin-bottom: 5px;
-}
-
-.dy-tags-row {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: #fff;
+    line-height: 1.45;
     margin-bottom: 6px;
+    word-break: break-all;
 }
 
-.dy-campaign-pill {
-    background: rgba(0, 0, 0, 0.45);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 3px 8px;
+.dy-tags-inline {
+    font-weight: 700;
+    color: #ffffff;
+    margin-left: 3px;
+}
+
+/* 声明条：精细喇叭图标与灰色小字 */
+.dy-disclaimer-pill {
     display: inline-flex;
     align-items: center;
-    font-size: 11px;
-    color: #e1f5fe;
-    margin-bottom: 6px;
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.65);
+    line-height: normal;
+    margin-bottom: 7px;
     width: fit-content;
 }
 
-.dy-campaign-badge {
-    background: #2ecc71;
-    color: #fff;
-    font-size: 9.5px;
-    padding: 1px 4px;
-    border-radius: 3px;
-    font-weight: 700;
-    margin-right: 5px;
+.dy-horn-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 4px;
+    opacity: 0.8;
 }
 
-.dy-gold-banner {
-    background: linear-gradient(90deg, rgba(230, 126, 34, 0.88), rgba(243, 156, 18, 0.82));
-    border-radius: 6px;
-    padding: 4px 8px;
+/* 猜你想搜与弹幕开关横排 */
+.dy-search-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.dy-search-pill {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    padding: 0 8px;
+    height: 27px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 11px;
-    font-weight: 700;
-    color: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    width: 100%;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
 
-.dy-gold-left {
+.dy-search-left {
     display: flex;
     align-items: center;
+    overflow: hidden;
 }
 
-.dy-fire-icon {
-    margin-right: 4px;
+.dy-search-icon {
+    width: 12px;
+    height: 12px;
+    margin-right: 5px;
+    color: rgba(255, 255, 255, 0.7);
+    flex-shrink: 0;
 }
 
+.dy-search-text {
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #f1f2f6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: normal;
+}
+
+.dy-search-arrow {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-left: 4px;
+}
+
+/* 抖音竖屏专属发光弹幕开关 */
+.dy-dm-switch-capsule {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 13px;
+    padding: 0 8px;
+    height: 27px;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s;
+}
+
+.dy-dm-switch-capsule.active {
+    background: rgba(24, 119, 242, 0.35);
+    border-color: rgba(24, 119, 242, 0.85);
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(24, 119, 242, 0.5);
+}
+
+/* 原生极细进度条 (贴着搜索条下方) */
+.dy-tiny-progressbar {
+    position: relative;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 1px;
+}
+
+.dy-tiny-buffer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.dy-tiny-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: #ffffff;
+}
+
+.dy-tiny-scrubber {
+    position: absolute;
+    right: -3px;
+    top: -2px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 0 4px rgba(0,0,0,0.8);
+}
+
+/* ==========================================================================
+   ★ 核心：复刻图二抖音底部导航栏 (加号/红标数字/纯净黑底)
+   ========================================================================== */
 .dy-bottom-wrap {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    height: 80px;
+    height: 52px;
     z-index: 11;
-    background: linear-gradient(to top, rgba(35, 10, 48, 0.96) 0%, rgba(18, 10, 28, 0.72) 65%, transparent 100%);
+    background: #000000;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    padding: 0 16px 8px 16px;
+    justify-content: center;
+    padding: 0 16px 2px 16px;
     pointer-events: auto;
 }
 
@@ -1247,51 +1341,89 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.6);
 }
 
 .dy-tab-item {
     display: flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
     cursor: pointer;
+    line-height: normal;
 }
 
 .dy-tab-item.active {
-    color: #fff;
+    color: #ffffff;
 }
 
-.dy-star-moment {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #ff7675, #fd79a8);
-    border: 1.5px solid #ffeaa7;
+/* 经典抖音黑白发布加号键 [+] */
+.dy-plus-btn-wrap {
+    position: relative;
+    width: 38px;
+    height: 27px;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 0 10px rgba(253, 121, 168, 0.8);
-    margin-bottom: 2px;
+    cursor: pointer;
 }
 
-.dy-msg-badge {
+.dy-plus-btn-deco {
     position: absolute;
-    top: -4px;
-    right: -7px;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #fe2c55;
+    top: 0;
+    width: 32px;
+    height: 27px;
+    border-radius: 7px;
+}
+
+.dy-plus-btn-deco.left {
+    left: 0;
+    background: #25F4EE;
+}
+
+.dy-plus-btn-deco.right {
+    right: 0;
+    background: #FE2C55;
+}
+
+.dy-plus-btn-core {
+    position: relative;
+    width: 32px;
+    height: 27px;
+    background: #ffffff;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+/* 消息红色数字气泡 (复刻图二) */
+.dy-msg-bubble {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    min-width: 14px;
+    height: 14px;
+    background: #FE2C55;
+    color: #fff;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3px;
+    line-height: 1;
 }
 
 .dy-home-bar {
     width: 110px;
-    height: 3.5px;
-    background: rgba(255, 255, 255, 0.8);
+    height: 3px;
+    background: rgba(255, 255, 255, 0.85);
     border-radius: 2px;
-    margin: 8px auto 2px auto;
+    margin: 5px auto 0 auto;
 }
 
 /* ==========================================================================
