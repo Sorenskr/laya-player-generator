@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * player.js - 媒体播放器核心控制引擎 (图四小窗右侧停靠、滚轮调整小窗尺寸)
+ * player.js - 媒体播放器核心控制引擎 (独立取景框右侧停靠、滚轮缩放小窗、双向联动)
  * ==========================================================================
  */
 
@@ -79,7 +79,7 @@ window.PlayerEngine = {
     const btnResetPos = document.getElementById('btn-reset-pos');
     const btnFacePreset = document.getElementById('btn-face-preset');
 
-    // 图四独立小窗 DOM
+    // 独立取景框 DOM 节点
     const swCropWindow = document.getElementById('sw-crop-window');
     const cropInspectorWindow = document.getElementById('crop-inspector-window');
     const btnCloseCropWindow = document.getElementById('btn-close-crop-window');
@@ -98,7 +98,7 @@ window.PlayerEngine = {
     };
 
     /* ==========================================================================
-       1. 视口画幅切换器
+       1. 视口画幅切换器 (16:9 / 19.5:9 / 9:16)
        ========================================================================== */
     const tabButtons = document.querySelectorAll('.tab-btn');
     tabButtons.forEach(btn => {
@@ -107,7 +107,8 @@ window.PlayerEngine = {
             btn.classList.add('active');
             
             const targetMode = btn.dataset.mode;
-            renderTarget.className = `player-box ${targetMode} ${document.getElementById('sel-mobile-skin')?.value === 'laya' ? 'skin-laya' : 'skin-douyin'}`;
+            const currentSkin = document.getElementById('sel-mobile-skin')?.value === 'laya' ? 'skin-laya' : 'skin-douyin';
+            renderTarget.className = `player-box ${targetMode} ${currentSkin}`;
 
             if (targetMode === 'mode-mobile-port') {
                 if (typeof window.switchRightTab === 'function') window.switchRightTab('dy');
@@ -122,7 +123,7 @@ window.PlayerEngine = {
     });
 
     /* ==========================================================================
-       2. 媒体上传、嗅探与小窗同步
+       2. 媒体上传、格式嗅探与小窗缩略图提取
        ========================================================================== */
     if (mediaUploader) {
         mediaUploader.addEventListener('click', () => {
@@ -156,7 +157,7 @@ window.PlayerEngine = {
                     updatePlayStateUI(false);
                 });
 
-                // 为小窗生成缩略图
+                // 为独立取景框生成清晰的缩略画面
                 const tempVid = document.createElement('video');
                 tempVid.src = vidUrl;
                 tempVid.currentTime = 0.5;
@@ -165,7 +166,7 @@ window.PlayerEngine = {
                     c.width = tempVid.videoWidth;
                     c.height = tempVid.videoHeight;
                     c.getContext('2d').drawImage(tempVid, 0, 0);
-                    cropThumbImg.src = c.toDataURL();
+                    if (cropThumbImg) cropThumbImg.src = c.toDataURL();
                 };
 
                 toast('視頻素材加載成功，原聲已接入！');
@@ -181,7 +182,7 @@ window.PlayerEngine = {
 
                 const imgUrl = URL.createObjectURL(file);
                 previewImg.src = imgUrl;
-                cropThumbImg.src = imgUrl;
+                if (cropThumbImg) cropThumbImg.src = imgUrl;
                 previewImg.onload = () => {
                     checkMediaAspect();
                 };
@@ -327,7 +328,7 @@ window.PlayerEngine = {
     });
 
     /* ==========================================================================
-       ★ 5. 图四独立小窗取景器：支持鼠标滚轮缩放窗口大小与框选移动
+       ★ 5. 独立取景框浮窗：滚轮调节小窗大小、红绿选框拖拽与双向联动
        ========================================================================== */
     function updateTransform() {
         const yVal = inPosY.value + '%';
@@ -360,7 +361,7 @@ window.PlayerEngine = {
         });
     }
 
-    // 开启/关闭图四独立小窗
+    // 开启/关闭独立取景框小窗
     if (swCropWindow && cropInspectorWindow) {
         swCropWindow.addEventListener('change', (e) => {
             cropInspectorWindow.style.display = e.target.checked ? 'flex' : 'none';
@@ -381,7 +382,7 @@ window.PlayerEngine = {
         });
     }
 
-    // 核心新增：鼠标滚轮放在小窗上自由缩放小窗宽度 (180px ~ 420px)
+    // 滚轮停留在小窗上无级缩放窗口尺寸 (180px ~ 420px)
     let currentWinWidth = 240;
     if (cropInspectorWindow) {
         cropInspectorWindow.addEventListener('wheel', (e) => {
@@ -397,6 +398,7 @@ window.PlayerEngine = {
         }, { passive: false });
     }
 
+    // 依据画幅比例自动同步小窗选框长宽比
     function syncCropBoxRatio() {
         if (!cropSelectionBox) return;
         const isPort = renderTarget.classList.contains('mode-mobile-port');
@@ -414,6 +416,7 @@ window.PlayerEngine = {
         }
     }
 
+    // 将滑块百分比转换为小窗内的像素坐标
     function syncCropBoxPosition() {
         if (!cropSelectionBox || !cropWindowBody) return;
         const xPct = parseFloat(inPosX.value) || 50;
@@ -433,7 +436,7 @@ window.PlayerEngine = {
         }
     }
 
-    // 图四小窗内拖拽选框
+    // 小窗内按住红绿选框拖拽移动
     let isDraggingCrop = false;
     let cropStartX = 0, cropStartY = 0;
     let cropBoxStartLeft = 0, cropBoxStartTop = 0;
@@ -468,6 +471,7 @@ window.PlayerEngine = {
             cropSelectionBox.style.left = newLeft + 'px';
             cropSelectionBox.style.top = newTop + 'px';
 
+            // 反算为百分比并驱动主画面
             const revXPct = Math.round((1 - newLeft / maxLeft) * 100);
             const revYPct = Math.round((1 - newTop / maxTop) * 100);
 
