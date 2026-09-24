@@ -52,16 +52,29 @@
 
         <div class="player-stage">
             <div class="player-box mode-pc" id="render-target">
-                <!-- 媒体底层容器 -->
+                <!-- 媒体底层容器 (支持鼠标直接按住拖拽构图与滚轮缩放) -->
                 <div class="media-container" id="player-media-wrap">
                     <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg-media" id="preview-img">
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 动态跑马灯弹幕层 (默认关闭隐藏) -->
+                <!-- 交互式专业九宫格取景框遮罩 (仅在开启取景开关时显示，截图导出自动隐藏) -->
+                <div class="viewfinder-overlay" id="viewfinder-overlay">
+                    <div class="vf-grid-line vf-h1"></div>
+                    <div class="vf-grid-line vf-h2"></div>
+                    <div class="vf-grid-line vf-v1"></div>
+                    <div class="vf-grid-line vf-v2"></div>
+                    <div class="vf-corner tl"></div>
+                    <div class="vf-corner tr"></div>
+                    <div class="vf-corner bl"></div>
+                    <div class="vf-corner br"></div>
+                    <div class="vf-hint-pill">可按住画面拖拽调整取景位置 / 滚轮缩放</div>
+                </div>
+
+                <!-- 动态跑马灯弹幕层 (默认关闭) -->
                 <div class="danmaku-layer" id="danmaku-container" style="display: none;"></div>
 
-                <!-- ================= 模式 1: 电脑网页端 & 手机横屏 UI (纯正繁体中文呈现) ================= -->
+                <!-- ================= 模式 1: 电脑网页端 & 手机横屏 UI ================= -->
                 <div class="player-top" id="web-player-top">
                     <div class="top-first-row">
                         <div class="top-left-group">
@@ -109,7 +122,7 @@
                     </div>
                 </div>
 
-                <!-- 居中播放/暂停按钮与胶囊文字 (支持分别独立开关) -->
+                <!-- 居中播放/暂停按钮与文字 -->
                 <div class="center-pause-wrap" id="wrap-center-all">
                     <div class="play-circle" id="btn-toggle-playback">
                         <div class="play-triangle" id="icon-center-play"></div>
@@ -142,7 +155,6 @@
                             </div>
                             <span class="time-label" id="disp-time">00:37:16 / 01:28:45</span>
                             
-                            <!-- 底部发光弹幕胶囊 (默认关闭) 与发射输入框 -->
                             <div id="wrap-bot-dm-group">
                                 <div class="dm-switch-capsule" id="btn-quick-dm-toggle" title="開關彈幕">
                                     <svg class="dm-capsule-icon" viewBox="0 0 24 24" fill="currentColor">
@@ -168,7 +180,7 @@
                     </div>
                 </div>
 
-                <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音/短视频模式 HUD (纯正繁体中文) ================= -->
+                <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音/短视频模式 HUD ================= -->
                 <div class="douyin-hud" id="douyin-hud">
                     <div class="dy-top-nav" id="dy-wrap-top-nav">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -270,7 +282,7 @@
         </div>
     </div>
 
-    <!-- 右侧高级控制面板 (严格全简体中文界面) -->
+    <!-- 右侧高级控制面板 (全简体中文操作) -->
     <div class="sidebar" id="right-sidebar">
         <div class="control-tabs">
             <button class="c-tab-btn active" id="tab-btn-web">💻 Web 播放器配置</button>
@@ -354,7 +366,6 @@
                     <span class="badge-tip">即开即显</span>
                 </div>
                 <div class="switch-grid">
-                    <!-- 动态弹幕默认关闭 -->
                     <div class="switch-tile">
                         <span>动态弹幕</span>
                         <label class="ios-toggle">
@@ -362,7 +373,6 @@
                             <span class="slider-round"></span>
                         </label>
                     </div>
-                    <!-- 加回中央播放圆钮与文字开关 -->
                     <div class="switch-tile">
                         <span>中央播放圆钮</span>
                         <label class="ios-toggle">
@@ -643,25 +653,54 @@
             </div>
         </div>
 
-        <!-- 通用画面防切脸构图卡片 -->
+        <!-- ================= 画面裁切与取景框控制卡片 (核心升级) ================= -->
         <div class="panel-card">
             <div class="card-header">
-                <span>📐 画面构图 (上下位移防切脸)</span>
+                <span>📐 画面裁切与取景控制</span>
+                <span class="badge-tip">防压扁变形</span>
             </div>
+
+            <!-- 智能比例取景框开关 -->
+            <div class="switch-tile highlight-tile">
+                <span>📐 开启比例取景框 (支持鼠标拖拽构图)</span>
+                <label class="ios-toggle">
+                    <input type="checkbox" id="sw-viewfinder">
+                    <span class="slider-round"></span>
+                </label>
+            </div>
+
+            <div class="form-row">
+                <label>画面自适应模式 (长视频/长图推荐等比裁剪)</label>
+                <select id="sel-crop-fit" style="background:#151821; font-weight:700; color:#5dade2;">
+                    <option value="cover">✂️ 等比裁切填充 (Cover - 自动适应比例无黑边)</option>
+                    <option value="contain">📺 完整画面包含 (Contain - 完整呈现上下/左右留黑边)</option>
+                </select>
+            </div>
+
             <div class="form-row">
                 <div class="range-box">
-                    <label>垂直 Y 轴位移 (露脸微调)</label>
+                    <label>垂直 Y 轴位移 (或直接在画面按住拖拽)</label>
                     <span class="range-value" id="txt-pos-y">50%</span>
                 </div>
                 <input type="range" id="in-pos-y" min="0" max="100" value="50">
             </div>
+
             <div class="form-row">
                 <div class="range-box">
-                    <label>画面缩放倍率 (Zoom)</label>
+                    <label>水平 X 轴位移</label>
+                    <span class="range-value" id="txt-pos-x">50%</span>
+                </div>
+                <input type="range" id="in-pos-x" min="0" max="100" value="50">
+            </div>
+
+            <div class="form-row">
+                <div class="range-box">
+                    <label>画面缩放倍率 (Zoom / 滚轮无级缩放)</label>
                     <span class="range-value" id="txt-media-scale">100%</span>
                 </div>
-                <input type="range" id="in-media-scale" min="80" max="220" value="100">
+                <input type="range" id="in-media-scale" min="80" max="250" value="100">
             </div>
+
             <div class="preset-btn-group">
                 <button class="btn btn-secondary" id="btn-reset-pos">↺ 居中默认</button>
                 <button class="btn btn-secondary" id="btn-face-preset">👤 快速露脸预设</button>
