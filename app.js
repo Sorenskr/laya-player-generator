@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * app.js - 全局中枢控制、彻底解决录屏黑屏、全屏实机预览与双皮肤切换引擎
+ * app.js - 全局中枢控制、彻底解决录屏黑屏、全屏真机预览与双皮肤切换引擎
  * ==========================================================================
  */
 
@@ -43,8 +43,8 @@ window.switchRightTab = function (mode) {
     }
 };
 
-// 官方原版 3D 拟真 Laya 图标 Base64 (稳定展示，防止破损)
-const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjUwIiBmaWxsPSIjMEQ1QkUxIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMzgiIGZpbGw9IiMyMTcyRjUiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIyNiIgZmlsbD0iIzNEODhGRCIvPjxwYXRoIGQ9Ik0yOCAzMiBoMTIgdiAyNCBoMTYgdiAxMSBIMjggeiIgZmlsbD0iI2ZmZmZmZiIvPjx0ZXh0IHg9IjU1IiB5PSI2NCIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjkwMCIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjZmZmZmZmIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+YXlhPC90ZXh0Pjwvc3ZnPg==";
+// 1:1 复刻 Laya.png 原图官方 3D 拟真 Logo (同心蓝环 + 黑立体阴影斜白字)
+const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgMTIwIj48ZGVmcz48cmFkaWFsR3JhZGllbnQgaWQ9ImJnIiBjeD0iNTAlIiBjeT0iNTAlIiByPSI2NSUiPjxzdG9wIG9mZnNldD0iMCUiIHN0b3AtY29sb3I9IiMzZDhiZmQiLz48c3RvcCBvZmZzZXQ9IjM1JSIgc3RvcC1jb2xvcj0iIzE2NmZlNSIvPjxzdG9wIG9mZnNldD0iNzAlIiBzdG9wLWNvbG9yPSIjMGQ1YmUxIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjMDgzZmEzIi8+PC9yYWRpYWxHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9IjEyMCIgaGVpZ2h0PSIxMjAiIHJ4PSIyNiIgZmlsbD0idXJsKCNiZykiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSI0NiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMjU3NWZjIiBzdHJva2Utd2lkdGg9IjMiIG9wYWNpdHk9IjAuNCIvPjxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjM0IiBmaWxsPSJub25lIiBzdHJva2U9IiM0ZmFjZmUiIHN0cm9rZS13aWR0aD0iMi41IiBvcGFjaXR5PSIwLjUiLz48Y2lyY2xlIGN4PSI2MCIgY3k9IjYwIiByPSIyMiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNjBhNWZhIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuNiIvPjxnIHRyYW5zZm9ybT0icm90YXRlKC02IDYwIDYwKSI+PHRleHQgeD0iNjMiIHk9Ijc0IiBmb250LWZhbWlseT0iJ0FyaWFsIEJsYWNrJywgSW1wYWN0LCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iOTAwIiBmb250LXN0eWxlPSJpdGFsaWMiIGZvbnQtc2l6ZT0iMzQiIGZpbGw9IiMwMDAwMDAiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMSI+TGF5YTwvdGV4dD48dGV4dCB4PSI2MiIgeT0iNzMiIGZvbnQtZmFtaWx5PSInQXJpYWwgQmxhY2snLCBJbXBhY3QsIHNhbnMtc2VyaWYiIGZvbnQtd2VpZ2h0PSI5MDAiIGZvbnQtc3R5bGU9Iml0YWxpYyIgZm9udC1zaXplPSIzNCIgZmlsbD0iIzAwMDAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgbGV0dGVyLXNwYWNpbmc9Ii0xIj5MYXlhPC90ZXh0Pjx0ZXh0IHg9IjYxIiB5PSI3MiIgZm9udC1mYW1pbHk9IidBcmlhbCBCbGFjaycsIEltcGFjdCwgc2Fucy1zZXJpZiIgZm9udC13ZWlnaHQ9IjkwMCIgZm9udC1zdHlsZT0iaXRhbGljIiBmb250LXNpemU9IjM0IiBmaWxsPSIjMDAwMDAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBsZXR0ZXItc3BhY2luZz0iLTEiPkxheWE8L3RleHQ+PHRleHQgeD0iNjAiIHk9IjcwIiBmb250LWZhbWlseT0iJ0FyaWFsIEJsYWNrJywgSW1wYWN0LCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iOTAwIiBmb250LXN0eWxlPSJpdGFsaWMiIGZvbnQtc2l6ZT0iMzQiIGZpbGw9IiMwMDAwMDAiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWpvaW49InJvdW5kIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBsZXR0ZXItc3BhY2luZz0iLTEiPkxheWE8L3RleHQ+PHRleHQgeD0iNjAiIHk9IjcwIiBmb250LWZhbWlseT0iJ0FyaWFsIEJsYWNrJywgSW1wYWN0LCBzYW5zLXNlcmlmIiBmb250LXdlaWdodD0iOTAwIiBmb250LXN0eWxlPSJpdGFsaWMiIGZvbnQtc2l6ZT0iMzQiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGxldHRlci1zcGFjaW5nPSItMSI+TGF5YTwvdGV4dD48L2c+PC9zdmc+";
 
 (function () {
     const tabWeb = document.getElementById('tab-btn-web');
@@ -278,7 +278,7 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
     bindToggle('sw-dy-right-bar', 'dy-wrap-right-bar');
     bindToggle('sw-dy-top-nav', 'dy-wrap-top-nav');
 
-    // 核心新增：【🔥热点】栏显隐开关联动 (默认关闭)
+    // 【🔥热点】栏显隐开关 (默认关闭)
     const swDyHotspot = document.getElementById('sw-dy-hotspot');
     const dyWrapHotspot = document.getElementById('dy-wrap-hotspot');
     if (swDyHotspot && dyWrapHotspot) {
@@ -345,7 +345,7 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
         });
     }
 
-    // 头像装载与恢复默认
+    // 头像上传与官方 3D Logo 恢复
     const dyAvatarUploader = document.getElementById('dy-avatar-uploader');
     const dyAvatarImg = document.getElementById('dy-avatar-img');
     const btnResetAvatar = document.getElementById('btn-reset-avatar');
@@ -377,7 +377,7 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
     }
 
     /* ==========================================================================
-       ★ E. 全屏实机预览模式 (所见即所得、真机比例复刻、带播放/暂停)
+       ★ E. 全屏实机预览模式 (彻底修复黑屏，支持视频播放/暂停)
        ========================================================================== */
     const btnOpenPreview = document.getElementById('btn-open-preview');
     const btnClosePreview = document.getElementById('btn-close-preview');
@@ -385,19 +385,45 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
     const previewStageWrap = document.getElementById('preview-stage-wrap');
     const playerStage = document.querySelector('.player-stage');
     const btnPreviewPauseToggle = document.getElementById('btn-preview-pause-toggle');
+    const previewVideo = document.getElementById('preview-video');
 
     if (btnOpenPreview && fullscreenPreviewModal && renderTarget && previewStageWrap) {
         btnOpenPreview.addEventListener('click', () => {
+            // 解决尺寸坍塌
+            previewStageWrap.style.width = '100%';
+            previewStageWrap.style.height = '100%';
+
+            const wasPlaying = window.PlayerEngine.isVideoMode && previewVideo && !previewVideo.paused;
+            const curTime = previewVideo ? previewVideo.currentTime : 0;
+
             previewStageWrap.appendChild(renderTarget);
             fullscreenPreviewModal.classList.add('show');
+
+            // 重新衔接视频解码与播放
+            if (window.PlayerEngine.isVideoMode && previewVideo) {
+                previewVideo.currentTime = curTime;
+                if (wasPlaying) {
+                    previewVideo.play().catch(() => {});
+                }
+            }
             window.showToast('🖥️ 全屏实机预览已开启：预览效果与下载 100% 一致');
         });
     }
 
     function exitFullscreenPreview() {
         if (!fullscreenPreviewModal || !renderTarget || !playerStage) return;
+        const wasPlaying = window.PlayerEngine.isVideoMode && previewVideo && !previewVideo.paused;
+        const curTime = previewVideo ? previewVideo.currentTime : 0;
+
         playerStage.appendChild(renderTarget);
         fullscreenPreviewModal.classList.remove('show');
+
+        if (window.PlayerEngine.isVideoMode && previewVideo) {
+            previewVideo.currentTime = curTime;
+            if (wasPlaying) {
+                previewVideo.play().catch(() => {});
+            }
+        }
     }
 
     if (btnClosePreview) btnClosePreview.addEventListener('click', exitFullscreenPreview);
@@ -413,7 +439,7 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
     /* ==========================================================================
        F. 全自动 LocalStorage 记忆系统与“一键重置”
        ========================================================================== */
-    const STORAGE_KEY = 'LAYA_STUDIO_PERSIST_V4';
+    const STORAGE_KEY = 'LAYA_STUDIO_PERSIST_V5';
     let saveTimeout = null;
 
     function triggerSaveStorage() {
@@ -561,7 +587,7 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
     }
 
     /* ==========================================================================
-       H. 超高清截图导出
+       H. 超高清截图导出 (PNG 导出，防畸变压扁)
        ========================================================================== */
     const btnSaveImg = document.getElementById('btn-save-img');
     if (btnSaveImg) {
@@ -662,7 +688,6 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
     const btnSaveVid = document.getElementById('btn-save-vid');
     if (btnSaveVid) {
         btnSaveVid.addEventListener('click', async () => {
-            const previewVideo = document.getElementById('preview-video');
             const inMediaScale = document.getElementById('in-media-scale');
             const inPosY = document.getElementById('in-pos-y');
             const inPosX = document.getElementById('in-pos-x');
@@ -685,16 +710,15 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
                 const outW = isDouyin ? 720 : 1280;
                 const outH = isDouyin ? 1280 : 720;
 
-                // ★ 致命修复：在克隆节点中彻底抹除 .player-box 的 #000 黑色背景，防止遮盖视频
+                // 彻底剥离黑色背景生成绝对透明图层
                 const uiSnapshotCanvas = await html2canvas(renderTarget, {
-                    backgroundColor: null, // 透明背景
+                    backgroundColor: null,
                     scale: outW / renderTarget.offsetWidth,
                     useCORS: true,
                     allowTaint: true,
                     onclone: (clonedDoc) => {
                         const target = clonedDoc.getElementById('render-target');
                         if (target) {
-                            // 移除任何带有 background 的类
                             target.className = target.className.replace(/\bplayer-box\b/, '');
                             target.style.setProperty('background', 'transparent', 'important');
                             target.style.setProperty('background-color', 'transparent', 'important');
@@ -715,7 +739,6 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
                 offCanvas.height = outH;
                 const ctx = offCanvas.getContext('2d');
 
-                // 音频抓取保护
                 let audioTracks = [];
                 try {
                     if (!window._audioCtx) {
@@ -736,10 +759,11 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
                 }
 
                 const canvasStream = offCanvas.captureStream(30);
-                const combinedStream = new MediaStream([
-                    ...canvasStream.getVideoTracks(),
-                    ...audioTracks
-                ]);
+                const streamTracks = [...canvasStream.getVideoTracks()];
+                if (audioTracks.length > 0) {
+                    streamTracks.push(...audioTracks);
+                }
+                const combinedStream = new MediaStream(streamTracks);
 
                 let mime = 'video/webm';
                 if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
@@ -852,7 +876,7 @@ const OFFICIAL_LAYA_B64 = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d
                         ctx.drawImage(previewVideo, offX, offY, rw, rh);
                     }
 
-                    // 2. 覆盖纯透明 UI 图层 (包含边框与全部按钮，绝无纯黑底布)
+                    // 2. 覆盖纯透明 UI 覆层 (包含边框与全部按钮)
                     ctx.drawImage(uiSnapshotCanvas, 0, 0, outW, outH);
 
                     // 3. 动态绘制弹幕
