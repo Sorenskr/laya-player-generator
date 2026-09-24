@@ -174,6 +174,19 @@ header {
     transform: translateY(0);
 }
 
+/* 一键重置记忆按键 */
+.btn-reset {
+    background: rgba(231, 76, 60, 0.18);
+    border: 1px solid rgba(231, 76, 60, 0.5);
+    color: #ff7675;
+}
+
+.btn-reset:hover {
+    background: rgba(231, 76, 60, 0.35);
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.4);
+}
+
 .btn-lang {
     background: #272d3b;
     color: #d0d4dc;
@@ -321,7 +334,7 @@ main {
 }
 
 /* ==========================================================================
-   构图参考线 (Viewfinder Overlay)
+   构图参考线
    ========================================================================== */
 .viewfinder-overlay {
     position: absolute;
@@ -456,6 +469,7 @@ main {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
+    vertical-align: middle;
 }
 
 .back-icon {
@@ -770,6 +784,9 @@ main {
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
 }
 
+/* ==========================================================================
+   底栏文字舒展对齐
+   ========================================================================== */
 .bottom-ctrl-row {
     display: flex;
     justify-content: space-between;
@@ -1063,6 +1080,7 @@ main {
     margin-bottom: 14px;
 }
 
+/* 核心优化：确保原生 Base64 头像完美渲染无毛刺 */
 .dy-avatar-img {
     width: 44px;
     height: 44px;
@@ -1071,6 +1089,7 @@ main {
     object-fit: cover;
     background: #0D5BE1;
     display: block;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 .dy-follow-plus {
@@ -1147,9 +1166,7 @@ main {
     100% { transform: rotate(360deg); }
 }
 
-/* ==========================================================================
-   ★ 核心：左下角抖音原生信息流 (层次分明、绝不压扁)
-   ========================================================================== */
+/* 左下角信息流 */
 .dy-left-info {
     position: absolute;
     left: 12px;
@@ -1188,7 +1205,6 @@ main {
     margin-left: 3px;
 }
 
-/* 声明条：精细喇叭图标与灰色小字 */
 .dy-disclaimer-pill {
     display: inline-flex;
     align-items: center;
@@ -1206,7 +1222,6 @@ main {
     opacity: 0.8;
 }
 
-/* 猜你想搜与弹幕开关横排 */
 .dy-search-bar-row {
     display: flex;
     align-items: center;
@@ -1257,7 +1272,6 @@ main {
     margin-left: 4px;
 }
 
-/* 抖音竖屏专属发光弹幕开关 */
 .dy-dm-switch-capsule {
     display: inline-flex;
     align-items: center;
@@ -1282,7 +1296,6 @@ main {
     box-shadow: 0 0 8px rgba(24, 119, 242, 0.5);
 }
 
-/* 原生极细进度条 (贴着搜索条下方) */
 .dy-tiny-progressbar {
     position: relative;
     width: 100%;
@@ -1318,9 +1331,7 @@ main {
     box-shadow: 0 0 4px rgba(0,0,0,0.8);
 }
 
-/* ==========================================================================
-   ★ 核心：复刻图二抖音底部导航栏 (加号/红标数字/纯净黑底)
-   ========================================================================== */
+/* 底部导航栏 */
 .dy-bottom-wrap {
     position: absolute;
     bottom: 0;
@@ -1358,7 +1369,6 @@ main {
     color: #ffffff;
 }
 
-/* 经典抖音黑白发布加号键 [+] */
 .dy-plus-btn-wrap {
     position: relative;
     width: 38px;
@@ -1399,23 +1409,24 @@ main {
     z-index: 2;
 }
 
-/* 消息红色数字气泡 (复刻图二) */
+/* 消息红色数字气泡：自动适应多位数 */
 .dy-msg-bubble {
     position: absolute;
     top: -5px;
     right: -10px;
-    min-width: 14px;
+    min-width: 15px;
     height: 14px;
     background: #FE2C55;
     color: #fff;
     border-radius: 7px;
     font-size: 10px;
     font-weight: 800;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 3px;
+    padding: 0 3.5px;
     line-height: 1;
+    box-sizing: border-box;
 }
 
 .dy-home-bar {
