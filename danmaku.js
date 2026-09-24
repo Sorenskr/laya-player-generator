@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * danmaku.js - 高级动态/定格弹幕双模工作台 (纯简体控制面板 + 繁体预设库)
+ * danmaku.js - 高级动态/定格弹幕双模工作台 (支持手机端原生弹幕开关联动)
  * ==========================================================================
  */
 
@@ -116,6 +116,7 @@ function syncPauseButtonUI(isPaused) {
     const btnParseBatch = document.getElementById('btn-parse-batch');
     const swDanmaku = document.getElementById('sw-danmaku');
     const btnQuickDmToggle = document.getElementById('btn-quick-dm-toggle');
+    const dyBtnDmToggle = document.getElementById('dy-btn-dm-toggle'); // 手机端弹幕胶囊
     const btnOpenDmInput = document.getElementById('btn-open-dm-input');
     const selDmMode = document.getElementById('sel-dm-mode');
 
@@ -357,6 +358,7 @@ function syncPauseButtonUI(isPaused) {
         });
     }
 
+    // 全局弹幕状态同步函数 (包含 Web 底栏与手机端原生胶囊)
     function applyDanmakuVisibility(isVisible) {
         if (danmakuContainer) {
             danmakuContainer.style.display = isVisible ? 'block' : 'none';
@@ -366,6 +368,9 @@ function syncPauseButtonUI(isPaused) {
         }
         if (btnQuickDmToggle) {
             btnQuickDmToggle.classList.toggle('active', isVisible);
+        }
+        if (dyBtnDmToggle) {
+            dyBtnDmToggle.classList.toggle('active', isVisible);
         }
     }
 
@@ -382,6 +387,16 @@ function syncPauseButtonUI(isPaused) {
             const nextState = !swDanmaku.checked;
             applyDanmakuVisibility(nextState);
             toast(nextState ? '弹幕已开启' : '弹幕已关闭');
+        });
+    }
+
+    // 手机端原生弹幕胶囊点击
+    if (dyBtnDmToggle) {
+        dyBtnDmToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const nextState = !swDanmaku.checked;
+            applyDanmakuVisibility(nextState);
+            toast(nextState ? '彈幕已開啟' : '彈幕已關閉');
         });
     }
 
