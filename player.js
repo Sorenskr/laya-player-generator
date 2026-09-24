@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * player.js - 媒体播放器引擎 (支持图四独立取景浮窗拖拽与全屏预览联动)
+ * player.js - 媒体播放器核心控制引擎 (图四小窗右侧停靠、滚轮调整小窗尺寸)
  * ==========================================================================
  */
 
@@ -87,6 +87,7 @@ window.PlayerEngine = {
     const cropSelectionBox = document.getElementById('crop-selection-box');
     const cropWindowBody = document.getElementById('crop-window-body');
     const btnCropReset = document.getElementById('btn-crop-reset');
+    const txtCropWinSize = document.getElementById('txt-crop-win-size');
 
     window.PlayerEngine.renderTarget = renderTarget;
     window.PlayerEngine.previewImg = previewImg;
@@ -106,7 +107,7 @@ window.PlayerEngine = {
             btn.classList.add('active');
             
             const targetMode = btn.dataset.mode;
-            renderTarget.className = `player-box ${targetMode}`;
+            renderTarget.className = `player-box ${targetMode} ${document.getElementById('sel-mobile-skin')?.value === 'laya' ? 'skin-laya' : 'skin-douyin'}`;
 
             if (targetMode === 'mode-mobile-port') {
                 if (typeof window.switchRightTab === 'function') window.switchRightTab('dy');
@@ -155,10 +156,10 @@ window.PlayerEngine = {
                     updatePlayStateUI(false);
                 });
 
-                // 为小窗生成缩略海报
+                // 为小窗生成缩略图
                 const tempVid = document.createElement('video');
                 tempVid.src = vidUrl;
-                tempVid.currentTime = 1;
+                tempVid.currentTime = 0.5;
                 tempVid.onloadeddata = () => {
                     const c = document.createElement('canvas');
                     c.width = tempVid.videoWidth;
@@ -326,7 +327,7 @@ window.PlayerEngine = {
     });
 
     /* ==========================================================================
-       ★ 5. 画面防变形缩放与图四独立取景框小窗交互
+       ★ 5. 图四独立小窗取景器：支持鼠标滚轮缩放窗口大小与框选移动
        ========================================================================== */
     function updateTransform() {
         const yVal = inPosY.value + '%';
@@ -359,12 +360,11 @@ window.PlayerEngine = {
         });
     }
 
-    // A. 开启/关闭图四独立小窗
+    // 开启/关闭图四独立小窗
     if (swCropWindow && cropInspectorWindow) {
         swCropWindow.addEventListener('change', (e) => {
             cropInspectorWindow.style.display = e.target.checked ? 'flex' : 'none';
             if (e.target.checked) {
-                // 初始化缩略图
                 if (!cropThumbImg.src || cropThumbImg.src === window.location.href) {
                     cropThumbImg.src = previewImg.src;
                 }
@@ -381,7 +381,22 @@ window.PlayerEngine = {
         });
     }
 
-    // B. 小窗内根据当前画幅 (16:9 / 19.5:9 / 9:16) 动态约束选框长宽比
+    // 核心新增：鼠标滚轮放在小窗上自由缩放小窗宽度 (180px ~ 420px)
+    let currentWinWidth = 240;
+    if (cropInspectorWindow) {
+        cropInspectorWindow.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY < 0) {
+                currentWinWidth = Math.min(420, currentWinWidth + 15);
+            } else {
+                currentWinWidth = Math.max(180, currentWinWidth - 15);
+            }
+            cropInspectorWindow.style.width = currentWinWidth + 'px';
+            if (txtCropWinSize) txtCropWinSize.textContent = `尺寸: ${currentWinWidth}px`;
+            syncCropBoxPosition();
+        }, { passive: false });
+    }
+
     function syncCropBoxRatio() {
         if (!cropSelectionBox) return;
         const isPort = renderTarget.classList.contains('mode-mobile-port');
@@ -418,7 +433,7 @@ window.PlayerEngine = {
         }
     }
 
-    // C. 核心拖拽：在图四小窗里按住绿色框框直接拖拽，实时改变大屏取景！
+    // 图四小窗内拖拽选框
     let isDraggingCrop = false;
     let cropStartX = 0, cropStartY = 0;
     let cropBoxStartLeft = 0, cropBoxStartTop = 0;
@@ -453,7 +468,6 @@ window.PlayerEngine = {
             cropSelectionBox.style.left = newLeft + 'px';
             cropSelectionBox.style.top = newTop + 'px';
 
-            // 反算为百分比并实时驱动主画面移动
             const revXPct = Math.round((1 - newLeft / maxLeft) * 100);
             const revYPct = Math.round((1 - newTop / maxTop) * 100);
 
