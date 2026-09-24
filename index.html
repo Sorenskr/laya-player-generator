@@ -23,7 +23,8 @@
         <span id="txt-app-title">Laya 播放器 · 双模生成引擎</span>
     </div>
     <div class="nav-actions">
-        <!-- 一键重置记忆按钮 -->
+        <!-- 核心新增功能按钮 -->
+        <button class="btn btn-preview" id="btn-open-preview">🖥️ 全屏实机预览</button>
         <button class="btn btn-reset" id="btn-global-reset" title="清除本地记忆，恢复出厂默认设置">↺ 一键重置</button>
         <button class="btn btn-lang" id="btn-toggle-lang">繁 / 简 转换</button>
         <input type="file" id="media-uploader" accept="image/*,video/mp4,video/webm" style="display: none;">
@@ -49,7 +50,7 @@
         <div class="viewport-tabs">
             <button class="tab-btn active" data-mode="mode-pc">电脑网页端 (16:9)</button>
             <button class="tab-btn" data-mode="mode-mobile-land">手机横屏 (19.5:9)</button>
-            <button class="tab-btn" data-mode="mode-mobile-port">手机竖屏 (9:16 抖音模式)</button>
+            <button class="tab-btn" data-mode="mode-mobile-port">手机竖屏 (9:16 沉浸模式)</button>
         </div>
 
         <div class="player-stage">
@@ -60,23 +61,10 @@
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 交互式专业九宫格取景框 -->
-                <div class="viewfinder-overlay" id="viewfinder-overlay">
-                    <div class="vf-grid-line vf-h1"></div>
-                    <div class="vf-grid-line vf-h2"></div>
-                    <div class="vf-grid-line vf-v1"></div>
-                    <div class="vf-grid-line vf-v2"></div>
-                    <div class="vf-corner tl"></div>
-                    <div class="vf-corner tr"></div>
-                    <div class="vf-corner bl"></div>
-                    <div class="vf-corner br"></div>
-                    <div class="vf-hint-pill">可按住画面拖拽调整取景位置 / 滚轮缩放</div>
-                </div>
-
                 <!-- 动态跑马灯弹幕层 (默认关闭) -->
                 <div class="danmaku-layer" id="danmaku-container" style="display: none;"></div>
 
-                <!-- ================= 模式 1: 电脑网页端 & 手机横屏 UI (繁体显示) ================= -->
+                <!-- ================= 模式 1: 电脑网页端 & 手机横屏 UI ================= -->
                 <div class="player-top" id="web-player-top">
                     <div class="top-first-row">
                         <div class="top-left-group">
@@ -182,29 +170,49 @@
                     </div>
                 </div>
 
-                <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音模式 (1:1 像素级复刻) ================= -->
+                <!-- ================= 模式 2: 手机竖屏 (9:16) 双风格架构 ================= -->
                 <div class="douyin-hud" id="douyin-hud">
-                    <div class="dy-top-nav" id="dy-wrap-top-nav">
+                    
+                    <!-- A. 顶部栏 (支持抖音风 / Laya 原生风自动切换) -->
+                    <!-- 风格 1：抖音原生顶部 -->
+                    <div class="dy-top-nav dy-skin-elem" id="dy-wrap-top-nav">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                         <div class="dy-nav-tabs">
-                            <span id="dy-nav-1" class="interactive-elem">精選</span>
-                            <span id="dy-nav-2" class="active interactive-elem">熱點</span>
-                            <span id="dy-nav-3" class="interactive-elem">排行</span>
-                            <span id="dy-nav-4" class="interactive-elem">直播</span>
-                            <span id="dy-nav-5" class="interactive-elem">關注</span>
+                            <span class="interactive-elem">精選</span>
+                            <span class="active interactive-elem">熱點</span>
+                            <span class="interactive-elem">排行</span>
+                            <span class="interactive-elem">直播</span>
+                            <span class="interactive-elem">關注</span>
                         </div>
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </div>
 
+                    <!-- 风格 2：Laya 原生顶部栏 (图三复刻：关注/全部/推荐/小游戏/扩列/奖杯/搜索) -->
+                    <div class="laya-top-nav laya-skin-elem" id="laya-wrap-top-nav" style="display: none;">
+                        <div class="laya-nav-tabs">
+                            <span class="interactive-elem">關注</span>
+                            <span class="interactive-elem">全部</span>
+                            <span class="active interactive-elem">推薦<i class="laya-recom-sparkle">✨</i></span>
+                            <span class="interactive-elem">小遊戲</span>
+                            <span class="interactive-elem">擴列</span>
+                        </div>
+                        <div class="laya-top-actions">
+                            <span class="laya-trophy-btn interactive-elem">🏆</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.4" class="interactive-elem"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        </div>
+                    </div>
+
+                    <!-- 全屏观看胶囊 -->
                     <div class="dy-fullscreen-pill interactive-elem" id="dy-fullscreen-pill">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                         <span>全屏觀看</span>
                     </div>
 
-                    <!-- 右侧互动操作栏 (使用 100% 稳定的 Base64 原生头像) -->
+                    <!-- 右侧互动操作栏 (使用高保真 Laya 3D 原生头像) -->
                     <div class="dy-right-bar" id="dy-wrap-right-bar">
                         <div class="dy-avatar-wrap interactive-elem" id="dy-avatar-click">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTAwIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgcng9IjUwIiBmaWxsPSIjMEQ1QkUxIi8+PGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iMzYiIGZpbGw9IiMyMTcyRjUiLz48Y2lyY2xlIGN4PSI1MCIgY3k9IjUwIiByPSIyMiIgZmlsbD0iIzNEODhGRCIvPjx0ZXh0IHg9IjUwIiB5PSI2MiIgZm9udC1zaXplPSIyOCIgZm9udC13ZWlnaHQ9IjkwMCIgZm9udC1zdHlsZT0iaXRhbGljIiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+TGF5YTwvdGV4dD48L3N2Zz4=" class="dy-avatar-img" id="dy-avatar-img" alt="Laya Avatar">
+                            <!-- 默认采用稳定的 Base64 官方立体 Laya Logo -->
+                            <img src="" class="dy-avatar-img" id="dy-avatar-img" alt="Laya Avatar">
                             <div class="dy-follow-plus" id="dy-btn-follow">+</div>
                         </div>
 
@@ -243,7 +251,7 @@
                         </div>
                     </div>
 
-                    <!-- 左下角信息流 (作者账号已更新为 @Laya 视频) -->
+                    <!-- 左下角信息流 -->
                     <div class="dy-left-info">
                         <div class="dy-author-row">
                             <span class="dy-author-name" id="dy-disp-author">@Laya 视频</span>
@@ -254,6 +262,7 @@
                             <span class="dy-tags-inline" id="dy-disp-tags">#心動熱舞 #私密精選</span>
                         </div>
 
+                        <!-- 平台提示声明条 -->
                         <div class="dy-disclaimer-pill interactive-elem" id="dy-wrap-campaign">
                             <svg class="dy-horn-icon" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -261,6 +270,7 @@
                             <span id="dy-disp-campaign">平台提示：本作品為私密企劃演繹，未成年人請主動離開 &gt;</span>
                         </div>
 
+                        <!-- 搜索栏与弹幕开关 -->
                         <div class="dy-search-bar-row">
                             <div class="dy-search-pill interactive-elem" id="dy-wrap-gold">
                                 <div class="dy-search-left">
@@ -280,6 +290,21 @@
                             </div>
                         </div>
 
+                        <!-- ★ 核心新增：【🔥热点】精巧条 (图二复刻：默认关闭) -->
+                        <div class="dy-hotspot-bar interactive-elem" id="dy-wrap-hotspot" style="display: none;">
+                            <div class="dy-hotspot-left">
+                                <span class="dy-hot-fire">🔥</span>
+                                <span class="dy-hot-tag">熱點</span>
+                                <span class="dy-hot-dot">·</span>
+                                <span class="dy-hot-title" id="dy-disp-hotspot-title">下班去炫頂配螺螄粉</span>
+                            </div>
+                            <div class="dy-hotspot-right">
+                                <span class="dy-hot-views" id="dy-disp-hotspot-views">117.7萬人在看</span>
+                                <span class="dy-hot-arrow">&gt;</span>
+                            </div>
+                        </div>
+
+                        <!-- 超细进度条 -->
                         <div class="dy-tiny-progressbar">
                             <div class="dy-tiny-buffer" style="width: 70%;"></div>
                             <div class="dy-tiny-fill" style="width: 35%;">
@@ -288,15 +313,12 @@
                         </div>
                     </div>
 
-                    <!-- 底部导航栏 (首頁、朋友、消息、我 纯正繁体) -->
-                    <div class="dy-bottom-wrap" id="dy-wrap-bottom-bar">
+                    <!-- B. 底部导航栏 (双风格切换) -->
+                    <!-- 风格 1：抖音原生底栏 (加号/[1]消息) -->
+                    <div class="dy-bottom-wrap dy-skin-elem" id="dy-wrap-bottom-bar">
                         <div class="dy-bottom-tabs">
-                            <div class="dy-tab-item active interactive-elem">
-                                <span>首頁</span>
-                            </div>
-                            <div class="dy-tab-item interactive-elem">
-                                <span>朋友</span>
-                            </div>
+                            <div class="dy-tab-item active interactive-elem"><span>首頁</span></div>
+                            <div class="dy-tab-item interactive-elem"><span>朋友</span></div>
                             <div class="dy-plus-btn-wrap interactive-elem" id="dy-btn-publish">
                                 <div class="dy-plus-btn-deco left"></div>
                                 <div class="dy-plus-btn-deco right"></div>
@@ -310,22 +332,96 @@
                                 <span>消息</span>
                                 <span class="dy-msg-bubble" id="dy-disp-msg-bubble">1</span>
                             </div>
-                            <div class="dy-tab-item interactive-elem">
-                                <span>我</span>
+                            <div class="dy-tab-item interactive-elem"><span>我</span></div>
+                        </div>
+                        <div class="dy-home-bar"></div>
+                    </div>
+
+                    <!-- 风格 2：Laya 原生底部 Tab (图三复刻：發現/瞬間/視訊/娛樂/消息/我的) -->
+                    <div class="laya-bottom-wrap laya-skin-elem" id="laya-wrap-bottom-bar" style="display: none;">
+                        <div class="laya-bottom-tabs">
+                            <div class="laya-tab-item interactive-elem">
+                                <span class="laya-tab-icon">🧭</span>
+                                <span>發現</span>
+                            </div>
+                            <div class="laya-tab-item interactive-elem">
+                                <span class="laya-tab-icon">✨</span>
+                                <span>瞬間</span>
+                            </div>
+                            <!-- 核心要求：插入繁体「視訊」且高亮 -->
+                            <div class="laya-tab-item active interactive-elem">
+                                <span class="laya-tab-icon laya-video-pulse">🎬</span>
+                                <span>視訊</span>
+                            </div>
+                            <div class="laya-tab-item interactive-elem">
+                                <span class="laya-tab-icon">🎮</span>
+                                <span>娛樂</span>
+                            </div>
+                            <div class="laya-tab-item interactive-elem" style="position: relative;">
+                                <span class="laya-tab-icon">💬</span>
+                                <span>消息</span>
+                                <span class="laya-msg-badge">27</span>
+                            </div>
+                            <div class="laya-tab-item interactive-elem">
+                                <span class="laya-tab-icon">👤</span>
+                                <span>我的</span>
                             </div>
                         </div>
                         <div class="dy-home-bar"></div>
                     </div>
+
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 右侧高级控制面板 (全简体中文操作界面) -->
+    <!-- ★ 核心新增：图四同款「独立画面取景框选小窗口」 -->
+    <div class="crop-inspector-window" id="crop-inspector-window" style="display: none;">
+        <div class="crop-window-header">
+            <span class="crop-window-title">📐 画面取景器 (拖拽红绿框构图)</span>
+            <button class="crop-window-close" id="btn-close-crop-window" title="关闭小窗">✕</button>
+        </div>
+        <div class="crop-window-body" id="crop-window-body">
+            <!-- 媒体缩略底图 -->
+            <img src="" class="crop-thumb-img" id="crop-thumb-img" alt="Thumbnail">
+            <!-- 核心：可在图四小窗里按住自由拖拽的取景矩形 -->
+            <div class="crop-selection-box" id="crop-selection-box">
+                <div class="crop-box-border"></div>
+                <div class="crop-box-tag">取景区域</div>
+            </div>
+        </div>
+        <div class="crop-window-footer">
+            <span>支持滚轮缩放 / 拖拽定位</span>
+            <button class="btn btn-secondary btn-sm" id="btn-crop-reset">居中</button>
+        </div>
+    </div>
+
+    <!-- ★ 核心新增：全屏实机预览弹窗 (全屏、带暂停播放控件、与下载 100% 一模一样) -->
+    <div class="fullscreen-preview-modal" id="fullscreen-preview-modal">
+        <div class="preview-modal-header">
+            <div class="preview-modal-tip">
+                <span>🖥️ 实机全屏预览已启动</span>
+                <span class="preview-badge">100% 下载真机复刻</span>
+            </div>
+            <div class="preview-modal-actions">
+                <button class="btn btn-save-img" onclick="document.getElementById('btn-save-img').click()">立即保存高清图</button>
+                <button class="btn btn-secondary" id="btn-close-preview">✕ 退出全屏</button>
+            </div>
+        </div>
+        <div class="preview-modal-body" id="preview-modal-body">
+            <!-- 运行时全屏挂载容器 -->
+            <div class="preview-stage-wrap" id="preview-stage-wrap"></div>
+        </div>
+        <div class="preview-modal-footer">
+            <button class="btn btn-secondary btn-sm" id="btn-preview-pause-toggle">⏸️ 播放/暂停控制</button>
+        </div>
+    </div>
+
+    <!-- 右侧高级控制面板 -->
     <div class="sidebar" id="right-sidebar">
         <div class="control-tabs">
             <button class="c-tab-btn active" id="tab-btn-web">💻 Web 播放器配置</button>
-            <button class="c-tab-btn" id="tab-btn-dy">📱 抖音短视频配置</button>
+            <button class="c-tab-btn" id="tab-btn-dy">📱 手机竖屏配置</button>
             <button class="c-tab-btn" id="tab-btn-dm">💬 高级弹幕轨道</button>
         </div>
 
@@ -520,18 +616,39 @@
             </div>
         </div>
 
-        <!-- ================= 选项卡 2: 抖音版配置 (已加入消息数量修改) ================= -->
+        <!-- ================= 选项卡 2: 手机竖屏双风格配置 ================= -->
         <div id="panel-dy-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
-                    <span>🎛️ 短视频组件开关</span>
-                    <span class="badge-tip">抖音专属</span>
+                    <span>🎨 手机竖屏皮肤模式切换</span>
+                    <span class="badge-tip">核心功能</span>
+                </div>
+                <div class="form-row">
+                    <label>选择当前呈现风格：</label>
+                    <select id="sel-mobile-skin" style="background:#151821; font-weight:700; color:#5dade2;">
+                        <option value="douyin">📱 抖音原生短视频风格 (图二)</option>
+                        <option value="laya">💎 Laya 官方原生交友社区风格 (图三)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="panel-card">
+                <div class="card-header">
+                    <span>🎛️ 专属组件显隐开关</span>
                 </div>
                 <div class="switch-grid">
                     <div class="switch-tile">
                         <span>热搜搜索条</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-gold" checked>
+                            <span class="slider-round"></span>
+                        </label>
+                    </div>
+                    <!-- 核心新增：热点栏开关 (默认关闭) -->
+                    <div class="switch-tile highlight-tile">
+                        <span>🔥 热点栏 (默认关)</span>
+                        <label class="ios-toggle">
+                            <input type="checkbox" id="sw-dy-hotspot">
                             <span class="slider-round"></span>
                         </label>
                     </div>
@@ -549,17 +666,10 @@
                             <span class="slider-round"></span>
                         </label>
                     </div>
-                    <div class="switch-tile">
-                        <span>顶部导航栏</span>
+                    <div class="switch-tile" style="grid-column: span 2;">
+                        <span>顶部导航栏 (抖音/Laya)</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-top-nav" checked>
-                            <span class="slider-round"></span>
-                        </label>
-                    </div>
-                    <div class="switch-tile" style="grid-column: span 2;">
-                        <span>底部黑色渐变蒙版</span>
-                        <label class="ios-toggle">
-                            <input type="checkbox" id="sw-dy-purple-mask" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
@@ -571,10 +681,10 @@
                     <span>📊 互动数据与作者资料</span>
                 </div>
                 <div class="form-row">
-                    <label>自定义头像上传 (支持更换/可随时重置)</label>
+                    <label>自定义头像上传 (可随时一键恢复原生)</label>
                     <div style="display: flex; gap: 6px;">
                         <input type="file" id="dy-avatar-uploader" accept="image/*" style="flex: 1;">
-                        <button class="btn btn-secondary btn-sm" id="btn-reset-avatar" title="恢复默认官方Laya头像">恢复默认</button>
+                        <button class="btn btn-secondary btn-sm" id="btn-reset-avatar" title="恢复官方3D Laya头像">恢复官方图</button>
                     </div>
                 </div>
                 <div class="form-grid-2">
@@ -599,9 +709,8 @@
                     <label>作者账号名</label>
                     <input type="text" id="in-dy-author" value="@Laya 视频">
                 </div>
-                <!-- 核心新增：未读消息气泡数量调节 -->
                 <div class="form-row">
-                    <label>未读消息数量 (底部红圈数字，留空则隐藏)</label>
+                    <label>未读消息数量 (填空则隐藏)</label>
                     <input type="text" id="in-dy-msg-count" value="1" placeholder="例如：1、99+ 或留空">
                 </div>
                 <div class="form-row">
@@ -616,11 +725,15 @@
 
             <div class="panel-card">
                 <div class="card-header">
-                    <span>🔥 声明条与热搜词设置</span>
+                    <span>🔥 【🔥热点】与热搜内容配置</span>
                 </div>
                 <div class="form-row">
-                    <label>平台声明/提示文案 (带喇叭图标)</label>
-                    <input type="text" id="in-dy-campaign" value="平台提示：本作品為私密企劃演繹，未成年人請主動離開 &gt;">
+                    <label>热点标题词 (文字小巧精细)</label>
+                    <input type="text" id="in-dy-hotspot-title" value="下班去炫頂配螺螄粉">
+                </div>
+                <div class="form-row">
+                    <label>热点观看人数</label>
+                    <input type="text" id="in-dy-hotspot-views" value="117.7萬人在看">
                 </div>
                 <div class="form-row">
                     <label>猜你想搜热词 (带放大镜)</label>
@@ -653,10 +766,10 @@
                 </div>
 
                 <div class="form-row" style="margin-top: 4px;">
-                    <label>弹幕排布模式</label>
+                    <label>弹幕排布模式 (静态截图推荐定格)</label>
                     <select id="sel-dm-mode" style="background:#151821; font-weight:700; color:#5dade2;">
-                        <option value="scroll">🎬 动态滚动模式 (视频/飘动推荐)</option>
-                        <option value="fixed">📌 静态固定排布 (手动微调X/Y位置)</option>
+                        <option value="scroll">🎬 动态滚动模式 (视频推荐)</option>
+                        <option value="fixed">📌 静态固定排布 (自由调X/Y位置，截图推荐)</option>
                     </select>
                 </div>
 
@@ -696,17 +809,18 @@
             </div>
         </div>
 
-        <!-- ================= 画面裁切与取景控制 ================= -->
+        <!-- ================= 图四同款取景框与画面裁切控制 ================= -->
         <div class="panel-card">
             <div class="card-header">
-                <span>📐 画面裁切与取景控制</span>
-                <span class="badge-tip">防压扁变形</span>
+                <span>📐 图四独立取景框选系统</span>
+                <span class="badge-tip">所选即所得</span>
             </div>
 
+            <!-- 核心：开启图四独立小窗 -->
             <div class="switch-tile highlight-tile">
-                <span>📐 开启比例取景框 (支持鼠标拖拽构图)</span>
+                <span>🖼️ 开启独立取景器浮窗 (图四同款)</span>
                 <label class="ios-toggle">
-                    <input type="checkbox" id="sw-viewfinder">
+                    <input type="checkbox" id="sw-crop-window">
                     <span class="slider-round"></span>
                 </label>
             </div>
@@ -721,7 +835,7 @@
 
             <div class="form-row">
                 <div class="range-box">
-                    <label>垂直 Y 轴位移 (或直接在画面按住拖拽)</label>
+                    <label>垂直 Y 轴位置 (也可在小窗内拖拽)</label>
                     <span class="range-value" id="txt-pos-y">50%</span>
                 </div>
                 <input type="range" id="in-pos-y" min="0" max="100" value="50">
@@ -729,7 +843,7 @@
 
             <div class="form-row">
                 <div class="range-box">
-                    <label>水平 X 轴位移</label>
+                    <label>水平 X 轴位置 (也可在小窗内拖拽)</label>
                     <span class="range-value" id="txt-pos-x">50%</span>
                 </div>
                 <input type="range" id="in-pos-x" min="0" max="100" value="50">
@@ -737,7 +851,7 @@
 
             <div class="form-row">
                 <div class="range-box">
-                    <label>画面缩放倍率 (Zoom / 滚轮无级缩放)</label>
+                    <label>画面缩放倍率 (Zoom / 滚轮自由缩放)</label>
                     <span class="range-value" id="txt-media-scale">100%</span>
                 </div>
                 <input type="range" id="in-media-scale" min="80" max="250" value="100">
