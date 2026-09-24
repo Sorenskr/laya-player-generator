@@ -23,7 +23,6 @@
         <span id="txt-app-title">Laya 播放器 · 双模生成引擎</span>
     </div>
     <div class="nav-actions">
-        <!-- 核心新增功能按钮 -->
         <button class="btn btn-preview" id="btn-open-preview">🖥️ 全屏实机预览</button>
         <button class="btn btn-reset" id="btn-global-reset" title="清除本地记忆，恢复出厂默认设置">↺ 一键重置</button>
         <button class="btn btn-lang" id="btn-toggle-lang">繁 / 简 转换</button>
@@ -170,11 +169,10 @@
                     </div>
                 </div>
 
-                <!-- ================= 模式 2: 手机竖屏 (9:16) 双风格架构 ================= -->
+                <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音/Laya 双风格架构 ================= -->
                 <div class="douyin-hud" id="douyin-hud">
                     
-                    <!-- A. 顶部栏 (支持抖音风 / Laya 原生风自动切换) -->
-                    <!-- 风格 1：抖音原生顶部 -->
+                    <!-- 风格 1：抖音原生顶部栏 -->
                     <div class="dy-top-nav dy-skin-elem" id="dy-wrap-top-nav">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                         <div class="dy-nav-tabs">
@@ -187,7 +185,7 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </div>
 
-                    <!-- 风格 2：Laya 原生顶部栏 (图三复刻：关注/全部/推荐/小游戏/扩列/奖杯/搜索) -->
+                    <!-- 风格 2：Laya 原生顶部栏 (图三复刻：關注/全部/推薦✨/小遊戲/擴列) -->
                     <div class="laya-top-nav laya-skin-elem" id="laya-wrap-top-nav" style="display: none;">
                         <div class="laya-nav-tabs">
                             <span class="interactive-elem">關注</span>
@@ -202,16 +200,15 @@
                         </div>
                     </div>
 
-                    <!-- 全屏观看胶囊 -->
                     <div class="dy-fullscreen-pill interactive-elem" id="dy-fullscreen-pill">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                         <span>全屏觀看</span>
                     </div>
 
-                    <!-- 右侧互动操作栏 (使用高保真 Laya 3D 原生头像) -->
+                    <!-- 右侧互动操作栏 -->
                     <div class="dy-right-bar" id="dy-wrap-right-bar">
                         <div class="dy-avatar-wrap interactive-elem" id="dy-avatar-click">
-                            <!-- 默认采用稳定的 Base64 官方立体 Laya Logo -->
+                            <!-- 纯正栅格 PNG 原生头像，杜绝截屏消失 -->
                             <img src="" class="dy-avatar-img" id="dy-avatar-img" alt="Laya Avatar">
                             <div class="dy-follow-plus" id="dy-btn-follow">+</div>
                         </div>
@@ -262,7 +259,6 @@
                             <span class="dy-tags-inline" id="dy-disp-tags">#心動熱舞 #私密精選</span>
                         </div>
 
-                        <!-- 平台提示声明条 -->
                         <div class="dy-disclaimer-pill interactive-elem" id="dy-wrap-campaign">
                             <svg class="dy-horn-icon" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -270,7 +266,6 @@
                             <span id="dy-disp-campaign">平台提示：本作品為私密企劃演繹，未成年人請主動離開 &gt;</span>
                         </div>
 
-                        <!-- 搜索栏与弹幕开关 -->
                         <div class="dy-search-bar-row">
                             <div class="dy-search-pill interactive-elem" id="dy-wrap-gold">
                                 <div class="dy-search-left">
@@ -290,7 +285,7 @@
                             </div>
                         </div>
 
-                        <!-- ★ 核心新增：【🔥热点】精巧条 (图二复刻：默认关闭) -->
+                        <!-- 核心修复：【🔥热点】精巧条 (默认关闭) -->
                         <div class="dy-hotspot-bar interactive-elem" id="dy-wrap-hotspot" style="display: none;">
                             <div class="dy-hotspot-left">
                                 <span class="dy-hot-fire">🔥</span>
@@ -313,8 +308,7 @@
                         </div>
                     </div>
 
-                    <!-- B. 底部导航栏 (双风格切换) -->
-                    <!-- 风格 1：抖音原生底栏 (加号/[1]消息) -->
+                    <!-- 风格 1：抖音底部导航栏 (繁体：首頁/朋友/+/消息/我) -->
                     <div class="dy-bottom-wrap dy-skin-elem" id="dy-wrap-bottom-bar">
                         <div class="dy-bottom-tabs">
                             <div class="dy-tab-item active interactive-elem"><span>首頁</span></div>
@@ -348,7 +342,6 @@
                                 <span class="laya-tab-icon">✨</span>
                                 <span>瞬間</span>
                             </div>
-                            <!-- 核心要求：插入繁体「視訊」且高亮 -->
                             <div class="laya-tab-item active interactive-elem">
                                 <span class="laya-tab-icon laya-video-pulse">🎬</span>
                                 <span>視訊</span>
@@ -373,35 +366,33 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- ★ 核心新增：图四同款「独立画面取景框选小窗口」 -->
-    <div class="crop-inspector-window" id="crop-inspector-window" style="display: none;">
-        <div class="crop-window-header">
-            <span class="crop-window-title">📐 画面取景器 (拖拽红绿框构图)</span>
-            <button class="crop-window-close" id="btn-close-crop-window" title="关闭小窗">✕</button>
-        </div>
-        <div class="crop-window-body" id="crop-window-body">
-            <!-- 媒体缩略底图 -->
-            <img src="" class="crop-thumb-img" id="crop-thumb-img" alt="Thumbnail">
-            <!-- 核心：可在图四小窗里按住自由拖拽的取景矩形 -->
-            <div class="crop-selection-box" id="crop-selection-box">
-                <div class="crop-box-border"></div>
-                <div class="crop-box-tag">取景区域</div>
+        <!-- ★ 核心升级：图四同款「独立画面取景浮窗」(位于左侧视频区右侧，支持滚轮缩放窗口大小) -->
+        <div class="crop-inspector-window" id="crop-inspector-window" style="display: none;">
+            <div class="crop-window-header" id="crop-window-header">
+                <span class="crop-window-title">📐 取景器 (可滚轮缩放窗体/拖拽框)</span>
+                <button class="crop-window-close" id="btn-close-crop-window" title="关闭小窗">✕</button>
+            </div>
+            <div class="crop-window-body" id="crop-window-body">
+                <img src="" class="crop-thumb-img" id="crop-thumb-img" alt="Thumbnail">
+                <div class="crop-selection-box" id="crop-selection-box">
+                    <div class="crop-box-border"></div>
+                    <div class="crop-box-tag">取景区</div>
+                </div>
+            </div>
+            <div class="crop-window-footer">
+                <span id="crop-window-zoom-hint">滚轮缩放窗体: 230px</span>
+                <button class="btn btn-secondary btn-sm" id="btn-crop-reset">居中</button>
             </div>
         </div>
-        <div class="crop-window-footer">
-            <span>支持滚轮缩放 / 拖拽定位</span>
-            <button class="btn btn-secondary btn-sm" id="btn-crop-reset">居中</button>
-        </div>
     </div>
 
-    <!-- ★ 核心新增：全屏实机预览弹窗 (全屏、带暂停播放控件、与下载 100% 一模一样) -->
+    <!-- ★ 全屏实机预览弹窗 (真机 100% 渲染、带视频暂停/播放联动) -->
     <div class="fullscreen-preview-modal" id="fullscreen-preview-modal">
         <div class="preview-modal-header">
             <div class="preview-modal-tip">
-                <span>🖥️ 实机全屏预览已启动</span>
-                <span class="preview-badge">100% 下载真机复刻</span>
+                <span>🖥️ 实机全屏预览</span>
+                <span class="preview-badge">100% 下载真实呈现</span>
             </div>
             <div class="preview-modal-actions">
                 <button class="btn btn-save-img" onclick="document.getElementById('btn-save-img').click()">立即保存高清图</button>
@@ -409,15 +400,14 @@
             </div>
         </div>
         <div class="preview-modal-body" id="preview-modal-body">
-            <!-- 运行时全屏挂载容器 -->
             <div class="preview-stage-wrap" id="preview-stage-wrap"></div>
         </div>
         <div class="preview-modal-footer">
-            <button class="btn btn-secondary btn-sm" id="btn-preview-pause-toggle">⏸️ 播放/暂停控制</button>
+            <button class="btn btn-secondary btn-sm" id="btn-preview-pause-toggle">⏸️ 播放 / 暂停控制</button>
         </div>
     </div>
 
-    <!-- 右侧高级控制面板 -->
+    <!-- 右侧高级控制面板 (全简体中文操作) -->
     <div class="sidebar" id="right-sidebar">
         <div class="control-tabs">
             <button class="c-tab-btn active" id="tab-btn-web">💻 Web 播放器配置</button>
@@ -620,8 +610,8 @@
         <div id="panel-dy-settings" class="tab-panel">
             <div class="panel-card">
                 <div class="card-header">
-                    <span>🎨 手机竖屏皮肤模式切换</span>
-                    <span class="badge-tip">核心功能</span>
+                    <span>🎨 手机竖屏风格模式切换</span>
+                    <span class="badge-tip">核心组件</span>
                 </div>
                 <div class="form-row">
                     <label>选择当前呈现风格：</label>
@@ -644,9 +634,9 @@
                             <span class="slider-round"></span>
                         </label>
                     </div>
-                    <!-- 核心新增：热点栏开关 (默认关闭) -->
+                    <!-- 核心修复：热点栏开关 (默认关) -->
                     <div class="switch-tile highlight-tile">
-                        <span>🔥 热点栏 (默认关)</span>
+                        <span>🔥 热点条 (默认关)</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-hotspot">
                             <span class="slider-round"></span>
@@ -816,7 +806,6 @@
                 <span class="badge-tip">所选即所得</span>
             </div>
 
-            <!-- 核心：开启图四独立小窗 -->
             <div class="switch-tile highlight-tile">
                 <span>🖼️ 开启独立取景器浮窗 (图四同款)</span>
                 <label class="ios-toggle">
