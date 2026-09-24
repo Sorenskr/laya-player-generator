@@ -331,30 +331,32 @@ main {
 }
 
 /* ==========================================================================
-   ★ 核心新增：图四独立小窗取景器样式 (Crop Inspector Window)
+   ★ 核心：图四独立小窗取景器样式 (置于左侧视频区右侧，支持滚轮缩放窗口大小)
    ========================================================================== */
 .crop-inspector-window {
     position: absolute;
-    bottom: 24px;
-    left: 24px;
-    width: 220px;
-    background: rgba(19, 22, 31, 0.96);
-    border: 1.5px solid rgba(61, 136, 253, 0.6);
+    top: 60px;
+    right: 18px; /* 居于左侧工作区的右侧 */
+    width: 230px; /* 默认宽度，支持滚轮缩放 */
+    background: rgba(18, 21, 30, 0.96);
+    border: 1.5px solid rgba(61, 136, 253, 0.7);
     border-radius: 10px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.85);
-    z-index: 80;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.85);
+    z-index: 85;
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    user-select: none;
 }
 
 .crop-window-header {
-    background: #181c26;
+    background: #151923;
     padding: 6px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    cursor: default;
 }
 
 .crop-window-title {
@@ -378,13 +380,12 @@ main {
 .crop-window-body {
     position: relative;
     width: 100%;
-    height: 150px;
+    height: 160px;
     background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    cursor: crosshair;
 }
 
 .crop-thumb-img {
@@ -395,13 +396,13 @@ main {
     pointer-events: none;
 }
 
-/* 图四同款：红绿高亮取景方框 */
+/* 图四同款红绿高亮取景方框 */
 .crop-selection-box {
     position: absolute;
     width: 70%;
     height: 70%;
     border: 2px solid #2ecc71;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.58);
     cursor: move;
     display: flex;
     align-items: center;
@@ -418,15 +419,15 @@ main {
     font-size: 9px;
     color: #2ecc71;
     font-weight: 800;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.75);
     padding: 1px 4px;
     border-radius: 3px;
     pointer-events: none;
 }
 
 .crop-window-footer {
-    background: #181c26;
-    padding: 4px 8px;
+    background: #151923;
+    padding: 5px 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -435,13 +436,13 @@ main {
 }
 
 /* ==========================================================================
-   ★ 核心新增：全屏实机预览弹窗 (Fullscreen Preview Modal)
+   ★ 全屏实机预览弹窗样式 (所见即所得、真机比例复刻)
    ========================================================================== */
 .fullscreen-preview-modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0, 0, 0, 0.95);
-    z-index: 9999;
+    z-index: 99999;
     display: none;
     flex-direction: column;
 }
@@ -496,7 +497,6 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    transform-origin: center center;
 }
 
 .preview-modal-footer {
@@ -510,7 +510,7 @@ main {
 }
 
 /* ==========================================================================
-   4. 动态跑马灯弹幕系统与定格样式
+   4. 动态跑马灯弹幕系统与定格样式 (修复手机静态图片即时显示)
    ========================================================================== */
 .danmaku-layer {
     position: absolute;
@@ -531,11 +531,13 @@ main {
     text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
     letter-spacing: 0.5px;
     animation: danmakuRoll linear infinite;
+    /* 核心修复：从容器右侧进入，避免 1100px 造成几秒钟空白 */
+    left: 100%;
 }
 
 @keyframes danmakuRoll {
-    0% { transform: translateX(1100px); }
-    100% { transform: translateX(-120%); }
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-2400px); }
 }
 
 .danmaku-layer.is-paused .danmaku-item {
@@ -550,6 +552,7 @@ main {
     transition: left 0.1s ease, top 0.1s ease, font-size 0.1s ease;
 }
 
+/* 手机竖屏下弹幕：粗黑边白字，极具可读性 */
 .mode-mobile-port .danmaku-item {
     color: #ffffff !important;
     text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.9) !important;
@@ -1089,7 +1092,7 @@ main {
 }
 
 /* ==========================================================================
-   ★ 6. 模式 B: 手机竖屏 (9:16) 抖音/Laya 双风格原生样式
+   ★ 6. 手机竖屏 (9:16) 抖音/Laya 双风格原生复刻
    ========================================================================== */
 .douyin-hud {
     display: none;
@@ -1113,7 +1116,7 @@ main {
     display: none !important;
 }
 
-/* 风格 1：抖音原生顶部导航 */
+/* 风格 1：抖音原生顶部栏 */
 .dy-top-nav {
     position: absolute;
     top: 14px;
@@ -1157,7 +1160,7 @@ main {
     border-radius: 2px;
 }
 
-/* ★ 风格 2：Laya 原生顶部导航 (图三复刻) */
+/* 风格 2：Laya 原生顶部栏 (图三复刻) */
 .laya-top-nav {
     position: absolute;
     top: 12px;
@@ -1248,7 +1251,7 @@ main {
     margin-bottom: 14px;
 }
 
-/* 高保真 Laya 3D 拟真头像 */
+/* 纯正 PNG 栅格头像，杜绝截图消失 */
 .dy-avatar-img {
     width: 44px;
     height: 44px;
@@ -1464,7 +1467,7 @@ main {
     box-shadow: 0 0 8px rgba(24, 119, 242, 0.5);
 }
 
-/* ★ 核心新增：【🔥热点】精巧条样式 (图二复刻：字号小、排版精细) */
+/* ★ 【🔥热点】精巧条样式 (图二复刻：字号紧凑精细) */
 .dy-hotspot-bar {
     background: rgba(0, 0, 0, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.08);
