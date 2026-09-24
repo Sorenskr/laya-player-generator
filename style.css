@@ -331,7 +331,7 @@ main {
 }
 
 /* ==========================================================================
-   ★ 图四独立小窗取景器样式 (定位在视频右侧，支持滚轮缩放尺寸)
+   ★ 独立取景框浮窗样式 (定位在视频主画面右侧，支持滚轮无级缩放尺寸)
    ========================================================================== */
 .crop-inspector-window {
     position: absolute;
@@ -346,7 +346,7 @@ main {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    transition: width 0.1s ease;
+    transition: width 0.08s ease;
 }
 
 .crop-window-header {
@@ -396,7 +396,7 @@ main {
     pointer-events: none;
 }
 
-/* 图四同款红绿高亮取景方框 */
+/* 红绿高亮取景方框 */
 .crop-selection-box {
     position: absolute;
     width: 70%;
@@ -436,7 +436,7 @@ main {
 }
 
 /* ==========================================================================
-   全屏实机预览弹窗
+   全屏实机预览弹窗 (解决黑屏，支持视频播放/暂停)
    ========================================================================== */
 .fullscreen-preview-modal {
     position: fixed;
@@ -509,7 +509,7 @@ main {
 }
 
 /* ==========================================================================
-   4. 动态跑马灯弹幕系统与定格样式 (修复首段动画延迟)
+   4. 动态跑马灯弹幕系统与定格样式
    ========================================================================== */
 .danmaku-layer {
     position: absolute;
@@ -527,12 +527,10 @@ main {
     white-space: nowrap;
     font-weight: 700;
     font-size: var(--danmaku-size);
-    text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
     letter-spacing: 0.5px;
     animation: danmakuRoll linear infinite;
 }
 
-/* 自适应所有画幅宽度的跑马灯位移 */
 @keyframes danmakuRoll {
     0% { left: 100%; transform: translateX(0); }
     100% { left: 0; transform: translateX(-100%); }
@@ -552,7 +550,7 @@ main {
 
 .mode-mobile-port .danmaku-item {
     color: #ffffff !important;
-    text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.9) !important;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
 }
 
 /* ==========================================================================
@@ -673,7 +671,6 @@ main {
     font-size: 13px;
     font-weight: 600;
     color: #ffffff !important;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     height: 24px;
     line-height: normal;
     display: inline-flex;
@@ -1089,7 +1086,7 @@ main {
 }
 
 /* ==========================================================================
-   ★ 6. 模式 B: 手机竖屏 (9:16) 双风格架构
+   ★ 6. 模式 B: 手机竖屏 (9:16) 双风格架构 (阴影已全部去除)
    ========================================================================== */
 .douyin-hud {
     display: none;
@@ -1113,14 +1110,14 @@ main {
     display: none !important;
 }
 
-/* 核心：用 CSS 规则驱动皮肤秒级切换，零 JS 样式冲突 */
+/* 核心：CSS 规则秒级驱动皮肤切换 */
 .skin-douyin .laya-skin-elem { display: none !important; }
 .skin-douyin .dy-skin-elem { display: flex !important; }
 
 .skin-laya .dy-skin-elem { display: none !important; }
 .skin-laya .laya-skin-elem { display: flex !important; }
 
-/* 风格 1：抖音原生顶部导航 */
+/* 风格 1：抖音原生顶部导航 (彻底去除假阴影) */
 .dy-top-nav {
     position: absolute;
     top: 14px;
@@ -1132,8 +1129,8 @@ main {
     padding: 0 16px;
     font-size: 14px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.65);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: none !important;
     pointer-events: auto;
     z-index: 12;
 }
@@ -1165,7 +1162,7 @@ main {
     border-radius: 2px;
 }
 
-/* 风格 2：Laya 原生顶部导航 (图三复刻) */
+/* 风格 2：Laya 原生顶部导航 (图三复刻，彻底去除假阴影) */
 .laya-top-nav {
     position: absolute;
     top: 12px;
@@ -1177,8 +1174,8 @@ main {
     padding: 0 16px;
     font-size: 13.5px;
     font-weight: 700;
-    color: rgba(255, 255, 255, 0.7);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
+    color: rgba(255, 255, 255, 0.8);
+    text-shadow: none !important;
     pointer-events: auto;
     z-index: 12;
 }
@@ -1241,7 +1238,7 @@ main {
     margin-right: 5px;
 }
 
-/* 右侧互动栏 */
+/* 右侧互动栏 (彻底去除假阴影) */
 .dy-right-bar {
     position: absolute;
     right: 8px;
@@ -1298,7 +1295,7 @@ main {
     flex-direction: column;
     align-items: center;
     margin-bottom: 12px;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    text-shadow: none !important;
 }
 
 .dy-action-icon {
@@ -1317,6 +1314,7 @@ main {
     font-size: 11px;
     font-weight: 600;
     color: #fff;
+    text-shadow: none !important;
 }
 
 .dy-vinyl-record {
@@ -1343,7 +1341,7 @@ main {
     100% { transform: rotate(360deg); }
 }
 
-/* 左下角信息流 */
+/* 左下角信息流 (彻底去除文字下方的假阴影) */
 .dy-left-info {
     position: absolute;
     left: 12px;
@@ -1351,7 +1349,7 @@ main {
     bottom: 58px;
     display: flex;
     flex-direction: column;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+    text-shadow: none !important;
     pointer-events: auto;
     z-index: 12;
 }
@@ -1366,6 +1364,7 @@ main {
     color: #ffffff;
     letter-spacing: 0.3px;
     line-height: normal;
+    text-shadow: none !important;
 }
 
 .dy-desc-row {
@@ -1375,6 +1374,7 @@ main {
     line-height: 1.45;
     margin-bottom: 6px;
     word-break: break-all;
+    text-shadow: none !important;
 }
 
 .dy-tags-inline {
@@ -1387,17 +1387,18 @@ main {
     display: inline-flex;
     align-items: center;
     font-size: 11.5px;
-    color: rgba(255, 255, 255, 0.65);
+    color: rgba(255, 255, 255, 0.7);
     line-height: normal;
     margin-bottom: 7px;
     width: fit-content;
+    text-shadow: none !important;
 }
 
 .dy-horn-icon {
     width: 12px;
     height: 12px;
     margin-right: 4px;
-    opacity: 0.8;
+    opacity: 0.85;
 }
 
 .dy-search-bar-row {
@@ -1474,7 +1475,7 @@ main {
     box-shadow: 0 0 8px rgba(24, 119, 242, 0.5);
 }
 
-/* ★ 【🔥热点】精巧条样式 (字号紧凑、高颜值) */
+/* ★ 【🔥热点】精巧条样式 (已去除【】方框，字号紧凑不折行) */
 .dy-hotspot-bar {
     background: rgba(0, 0, 0, 0.52);
     border: 1px solid rgba(255, 255, 255, 0.08);
@@ -1487,6 +1488,7 @@ main {
     font-size: 10.5px;
     margin-bottom: 6px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    text-shadow: none !important;
 }
 
 .dy-hotspot-left {
@@ -1496,11 +1498,21 @@ main {
     line-height: normal;
 }
 
+.dy-hot-fire {
+    font-size: 11px;
+    margin-right: 4px;
+}
+
 .dy-hot-tag {
     color: #ff7675;
     font-weight: 800;
     font-size: 10.5px;
     white-space: nowrap;
+}
+
+.dy-hot-dot {
+    margin: 0 4px;
+    color: rgba(255, 255, 255, 0.4);
 }
 
 .dy-hot-title {
