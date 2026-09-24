@@ -1,6 +1,6 @@
 /**
  * ==========================================================================
- * danmaku.js - 高级动态/定格弹幕双模工作台 (支持手机端原生弹幕开关联动)
+ * danmaku.js - 高级动态/定格弹幕双模工作台 (自动记忆与状态持久化)
  * ==========================================================================
  */
 
@@ -42,6 +42,7 @@ window.DanmakuEngine = {
         if (!presetsDB[presetKey]) return;
         this.list = JSON.parse(JSON.stringify(presetsDB[presetKey]));
         this.refresh();
+        if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
         if (typeof window.showToast === 'function') {
             window.showToast(`已载入预设案例：${presetNames[presetKey]}`);
         }
@@ -61,6 +62,7 @@ window.DanmakuEngine = {
         };
         this.list.unshift(newTrack);
         this.refresh();
+        if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
     }
 };
 
@@ -116,7 +118,7 @@ function syncPauseButtonUI(isPaused) {
     const btnParseBatch = document.getElementById('btn-parse-batch');
     const swDanmaku = document.getElementById('sw-danmaku');
     const btnQuickDmToggle = document.getElementById('btn-quick-dm-toggle');
-    const dyBtnDmToggle = document.getElementById('dy-btn-dm-toggle'); // 手机端弹幕胶囊
+    const dyBtnDmToggle = document.getElementById('dy-btn-dm-toggle');
     const btnOpenDmInput = document.getElementById('btn-open-dm-input');
     const selDmMode = document.getElementById('sel-dm-mode');
 
@@ -202,12 +204,14 @@ function syncPauseButtonUI(isPaused) {
                 dm.text = e.target.value;
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.textContent = e.target.value;
+                if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
             card.querySelector('.dm-input-top').addEventListener('input', (e) => {
                 dm.top = Math.min(95, Math.max(5, parseInt(e.target.value) || 20));
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.top = dm.top + '%';
+                if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
             const inputLeft = card.querySelector('.dm-input-left');
@@ -216,6 +220,7 @@ function syncPauseButtonUI(isPaused) {
                     dm.left = Math.min(90, Math.max(2, parseInt(e.target.value) || 10));
                     const stageEl = document.getElementById('stage_' + dm.id);
                     if (stageEl) stageEl.style.left = dm.left + '%';
+                    if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
                 });
             }
 
@@ -228,6 +233,7 @@ function syncPauseButtonUI(isPaused) {
                         const duration = Math.max(2, dm.speed / window.DanmakuEngine.speedFactor);
                         stageEl.style.animationDuration = duration.toFixed(1) + 's';
                     }
+                    if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
                 });
             }
 
@@ -235,22 +241,26 @@ function syncPauseButtonUI(isPaused) {
                 dm.size = Math.min(40, Math.max(12, parseInt(e.target.value) || 16));
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.fontSize = dm.size + 'px';
+                if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
             card.querySelector('.dm-input-color').addEventListener('input', (e) => {
                 dm.color = e.target.value;
                 const stageEl = document.getElementById('stage_' + dm.id);
                 if (stageEl) stageEl.style.color = e.target.value;
+                if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
             card.querySelector('.dm-input-vis').addEventListener('change', (e) => {
                 dm.visible = e.target.checked;
                 renderDanmakuStage();
+                if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             });
 
             card.querySelector('.dm-track-del').addEventListener('click', () => {
                 window.DanmakuEngine.list.splice(index, 1);
                 window.DanmakuEngine.refresh();
+                if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
                 toast('弹幕已删除');
             });
 
@@ -279,6 +289,7 @@ function syncPauseButtonUI(isPaused) {
                     stageEl.style.animationDuration = duration.toFixed(1) + 's';
                 }
             });
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
         });
     }
 
@@ -286,6 +297,7 @@ function syncPauseButtonUI(isPaused) {
         selDmMode.addEventListener('change', (e) => {
             window.DanmakuEngine.mode = e.target.value;
             window.DanmakuEngine.refresh();
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             toast(e.target.value === 'fixed' ? '📌 已切换为：定格排布模式 (自由调X/Y位置)' : '🎬 已切换为：动态滚动模式');
         });
     }
@@ -304,6 +316,7 @@ function syncPauseButtonUI(isPaused) {
             txtDanmakuSize.textContent = sizeVal;
             window.DanmakuEngine.list.forEach(dm => dm.size = parseInt(e.target.value));
             renderDanmakuStage();
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
         });
     }
 
@@ -325,6 +338,7 @@ function syncPauseButtonUI(isPaused) {
                 visible: true
             });
             window.DanmakuEngine.refresh();
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             toast('已新增 1 条自定义弹幕');
         });
     }
@@ -354,11 +368,11 @@ function syncPauseButtonUI(isPaused) {
             window.DanmakuEngine.list = [...window.DanmakuEngine.list, ...newTracks];
             window.DanmakuEngine.refresh();
             inBatchDanmaku.value = '';
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             toast(`已导入 ${segs.length} 条弹幕！`);
         });
     }
 
-    // 全局弹幕状态同步函数 (包含 Web 底栏与手机端原生胶囊)
     function applyDanmakuVisibility(isVisible) {
         if (danmakuContainer) {
             danmakuContainer.style.display = isVisible ? 'block' : 'none';
@@ -379,6 +393,7 @@ function syncPauseButtonUI(isPaused) {
     if (swDanmaku) {
         swDanmaku.addEventListener('change', (e) => {
             applyDanmakuVisibility(e.target.checked);
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
         });
     }
 
@@ -386,16 +401,17 @@ function syncPauseButtonUI(isPaused) {
         btnQuickDmToggle.addEventListener('click', () => {
             const nextState = !swDanmaku.checked;
             applyDanmakuVisibility(nextState);
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             toast(nextState ? '弹幕已开启' : '弹幕已关闭');
         });
     }
 
-    // 手机端原生弹幕胶囊点击
     if (dyBtnDmToggle) {
         dyBtnDmToggle.addEventListener('click', (e) => {
             e.stopPropagation();
             const nextState = !swDanmaku.checked;
             applyDanmakuVisibility(nextState);
+            if (typeof window.triggerSaveStorage === 'function') window.triggerSaveStorage();
             toast(nextState ? '彈幕已開啟' : '彈幕已關閉');
         });
     }
