@@ -331,32 +331,31 @@ main {
 }
 
 /* ==========================================================================
-   ★ 核心：图四独立小窗取景器样式 (置于左侧视频区右侧，支持滚轮缩放窗口大小)
+   ★ 图四独立小窗取景器样式 (定位在视频右侧，支持滚轮缩放尺寸)
    ========================================================================== */
 .crop-inspector-window {
     position: absolute;
     top: 60px;
-    right: 18px; /* 居于左侧工作区的右侧 */
-    width: 230px; /* 默认宽度，支持滚轮缩放 */
-    background: rgba(18, 21, 30, 0.96);
+    right: 20px;
+    width: 240px;
+    background: rgba(19, 22, 31, 0.96);
     border: 1.5px solid rgba(61, 136, 253, 0.7);
     border-radius: 10px;
-    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.85);
-    z-index: 85;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
+    z-index: 90;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    user-select: none;
+    transition: width 0.1s ease;
 }
 
 .crop-window-header {
-    background: #151923;
+    background: #181c26;
     padding: 6px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    cursor: default;
 }
 
 .crop-window-title {
@@ -369,7 +368,7 @@ main {
     background: transparent;
     border: none;
     color: #8b93a4;
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
 }
 
@@ -380,12 +379,13 @@ main {
 .crop-window-body {
     position: relative;
     width: 100%;
-    height: 160px;
+    height: 155px;
     background: #000;
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    cursor: crosshair;
 }
 
 .crop-thumb-img {
@@ -402,7 +402,7 @@ main {
     width: 70%;
     height: 70%;
     border: 2px solid #2ecc71;
-    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.58);
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
     cursor: move;
     display: flex;
     align-items: center;
@@ -412,11 +412,11 @@ main {
 .crop-box-border {
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    border: 1px dashed #e74c3c;
+    border: 1.5px dashed #e74c3c;
 }
 
 .crop-box-tag {
-    font-size: 9px;
+    font-size: 9.5px;
     color: #2ecc71;
     font-weight: 800;
     background: rgba(0,0,0,0.75);
@@ -426,8 +426,8 @@ main {
 }
 
 .crop-window-footer {
-    background: #151923;
-    padding: 5px 8px;
+    background: #181c26;
+    padding: 5px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -436,13 +436,13 @@ main {
 }
 
 /* ==========================================================================
-   ★ 全屏实机预览弹窗样式 (所见即所得、真机比例复刻)
+   全屏实机预览弹窗
    ========================================================================== */
 .fullscreen-preview-modal {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.95);
-    z-index: 99999;
+    background: rgba(0, 0, 0, 0.96);
+    z-index: 9999;
     display: none;
     flex-direction: column;
 }
@@ -506,11 +506,10 @@ main {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
 }
 
 /* ==========================================================================
-   4. 动态跑马灯弹幕系统与定格样式 (修复手机静态图片即时显示)
+   4. 动态跑马灯弹幕系统与定格样式 (修复首段动画延迟)
    ========================================================================== */
 .danmaku-layer {
     position: absolute;
@@ -519,7 +518,7 @@ main {
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 3;
+    z-index: 4;
     overflow: hidden;
 }
 
@@ -531,13 +530,12 @@ main {
     text-shadow: 1px 1px 2px #000, -1px -1px 2px #000, 1px -1px 2px #000, -1px 1px 2px #000;
     letter-spacing: 0.5px;
     animation: danmakuRoll linear infinite;
-    /* 核心修复：从容器右侧进入，避免 1100px 造成几秒钟空白 */
-    left: 100%;
 }
 
+/* 自适应所有画幅宽度的跑马灯位移 */
 @keyframes danmakuRoll {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-2400px); }
+    0% { left: 100%; transform: translateX(0); }
+    100% { left: 0; transform: translateX(-100%); }
 }
 
 .danmaku-layer.is-paused .danmaku-item {
@@ -552,7 +550,6 @@ main {
     transition: left 0.1s ease, top 0.1s ease, font-size 0.1s ease;
 }
 
-/* 手机竖屏下弹幕：粗黑边白字，极具可读性 */
 .mode-mobile-port .danmaku-item {
     color: #ffffff !important;
     text-shadow: -1.5px -1.5px 0 #000, 1.5px -1.5px 0 #000, -1.5px 1.5px 0 #000, 1.5px 1.5px 0 #000, 0 2px 4px rgba(0, 0, 0, 0.9) !important;
@@ -1092,7 +1089,7 @@ main {
 }
 
 /* ==========================================================================
-   ★ 6. 手机竖屏 (9:16) 抖音/Laya 双风格原生复刻
+   ★ 6. 模式 B: 手机竖屏 (9:16) 双风格架构
    ========================================================================== */
 .douyin-hud {
     display: none;
@@ -1116,7 +1113,14 @@ main {
     display: none !important;
 }
 
-/* 风格 1：抖音原生顶部栏 */
+/* 核心：用 CSS 规则驱动皮肤秒级切换，零 JS 样式冲突 */
+.skin-douyin .laya-skin-elem { display: none !important; }
+.skin-douyin .dy-skin-elem { display: flex !important; }
+
+.skin-laya .dy-skin-elem { display: none !important; }
+.skin-laya .laya-skin-elem { display: flex !important; }
+
+/* 风格 1：抖音原生顶部导航 */
 .dy-top-nav {
     position: absolute;
     top: 14px;
@@ -1131,6 +1135,7 @@ main {
     color: rgba(255, 255, 255, 0.65);
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
     pointer-events: auto;
+    z-index: 12;
 }
 
 .dy-nav-tabs {
@@ -1160,7 +1165,7 @@ main {
     border-radius: 2px;
 }
 
-/* 风格 2：Laya 原生顶部栏 (图三复刻) */
+/* 风格 2：Laya 原生顶部导航 (图三复刻) */
 .laya-top-nav {
     position: absolute;
     top: 12px;
@@ -1175,6 +1180,7 @@ main {
     color: rgba(255, 255, 255, 0.7);
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85);
     pointer-events: auto;
+    z-index: 12;
 }
 
 .laya-nav-tabs {
@@ -1244,6 +1250,7 @@ main {
     flex-direction: column;
     align-items: center;
     pointer-events: auto;
+    z-index: 12;
 }
 
 .dy-avatar-wrap {
@@ -1251,7 +1258,6 @@ main {
     margin-bottom: 14px;
 }
 
-/* 纯正 PNG 栅格头像，杜绝截图消失 */
 .dy-avatar-img {
     width: 44px;
     height: 44px;
@@ -1347,6 +1353,7 @@ main {
     flex-direction: column;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
     pointer-events: auto;
+    z-index: 12;
 }
 
 .dy-author-row {
@@ -1467,9 +1474,9 @@ main {
     box-shadow: 0 0 8px rgba(24, 119, 242, 0.5);
 }
 
-/* ★ 【🔥热点】精巧条样式 (图二复刻：字号紧凑精细) */
+/* ★ 【🔥热点】精巧条样式 (字号紧凑、高颜值) */
 .dy-hotspot-bar {
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.52);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 4px;
     padding: 0 8px;
@@ -1477,7 +1484,7 @@ main {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 10.5px;
     margin-bottom: 6px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.3);
 }
@@ -1486,31 +1493,24 @@ main {
     display: flex;
     align-items: center;
     overflow: hidden;
-}
-
-.dy-hot-fire {
-    font-size: 11px;
-    margin-right: 3px;
+    line-height: normal;
 }
 
 .dy-hot-tag {
     color: #ff7675;
-    font-weight: 700;
+    font-weight: 800;
     font-size: 10.5px;
-}
-
-.dy-hot-dot {
-    margin: 0 3px;
-    color: rgba(255,255,255,0.4);
+    white-space: nowrap;
 }
 
 .dy-hot-title {
-    color: #f1f2f6;
-    font-size: 11px;
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 140px;
+    max-width: 135px;
 }
 
 .dy-hotspot-right {
@@ -1522,7 +1522,7 @@ main {
 
 .dy-hot-views {
     color: rgba(255, 255, 255, 0.6);
-    font-size: 10px;
+    font-size: 9.5px;
 }
 
 .dy-hot-arrow {
@@ -1572,7 +1572,7 @@ main {
     left: 0;
     right: 0;
     height: 52px;
-    z-index: 11;
+    z-index: 12;
     background: #000000;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
@@ -1662,14 +1662,14 @@ main {
     box-sizing: border-box;
 }
 
-/* ★ 风格 2：Laya 原生底部导航栏 (图三复刻：發現/瞬間/視訊/娛樂/消息/我的) */
+/* 风格 2：Laya 原生底部导航栏 (图三复刻：發現/瞬間/視訊/娛樂/消息/我的) */
 .laya-bottom-wrap {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
     height: 52px;
-    z-index: 11;
+    z-index: 12;
     background: rgba(12, 10, 18, 0.98);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
