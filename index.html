@@ -11,7 +11,7 @@
 
 <div id="toast-container"></div>
 
-<!-- 顶部工具导航栏 (全简体中文操作按键) -->
+<!-- 顶部工具导航栏 -->
 <header>
     <div class="brand">
         <svg class="brand-logo" viewBox="0 0 100 100">
@@ -52,13 +52,13 @@
 
         <div class="player-stage">
             <div class="player-box mode-pc" id="render-target">
-                <!-- 媒体底层容器 (支持鼠标直接按住拖拽构图与滚轮缩放) -->
+                <!-- 媒体底层容器 -->
                 <div class="media-container" id="player-media-wrap">
                     <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=1200&q=95" class="player-bg-media" id="preview-img">
                     <video id="preview-video" class="player-bg-media" loop playsinline style="display: none;"></video>
                 </div>
 
-                <!-- 交互式专业九宫格取景框遮罩 (仅在开启取景开关时显示，截图导出自动隐藏) -->
+                <!-- 交互式专业九宫格取景框 -->
                 <div class="viewfinder-overlay" id="viewfinder-overlay">
                     <div class="vf-grid-line vf-h1"></div>
                     <div class="vf-grid-line vf-h2"></div>
@@ -180,8 +180,9 @@
                     </div>
                 </div>
 
-                <!-- ================= 模式 2: 手机竖屏 (9:16) 抖音/短视频模式 HUD ================= -->
+                <!-- ================= 模式 2: 手机竖屏 (9:16) 1:1 抖音原生重构版 ================= -->
                 <div class="douyin-hud" id="douyin-hud">
+                    <!-- 顶部精选/热点栏 -->
                     <div class="dy-top-nav" id="dy-wrap-top-nav">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                         <div class="dy-nav-tabs">
@@ -194,11 +195,13 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" class="interactive-elem"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     </div>
 
+                    <!-- 全屏观看悬浮窗 (导入横屏素材时自适应显示) -->
                     <div class="dy-fullscreen-pill interactive-elem" id="dy-fullscreen-pill">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
                         <span>全屏觀看</span>
                     </div>
 
+                    <!-- 右侧互动操作栏 -->
                     <div class="dy-right-bar" id="dy-wrap-right-bar">
                         <div class="dy-avatar-wrap interactive-elem" id="dy-avatar-click">
                             <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='50' fill='%230D5BE1'/><circle cx='50' cy='50' r='36' fill='%232172F5'/><circle cx='50' cy='50' r='22' fill='%233D88FD'/><text x='50' y='60' font-size='28' font-weight='900' font-style='italic' fill='%23fff' text-anchor='middle'>Laya</text></svg>" class="dy-avatar-img" id="dy-avatar-img">
@@ -207,32 +210,33 @@
 
                         <div class="dy-action-item interactive-elem" id="dy-btn-like">
                             <div class="dy-action-icon" id="dy-like-icon-wrap">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" id="dy-svg-like"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                <svg width="25" height="25" viewBox="0 0 24 24" fill="#ffffff" id="dy-svg-like"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
                             </div>
                             <span class="dy-action-txt" id="dy-val-likes">3.3萬</span>
                         </div>
 
                         <div class="dy-action-item interactive-elem" id="dy-btn-comment">
                             <div class="dy-action-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
+                                <svg width="23" height="23" viewBox="0 0 24 24" fill="#ffffff"><path d="M21.99 4c0-1.1-.89-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4-.01-18z"/></svg>
                             </div>
                             <span class="dy-action-txt" id="dy-val-comments">1098</span>
                         </div>
 
                         <div class="dy-action-item interactive-elem" id="dy-btn-star">
                             <div class="dy-action-icon" id="dy-star-icon-wrap">
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" id="dy-svg-star"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                <svg width="25" height="25" viewBox="0 0 24 24" fill="#ffffff" id="dy-svg-star"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                             </div>
                             <span class="dy-action-txt" id="dy-val-stars">1.1萬</span>
                         </div>
 
                         <div class="dy-action-item interactive-elem" id="dy-btn-share">
                             <div class="dy-action-icon">
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="#ffffff"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
+                                <svg width="23" height="23" viewBox="0 0 24 24" fill="#ffffff"><path d="M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z"/></svg>
                             </div>
                             <span class="dy-action-txt" id="dy-val-shares">2766</span>
                         </div>
 
+                        <!-- 旋转黑胶唱片 -->
                         <div class="dy-action-item interactive-elem" style="margin-bottom: 0;">
                             <div class="dy-vinyl-record">
                                 <div class="dy-vinyl-center"></div>
@@ -240,40 +244,84 @@
                         </div>
                     </div>
 
+                    <!-- ★ 核心：左下角 1:1 复刻抖音信息流 -->
                     <div class="dy-left-info">
-                        <div class="dy-author-name interactive-elem" id="dy-disp-author">@Laya 暗號 1896</div>
-                        <div class="dy-video-desc interactive-elem" id="dy-disp-desc">Laya 丨 1896 已解鎖完整無碼未刪減版，點擊任意處觀看</div>
-                        <div class="dy-tags-row interactive-elem" id="dy-disp-tags">#心動熱舞 #私密精選 #完整版</div>
-
-                        <div class="dy-campaign-pill interactive-elem" id="dy-wrap-campaign">
-                            <span class="dy-campaign-badge">心動匹配</span>
-                            <span id="dy-disp-campaign">來Laya 語音廳，親自演給你看 &gt;</span>
+                        <!-- 作者名 -->
+                        <div class="dy-author-row">
+                            <span class="dy-author-name" id="dy-disp-author">@梁達</span>
                         </div>
 
-                        <div class="dy-gold-banner interactive-elem" id="dy-wrap-gold">
-                            <div class="dy-gold-left">
-                                <span class="dy-fire-icon">🔥</span>
-                                <span id="dy-disp-gold-title">視頻榜單：最讓你心動的女優評選大賽</span>
+                        <!-- 视频描述文案与标签 (层次分明、行高舒展) -->
+                        <div class="dy-desc-row">
+                            <span id="dy-disp-desc">Laya 丨 1896 已解鎖完整無碼未刪減版，點擊任意處觀看</span>
+                            <span class="dy-tags-inline" id="dy-disp-tags">#心動熱舞 #私密精選</span>
+                        </div>
+
+                        <!-- 抖音原生作者声明条 (复刻图二小喇叭图标) -->
+                        <div class="dy-disclaimer-pill interactive-elem" id="dy-wrap-campaign">
+                            <svg class="dy-horn-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                            </svg>
+                            <span id="dy-disp-campaign">平台提示：本作品為私密企劃演繹，未成年人請主動離開 &gt;</span>
+                        </div>
+
+                        <!-- 弹幕开关与相关搜索条融合栏 (复刻图二搜索条) -->
+                        <div class="dy-search-bar-row">
+                            <div class="dy-search-pill interactive-elem" id="dy-wrap-gold">
+                                <div class="dy-search-left">
+                                    <svg class="dy-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
+                                        <circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                    </svg>
+                                    <span class="dy-search-text" id="dy-disp-gold-title">猜你想搜 · Laya 獨家完整版合集</span>
+                                </div>
+                                <span class="dy-search-arrow">&gt;</span>
                             </div>
-                            <span id="dy-disp-gold-views">45.1萬人在看 &gt;</span>
+
+                            <!-- 抖音专属发光弹幕开关胶囊 -->
+                            <div class="dy-dm-switch-capsule" id="dy-btn-dm-toggle" title="開關彈幕">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2z"/>
+                                </svg>
+                                <span>彈</span>
+                            </div>
+                        </div>
+
+                        <!-- 贴着搜索框的原生超细播放进度条 (复刻图二) -->
+                        <div class="dy-tiny-progressbar">
+                            <div class="dy-tiny-buffer" style="width: 70%;"></div>
+                            <div class="dy-tiny-fill" style="width: 35%;">
+                                <div class="dy-tiny-scrubber"></div>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- ★ 核心：复刻图二抖音底部导航栏 (加号/红标数字) -->
                     <div class="dy-bottom-wrap" id="dy-wrap-bottom-bar">
                         <div class="dy-bottom-tabs">
-                            <div class="dy-tab-item active interactive-elem">首頁</div>
-                            <div class="dy-tab-item interactive-elem">
-                                <div class="dy-star-moment">
-                                    <span style="font-size: 16px; line-height: 1;">😊</span>
-                                </div>
-                                <span style="color: #ffeaa7;">瞬間</span>
+                            <div class="dy-tab-item active interactive-elem">
+                                <span>首頁</span>
                             </div>
-                            <div class="dy-tab-item interactive-elem">派對</div>
+                            <div class="dy-tab-item interactive-elem">
+                                <span>朋友</span>
+                            </div>
+                            <!-- 抖音经典发布加号键 [+] -->
+                            <div class="dy-plus-btn-wrap interactive-elem" id="dy-btn-publish">
+                                <div class="dy-plus-btn-deco left"></div>
+                                <div class="dy-plus-btn-deco right"></div>
+                                <div class="dy-plus-btn-core">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3.5">
+                                        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <!-- 带有红底白字数字气泡的“消息” (复刻图二) -->
                             <div class="dy-tab-item interactive-elem" style="position: relative;">
                                 <span>消息</span>
-                                <span class="dy-msg-badge"></span>
+                                <span class="dy-msg-bubble">1</span>
                             </div>
-                            <div class="dy-tab-item interactive-elem">我的</div>
+                            <div class="dy-tab-item interactive-elem">
+                                <span>我</span>
+                            </div>
                         </div>
                         <div class="dy-home-bar"></div>
                     </div>
@@ -490,14 +538,14 @@
                 </div>
                 <div class="switch-grid">
                     <div class="switch-tile">
-                        <span>金色引流榜单</span>
+                        <span>热搜搜索条</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-gold" checked>
                             <span class="slider-round"></span>
                         </label>
                     </div>
                     <div class="switch-tile">
-                        <span>活动声明胶囊</span>
+                        <span>平台声明条</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-campaign" checked>
                             <span class="slider-round"></span>
@@ -518,7 +566,7 @@
                         </label>
                     </div>
                     <div class="switch-tile" style="grid-column: span 2;">
-                        <span>底部梦幻紫黑渐变蒙版</span>
+                        <span>底部黑色渐变蒙版</span>
                         <label class="ios-toggle">
                             <input type="checkbox" id="sw-dy-purple-mask" checked>
                             <span class="slider-round"></span>
@@ -532,7 +580,7 @@
                     <span>📊 互动数据与作者资料</span>
                 </div>
                 <div class="form-row">
-                    <label>自定义头像上传 (支持女性/自定义图)</label>
+                    <label>自定义头像上传 (支持女性/自选图)</label>
                     <input type="file" id="dy-avatar-uploader" accept="image/*">
                 </div>
                 <div class="form-grid-2">
@@ -555,7 +603,7 @@
                 </div>
                 <div class="form-row">
                     <label>作者账号名</label>
-                    <input type="text" id="in-dy-author" value="@Laya 暗號 1896">
+                    <input type="text" id="in-dy-author" value="@梁達">
                 </div>
                 <div class="form-row">
                     <label>作品文案说明</label>
@@ -563,25 +611,21 @@
                 </div>
                 <div class="form-row">
                     <label>热门标签 (Tags)</label>
-                    <input type="text" id="in-dy-tags" value="#心動熱舞 #私密精選 #完整版">
+                    <input type="text" id="in-dy-tags" value="#心動熱舞 #私密精選">
                 </div>
             </div>
 
             <div class="panel-card">
                 <div class="card-header">
-                    <span>🔥 引流声明与金色榜单</span>
+                    <span>🔥 声明条与热搜词设置</span>
                 </div>
                 <div class="form-row">
-                    <label>活动胶囊引流文案</label>
-                    <input type="text" id="in-dy-campaign" value="來Laya 語音廳，親自演給你看 &gt;">
+                    <label>平台声明/提示文案 (带喇叭图标)</label>
+                    <input type="text" id="in-dy-campaign" value="平台提示：本作品為私密企劃演繹，未成年人請主動離開 &gt;">
                 </div>
                 <div class="form-row">
-                    <label>金色榜单名称</label>
-                    <input type="text" id="in-dy-gold-title" value="視頻榜單：最讓你心動的女優評選大賽">
-                </div>
-                <div class="form-row">
-                    <label>金色榜单热度人数</label>
-                    <input type="text" id="in-dy-gold-views" value="45.1萬人在看 &gt;">
+                    <label>猜你想搜热词 (带放大镜)</label>
+                    <input type="text" id="in-dy-gold-title" value="猜你想搜 · Laya 獨家完整版合集">
                 </div>
             </div>
         </div>
@@ -653,14 +697,13 @@
             </div>
         </div>
 
-        <!-- ================= 画面裁切与取景框控制卡片 (核心升级) ================= -->
+        <!-- ================= 画面裁切与取景控制 ================= -->
         <div class="panel-card">
             <div class="card-header">
                 <span>📐 画面裁切与取景控制</span>
                 <span class="badge-tip">防压扁变形</span>
             </div>
 
-            <!-- 智能比例取景框开关 -->
             <div class="switch-tile highlight-tile">
                 <span>📐 开启比例取景框 (支持鼠标拖拽构图)</span>
                 <label class="ios-toggle">
@@ -670,10 +713,10 @@
             </div>
 
             <div class="form-row">
-                <label>画面自适应模式 (长视频/长图推荐等比裁剪)</label>
+                <label>画面自适应模式</label>
                 <select id="sel-crop-fit" style="background:#151821; font-weight:700; color:#5dade2;">
                     <option value="cover">✂️ 等比裁切填充 (Cover - 自动适应比例无黑边)</option>
-                    <option value="contain">📺 完整画面包含 (Contain - 完整呈现上下/左右留黑边)</option>
+                    <option value="contain">📺 完整画面包含 (Contain - 完整呈现留黑边)</option>
                 </select>
             </div>
 
