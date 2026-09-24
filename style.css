@@ -291,7 +291,6 @@ main {
     border: 2px solid rgba(255, 255, 255, 0.18);
 }
 
-/* 媒体展示容器 (支持按住拖拽手型光标) */
 .media-container {
     position: absolute;
     top: 0;
@@ -322,7 +321,7 @@ main {
 }
 
 /* ==========================================================================
-   ★ 核心：交互式九宫格取景构图参考线 (Viewfinder Overlay)
+   构图参考线 (Viewfinder Overlay)
    ========================================================================== */
 .viewfinder-overlay {
     position: absolute;
@@ -425,7 +424,7 @@ main {
 }
 
 /* ==========================================================================
-   5. 模式 A: 电脑端 & 手机横屏 WEB HUD 样式 (精细对齐)
+   5. 顶部 HUD 样式
    ========================================================================== */
 .player-top {
     position: absolute;
@@ -441,7 +440,7 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 24px;
+    height: 26px;
 }
 
 .top-left-group {
@@ -457,13 +456,12 @@ main {
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
-    vertical-align: middle;
 }
 
 .back-icon {
     color: #fff;
     cursor: pointer;
-    height: 22px;
+    height: 24px;
 }
 
 .laya-brand-badge {
@@ -471,7 +469,7 @@ main {
     border: 1px solid rgba(61, 136, 253, 0.7);
     padding: 0 8px 0 5px;
     border-radius: 20px;
-    height: 22px;
+    height: 24px;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
@@ -490,7 +488,7 @@ main {
     font-size: 11px;
     font-weight: 700;
     color: #ffffff !important;
-    line-height: 1;
+    line-height: normal;
 }
 
 .free-channel-pill {
@@ -501,8 +499,8 @@ main {
     font-size: 11px;
     font-weight: 700;
     color: #f39c12 !important;
-    height: 22px;
-    line-height: 1;
+    height: 24px;
+    line-height: normal;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
@@ -511,7 +509,6 @@ main {
 .free-channel-pill span:first-child {
     margin-right: 4px;
     font-size: 11px;
-    line-height: 1;
 }
 
 .viewer-pill {
@@ -521,8 +518,8 @@ main {
     border-radius: 12px;
     font-size: 11px;
     color: #e1f5fe !important;
-    height: 22px;
-    line-height: 1;
+    height: 24px;
+    line-height: normal;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
@@ -544,8 +541,8 @@ main {
     font-weight: 600;
     color: #ffffff !important;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-    height: 22px;
-    line-height: 22px;
+    height: 24px;
+    line-height: normal;
     display: inline-flex;
     align-items: center;
 }
@@ -555,10 +552,10 @@ main {
     color: #ffffff !important;
     font-size: 9px;
     font-weight: 800;
-    padding: 0 5px;
+    padding: 2px 6px;
     border-radius: 3px;
     height: 18px;
-    line-height: 18px;
+    line-height: normal;
     display: inline-flex;
     align-items: center;
 }
@@ -569,15 +566,14 @@ main {
     flex-direction: row !important;
     white-space: nowrap;
     font-size: 11px;
-    height: 24px;
+    height: 26px;
 }
 
 .top-right-group > * {
     margin-left: 12px;
     display: inline-flex;
     align-items: center;
-    line-height: 1;
-    height: 22px;
+    line-height: normal;
 }
 
 .status-dot-item {
@@ -601,8 +597,8 @@ main {
     background: rgba(18, 20, 26, 0.88);
     border: 1px solid rgba(243, 156, 18, 0.5);
     border-radius: 6px;
-    padding: 0 9px;
-    height: 24px;
+    padding: 4px 9px;
+    min-height: 24px;
     box-sizing: border-box;
     display: inline-flex;
     align-items: center;
@@ -620,7 +616,7 @@ main {
     color: #f1f2f6 !important;
     white-space: nowrap;
     margin-right: 6px;
-    line-height: 1;
+    line-height: normal;
 }
 
 .banner-text strong {
@@ -634,12 +630,11 @@ main {
     border: 1px solid rgba(243, 156, 18, 0.4);
     font-size: 10px;
     font-weight: 700;
-    padding: 0 5px;
-    height: 16px;
-    line-height: 16px;
+    padding: 1px 5px;
     border-radius: 3px;
     display: inline-flex;
     align-items: center;
+    line-height: normal;
 }
 
 .center-pause-wrap {
@@ -709,7 +704,7 @@ main {
     position: absolute;
     left: 16px;
     right: 16px;
-    bottom: 42px;
+    bottom: 46px;
     height: 32px;
     pointer-events: none;
     z-index: 5;
@@ -728,7 +723,7 @@ main {
     right: 0;
     z-index: 6;
     background: linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.4) 70%, rgba(0,0,0,0) 100%);
-    padding: 14px 16px 8px 16px;
+    padding: 14px 16px 10px 16px;
     display: flex;
     flex-direction: column;
 }
@@ -740,7 +735,7 @@ main {
     background: rgba(255, 255, 255, 0.2);
     border-radius: 3px;
     cursor: pointer;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .progress-bar-buffer {
@@ -775,13 +770,16 @@ main {
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
 }
 
+/* ==========================================================================
+   ★ 核心修复：底栏完全告别文字压扁与截断 (空间舒展，行高正常)
+   ========================================================================== */
 .bottom-ctrl-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 11.5px;
     color: #d0d4dc;
-    height: 26px;
+    min-height: 28px;
 }
 
 .ctrl-left {
@@ -789,15 +787,12 @@ main {
     align-items: center;
     flex-direction: row !important;
     white-space: nowrap;
-    height: 100%;
 }
 
 .ctrl-left > * {
     margin-right: 12px;
     display: inline-flex;
     align-items: center;
-    height: 22px;
-    line-height: 1;
 }
 
 .time-label {
@@ -805,8 +800,8 @@ main {
     font-variant-numeric: tabular-nums !important;
     font-size: 11.5px;
     font-weight: 500;
-    letter-spacing: 0.2px;
-    line-height: 1;
+    letter-spacing: 0.3px;
+    line-height: normal;
     display: inline-flex;
     align-items: center;
     color: #d0d4dc;
@@ -815,7 +810,6 @@ main {
 #wrap-bot-dm-group {
     display: inline-flex;
     align-items: center;
-    height: 22px;
 }
 
 .dm-switch-capsule {
@@ -824,8 +818,8 @@ main {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 14px;
-    padding: 0 8px;
-    height: 22px;
+    padding: 0 9px;
+    height: 26px;
     margin-right: 8px;
     cursor: pointer;
     box-sizing: border-box;
@@ -845,9 +839,9 @@ main {
 }
 
 .dm-capsule-icon {
-    width: 12px;
-    height: 12px;
-    margin-right: 4px;
+    width: 13px;
+    height: 13px;
+    margin-right: 5px;
     color: #8b93a4;
 }
 
@@ -856,11 +850,11 @@ main {
 }
 
 .dm-capsule-text {
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 700;
     color: #8b93a4;
     margin-right: 5px;
-    line-height: 1;
+    line-height: normal;
 }
 
 .dm-switch-capsule.active .dm-capsule-text {
@@ -879,14 +873,15 @@ main {
     box-shadow: 0 0 6px #2ecc71;
 }
 
+/* 弹幕输入框：舒展高度 + normal 行高，让文字底部笔画完整舒展 */
 .fake-dm-bar {
     background: rgba(255, 255, 255, 0.14);
     border: 1px solid rgba(255, 255, 255, 0.18);
     border-radius: 16px;
     display: inline-flex;
     align-items: center;
-    padding: 0 4px 0 10px;
-    height: 22px;
+    padding: 0 4px 0 11px;
+    height: 26px;
     cursor: pointer;
     box-sizing: border-box;
     transition: background 0.15s ease, border-color 0.15s ease;
@@ -898,24 +893,27 @@ main {
 }
 
 .fake-dm-txt {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.88);
+    font-size: 11.5px;
+    color: rgba(255, 255, 255, 0.9);
     margin-right: 8px;
-    max-width: 170px;
+    max-width: 180px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    line-height: 1;
+    line-height: normal;
 }
 
 .fake-dm-btn {
     background: var(--primary);
     color: #fff;
     border-radius: 12px;
-    padding: 2px 8px;
+    padding: 3px 9px;
     font-weight: 700;
-    font-size: 10px;
-    line-height: 1;
+    font-size: 10.5px;
+    line-height: normal;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ctrl-right {
@@ -923,23 +921,23 @@ main {
     align-items: center;
     flex-direction: row !important;
     white-space: nowrap;
-    height: 100%;
 }
 
 .ctrl-right > * {
     margin-left: 12px;
     display: inline-flex;
     align-items: center;
-    line-height: 1;
-    height: 22px;
+    line-height: normal;
 }
 
 .live-tag-btn {
-    padding: 0 6px;
+    padding: 3px 7px;
     border-radius: 4px;
-    height: 20px;
+    height: 24px;
     box-sizing: border-box;
     background: rgba(255, 255, 255, 0.08);
+    display: inline-flex;
+    align-items: center;
 }
 
 .live-tag-btn:hover {
@@ -952,11 +950,13 @@ main {
     color: #fff;
     font-size: 10px;
     font-weight: 700;
-    padding: 0 7px;
-    height: 20px;
-    line-height: 20px;
+    padding: 3px 8px;
+    height: 24px;
+    line-height: normal;
     border-radius: 4px;
     box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
 }
 
 /* ==========================================================================
