@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ==========================================================================
  * app.js - 全局中枢控制、真实蓝/紫双Logo原图无损导出、真机录屏合成与持久化引擎
  * ==========================================================================
@@ -3872,10 +3872,17 @@ window.switchRightTab = function (mode) {
     }
 
     // ★ 1. 顶部标签栏固定高亮「推薦」+ 1秒自动弹回 + 右侧头像关注状态联动 + 底部导航栏固定高亮「視頻」1秒自动弹回
+    // 正式版默认关闭直播入口 (false)，测试版开启直播入口 (true)
+    window.__ENABLE_LAYA_LIVE_ENTRY = false;
     window.__layaLiveTabArmed = false;
     let topNavBounceTimer = null;
     let avatarFollowRestoreTimer = null;
     let botNavBounceTimer = null;
+
+    const liveSettingsCardInit = document.getElementById('card-dy-live-settings');
+    if (liveSettingsCardInit) {
+        liveSettingsCardInit.style.display = window.__ENABLE_LAYA_LIVE_ENTRY ? '' : 'none';
+    }
 
     function setRightAvatarFollowedByTab(isFollowed) {
         const avatarWrap = document.getElementById('dy-avatar-click');
@@ -3931,8 +3938,8 @@ window.switchRightTab = function (mode) {
 
                 const armedTip = document.getElementById('dy-live-armed-tip');
 
-                // 处理「直播」标签待进入状态
-                if (isLiveTab && renderTarget && renderTarget.classList.contains('mode-mobile-port')) {
+                // 处理「直播」标签待进入状态（仅在开启直播入口时生效）
+                if (window.__ENABLE_LAYA_LIVE_ENTRY && isLiveTab && renderTarget && renderTarget.classList.contains('mode-mobile-port')) {
                     window.__layaLiveTabArmed = true;
                     if (armedTip && !renderTarget.classList.contains('dy-live-open')) {
                         armedTip.style.display = 'inline-flex';
@@ -3962,13 +3969,14 @@ window.switchRightTab = function (mode) {
                     }, 1000);
                 }
 
-                // 若点的不是「推薦」，短暂亮 1 秒后自动弹回「推薦」亮灯
+                // 若点的不是「推薦」，短暂亮 1 秒后自动弹回「推薦」亮灯（若已进入直播间则保持「直播」亮灯）
                 if (!isRecommendTab) {
                     topNavBounceTimer = setTimeout(() => {
-                        items.forEach((el, i) => el.classList.toggle('active', i === defaultIndex));
-                        // 同步另一个皮肤的顶部标签栏也回到「推薦」
-                        document.querySelectorAll('#laya-app-nav-tabs .laya-app-nav-item').forEach((el, i) => el.classList.toggle('active', i === 1));
-                        document.querySelectorAll('.laya-nav-tabs > span').forEach((el, i) => el.classList.toggle('active', i === 1));
+                        const inLiveNow = renderTarget && renderTarget.classList.contains('dy-live-open');
+                        const targetIdx = inLiveNow ? 2 : defaultIndex;
+                        items.forEach((el, i) => el.classList.toggle('active', i === targetIdx));
+                        document.querySelectorAll('#laya-app-nav-tabs .laya-app-nav-item').forEach((el, i) => el.classList.toggle('active', i === targetIdx));
+                        document.querySelectorAll('.laya-nav-tabs > span').forEach((el, i) => el.classList.toggle('active', i === targetIdx));
                     }, 1000);
                 }
             });
@@ -7363,10 +7371,10 @@ window.switchRightTab = function (mode) {
             if (!clonedItem) return;
             const clonedGlow = clonedItem.querySelector('.laya-app-nav-glow');
             if (clonedGlow) {
-                const iw = origItem.offsetWidth || 36;
-                const ih = origItem.offsetHeight || 22;
-                clonedGlow.style.setProperty('left', Math.round((iw - 42) / 2) + 'px', 'important');
-                clonedGlow.style.setProperty('top', Math.round((ih - 24) / 2 + 1) + 'px', 'important');
+                const iw = origItem.offsetWidth || 40;
+                const ih = origItem.offsetHeight || 24;
+                clonedGlow.style.setProperty('left', Math.round((iw - 48) / 2) + 'px', 'important');
+                clonedGlow.style.setProperty('top', Math.round((ih - 27) / 2 + 1) + 'px', 'important');
                 clonedGlow.style.setProperty('margin', '0', 'important');
                 clonedGlow.style.setProperty('transform', 'none', 'important');
             }
@@ -9172,14 +9180,23 @@ window.switchRightTab = function (mode) {
 
     // 进入 Laya 直播页面（满足：1.手机竖屏9:16 + 2.顶部点了「直播」 + 3.下方视频区被点击）
     function enterLayaLiveRoom() {
+        if (!window.__ENABLE_LAYA_LIVE_ENTRY) return;
         if (!renderTarget || !renderTarget.classList.contains('mode-mobile-port')) return;
         window.__layaLiveTabArmed = false;
         if (liveArmedTipEl) liveArmedTipEl.style.display = 'none';
+        if (topNavBounceTimer) {
+            clearTimeout(topNavBounceTimer);
+            topNavBounceTimer = null;
+        }
 
         // 若评论区打开则先收起
         renderTarget.classList.remove('dy-comment-open', 'dy-comment-expanded');
         renderTarget.classList.add('dy-live-open');
         if (liveOverlayEl) liveOverlayEl.style.display = 'flex';
+
+        // 保持本软件原有的顶部标签栏亮在「直播」(index 2)
+        document.querySelectorAll('#laya-app-nav-tabs .laya-app-nav-item').forEach((el, idx) => el.classList.toggle('active', idx === 2));
+        document.querySelectorAll('.laya-nav-tabs > span').forEach((el, idx) => el.classList.toggle('active', idx === 2));
 
         if (window.PlayerEngine && typeof window.PlayerEngine.updateTransform === 'function') {
             setTimeout(() => window.PlayerEngine.updateTransform(), 25);
